@@ -38,3 +38,9 @@ jobs:
         env:
           CHROMIUM_SANDBOX: "off"
       - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-review
+          path: .impeccable/review/mobile/
+          retention-days: 3

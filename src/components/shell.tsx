@@ -101,14 +101,14 @@ export function Shell({
         primary[0],
         primary[1],
         ["/me/pickups", "Pindai", ScanLine] as const,
-        primary[4],
+        ["/me/loans", "Pinjaman", RotateCcw] as const,
         ["/profile", "Profil", UserRound] as const,
       ]
     : [
         primary[0],
         primary[1],
         ["/admin/labels", "Label QR", ScanLine] as const,
-        primary[3],
+        ["/admin/requests", "Pengajuan", ClipboardCheck] as const,
         ["/profile", "Profil", UserRound] as const,
       ];
   return (
