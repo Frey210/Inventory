@@ -1,6 +1,6 @@
 # Status implementasi MTC Inventory
 
-Pembaruan: 18 Oktober 2026. Tahap: aplikasi persiapan/pilot telah di-deploy dan sehat pada LXC Docker dengan PostgreSQL CT102. Rilis redesign `a1fb4800c3d5` aktif dan telah lulus CI. Ini bukan pernyataan seluruh V1/UAT/gate operasional lulus.
+Pembaruan: 18 Oktober 2026. Tahap: aplikasi persiapan/pilot telah di-deploy dan sehat pada LXC Docker dengan PostgreSQL CT102. Rilis performa `153e39d17a37` aktif dan telah lulus CI. Ini bukan pernyataan seluruh V1/UAT/gate operasional lulus.
 
 ## Implementasi tersedia
 
@@ -62,4 +62,4 @@ Shell dikirim sebelum data konten selesai melalui Suspense. Tambahan progress ba
 
 Verifikasi lokal: lint/typecheck/build lulus; tes pemetaan kebutuhan data lulus, dua E2E lama lulus, dan E2E navigasi baru lulus. Uji menahan respons jaringan untuk progress/pending search, mengunci tabel Master pada DB uji untuk membuktikan fallback streaming sambil menu tetap terlihat, memastikan pencarian tidak membuat document request atau menghapus state window, memeriksa reduced motion, serta membatalkan import kamera tertunda. Screenshot desktop/mobile di `.impeccable/review/performance/`; detektor tanpa temuan primer. Tidak ada migration, perubahan data operasional atau dependensi baru.
 
-Rilis/perbandingan sesudah deployment: menunggu commit, CI, aktivasi image dan pengukuran ulang pada domain yang sama. Kamera fisik, jaringan pengguna nyata dan audit aksesibilitas menyeluruh belum diuji pada batch ini.
+Rilis performa `153e39d17a37` sudah di-push dan di-deploy; web/worker healthy, origin lulus dari CT160/CT161. CI https://github.com/Frey210/Inventory/actions/runs/39131611726 hijau: 10 tes inti, 3 browser dan renderer nota. Perbandingan browser publik: JavaScript 292416 → 161471 byte (-44,8%); muat awal termasuk network idle 10060 → 2029 ms; Barang 997 → 1044 ms, Riwayat 1244 → 241 ms, Profil 1200 → 260 ms. Katalog belum menunjukkan percepatan waktu transisi pada sampel ini; feedback pending tetap langsung. Dataset produksi saat pengukuran belum memiliki Item/Asset/Balance, sehingga bukan bukti performa skala besar. Pengukuran satu lingkungan bukan jaminan semua perangkat/jaringan. Backup terenkripsi sebelum rilis berhasil dan disalin off-host. Klien browser uji dipisahkan agar suite tidak menghabiskan batas login bersama; batas produksi tidak diubah. Kamera fisik, jaringan pengguna nyata dan audit aksesibilitas menyeluruh belum diuji pada batch ini.

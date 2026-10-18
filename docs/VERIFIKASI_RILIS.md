@@ -2,6 +2,22 @@
 
 Tanggal: 18 Oktober 2026. Status: **siap untuk pilot dalam mode preparation**, bukan persetujuan cutover operasional.
 
+## Rilis performa aktif
+
+Image aplikasi/worker `153e39d17a37` aktif dan healthy. [CI performa](https://github.com/Frey210/Inventory/actions/runs/39131611726) lulus 10 tes inti, tiga alur browser, lint/typecheck/build dan tiga fixture nota. Origin lulus dari kedua node Cloudflare. Tidak ada migration, perubahan credential atau impor data operasional.
+
+| Pengukuran browser publik | Sebelum | Sesudah |
+| --- | ---: | ---: |
+| JavaScript terunduh awal | 292416 byte | 161471 byte |
+| Muat awal, termasuk network idle | 10060 ms | 2029 ms |
+| Pindah ke Barang | 997 ms | 1044 ms |
+| Pindah ke Riwayat | 1244 ms | 241 ms |
+| Pindah ke Profil | 1200 ms | 260 ms |
+
+Pengukuran Chromium pada jalur dan akun yang sama, satu sampel tiap versi, viewport 1440×1000. Bukan LCP/Core Web Vitals atau SLA. Saat uji produksi belum ada Item/Asset/Balance; tidak membuktikan performa volume besar. JavaScript awal turun 44,8%; katalog tidak terbukti lebih cepat pada sampel ini. Jaringan/perangkat fisik pengguna belum diukur.
+
+Uji lokal menahan respons untuk membuktikan progress link/pending pencarian, memblokir query Master untuk memeriksa skeleton streaming dan menu tetap terlihat, membuktikan pencarian tanpa document reload, reduced motion, dan pembatalan loading kamera. Screenshot memakai fixture DB uji. Semua query/otorisasi stok tetap server-side tanpa cache lintas pengguna. Backup sebelum aktivasi berhasil dan disalin off-host.
+
 ## Rilis redesign aktif
 
 Rilis aplikasi terbaru: `a1fb4800c3d5`, menggantikan image awal `6934cf53b011`. [CI redesign](https://github.com/Frey210/Inventory/actions/runs/39128868102) hijau: sembilan tes domain/integrasi, dua alur Playwright, lint, typecheck, build dan tiga fixture nota. Tes katalog meliputi filter kategori/tracking/rak, stok hanya pada rak terpilih, unit kalibrasi kedaluwarsa tidak tersedia, prefill ke permintaan, pengajuan tanpa perubahan stok, pergantian mode alat/komponen serta responsif 375–1440 px.

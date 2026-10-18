@@ -2,7 +2,7 @@
 
 ## Rilis aktif
 
-Aplikasi berjalan dalam mode **preparation** pada `/opt/mtc-inventory`, LXC Docker `192.168.10.68`. Image aplikasi/worker bertag `a1fb4800c3d5`; kode ada pada https://github.com/Frey210/Inventory. Konfigurasi runtime dan script operasi mengikuti repository. Lihat `docs/VERIFIKASI_RILIS.md` untuk bukti pengujian.
+Aplikasi berjalan dalam mode **preparation** pada `/opt/mtc-inventory`, LXC Docker `192.168.10.68`. Image aplikasi/worker bertag `153e39d17a37`; kode ada pada https://github.com/Frey210/Inventory. Konfigurasi runtime dan script operasi mengikuti repository. Lihat `docs/VERIFIKASI_RILIS.md` untuk bukti pengujian.
 
 Cloudflare Tunnel: hostname `inventory.farlabs.my.id`, service **HTTP**, URL `192.168.10.68:3030`. Origin `http://192.168.10.68:3030` telah diuji dari CT160 dan CT161. URL publik `/login` juga telah merespons HTTP 200. Jika hostname diubah, perbarui BETTER_AUTH_URL agar origin dan cookie tetap sesuai.
 
