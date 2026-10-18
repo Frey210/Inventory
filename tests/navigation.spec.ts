@@ -7,6 +7,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { db } from "../src/server/db";
 if (!process.env.INVENTORY_DATABASE_URL?.includes("inventory_test"))
   throw Error("Navigation tests require isolated DB");
+// Separate simulated client so other suites do not exhaust the shared sign-in rate limit.
+test.use({ extraHTTPHeaders: { "x-forwarded-for": "127.0.0.33" } });
 const username = "nav_" + randomUUID().slice(0, 8),
   password = randomBytes(20).toString("base64url"),
   id = randomUUID();
@@ -40,7 +42,11 @@ test("navigation reacts immediately, streams loading while data waits, and searc
   await page.goto("/login");
   await page.getByLabel("Username", { exact: true }).fill(username);
   await page.getByLabel("Password", { exact: true }).fill(password);
+  const signedIn = page.waitForResponse((response) =>
+    response.url().endsWith("/api/auth/sign-in/username"),
+  );
   await page.getByRole("button", { name: "Masuk", exact: true }).click();
+  expect((await signedIn).status()).toBe(200);
   await expect(page).toHaveURL(/admin\/dashboard/);
   await page.waitForLoadState("networkidle");
   const hydrated = await page.evaluate(() => {
