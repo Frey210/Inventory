@@ -17,7 +17,7 @@ services:
   worker:
     image: mtc-inventory-tools:${IMAGE_TAG:-local}
     restart: unless-stopped
-    env_file: [.env.production, .env.worker]
+    env_file: .env.worker
     extra_hosts: ["postgresql.epi:192.168.10.69"]
     volumes:
       - inventory-storage:/app/storage
@@ -28,9 +28,15 @@ services:
       - no-new-privileges:true
       - seccomp=./deploy/chromium-seccomp.json
     cap_drop: [ALL]
+    healthcheck:
+      test: ["CMD", "node", "-e", "const fs=require('fs');if(Date.now()-Date.parse(fs.readFileSync('/app/storage/worker-heartbeat','utf8'))>60000)process.exit(1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
   migrate:
     image: mtc-inventory-tools:${IMAGE_TAG:-local}
-    env_file: [.env.production, .env.migrate]
+    env_file: .env.migrate
     extra_hosts: ["postgresql.epi:192.168.10.69"]
     volumes:
       - ./db-ca.crt:/app/db-ca.crt:ro
@@ -38,7 +44,7 @@ services:
     command: ["npx","prisma","migrate","deploy"]
   backup:
     image: postgres:17-bookworm
-    env_file: [.env.production, .env.backup]
+    env_file: .env.backup
     extra_hosts: ["postgresql.epi:192.168.10.69"]
     profiles: [tools]
     entrypoint: ["sh","/scripts/backup.sh"]

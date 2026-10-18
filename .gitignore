@@ -15,5 +15,7 @@ test-results/
 src/generated/
 backups/
 .backup-key
+.backup-recipient.crt
+.backup.lock
 db-ca.crt
 .impeccable/review/

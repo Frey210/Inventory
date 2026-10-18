@@ -1,0 +1,10 @@
+[Unit]
+Description=MTC Inventory backup every four hours
+
+[Timer]
+OnCalendar=*-*-* 00,04,08,12,16,20:17:00 UTC
+Persistent=true
+RandomizedDelaySec=60
+
+[Install]
+WantedBy=timers.target

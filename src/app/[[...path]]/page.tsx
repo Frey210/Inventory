@@ -296,6 +296,13 @@ export default async function Page({
       orderBy: { sku: "asc" },
       take: 1000,
     });
+    const selectableItems = items.filter(
+      (i) =>
+        i.active &&
+        [i.typeId, i.categoryId, i.unitId].every((id) =>
+          masters.some((m) => m.id === id && m.active),
+        ),
+    );
     const scope = tech ? { actorId: user.id } : {};
     if (path === "/profile")
       return (
@@ -980,7 +987,7 @@ export default async function Page({
             }
           />
           <section className="panel">
-            {!items.length ? (
+            {!selectableItems.length ? (
               <>
                 <p>
                   Belum ada katalog barang. Siapkan master dan SKU terlebih
@@ -1002,20 +1009,18 @@ export default async function Page({
                 label={tech ? "Kirim Request" : "Simpan Draft"}
                 items={
                   serialize(
-                    items
-                      .filter((i) => i.active)
-                      .map((i) => ({
-                        id: i.id,
-                        name: i.name,
-                        sku: i.sku,
-                        tracking: i.tracking,
-                        unitId: i.unitId,
-                        locationId: i.locationId,
-                        photoId: i.photoId,
-                        unitName: lookup(i.unitId),
-                        categoryName: lookup(i.categoryId),
-                        specifications: i.description,
-                      })),
+                    selectableItems.map((i) => ({
+                      id: i.id,
+                      name: i.name,
+                      sku: i.sku,
+                      tracking: i.tracking,
+                      unitId: i.unitId,
+                      locationId: i.locationId,
+                      photoId: i.photoId,
+                      unitName: lookup(i.unitId),
+                      categoryName: lookup(i.categoryId),
+                      specifications: i.description,
+                    })),
                   ) as CatalogItem[]
                 }
                 locations={options("location")}

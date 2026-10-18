@@ -1,0 +1,12 @@
+[Unit]
+Description=MTC Inventory encrypted database and file backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/mtc-inventory
+ExecStart=/bin/sh /opt/mtc-inventory/scripts/run-backup.sh
+UMask=0077
+Nice=10
+TimeoutStartSec=30min

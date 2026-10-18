@@ -120,11 +120,24 @@ async function movement(
     },
   });
 }
-async function validateQuantity(tx: Tx, itemId: string, amount: string) {
+async function validateQuantity(
+  tx: Tx,
+  itemId: string,
+  amount: string,
+  historical = false,
+) {
   quantity.parse(amount);
   const item = await tx.item.findUniqueOrThrow({ where: { id: itemId } });
-  if (!item.active) throw new Error("Barang tidak aktif.");
-  const unit = await activeMaster(tx, item.unitId, "unit");
+  if (!historical && !item.active) throw new Error("Barang tidak aktif.");
+  if (!historical) {
+    await activeMaster(tx, item.typeId, "type");
+    await activeMaster(tx, item.categoryId, "category");
+  }
+  const unit = historical
+    ? await tx.master.findUnique({ where: { id: item.unitId } })
+    : await activeMaster(tx, item.unitId, "unit");
+  if (!unit || unit.kind !== "unit")
+    throw new Error("Referensi satuan tidak valid.");
   const details = unit.details as { fractional?: boolean };
   const qty = new Prisma.Decimal(amount);
   if (!details.fractional && !qty.isInteger())
@@ -212,6 +225,16 @@ export async function execute(
   input: unknown,
 ) {
   return atomic(actor, key, action, input, async (tx) => {
+    if (
+      actor.role === "AUDITOR" &&
+      ![
+        "notification-read",
+        "post-stocktake",
+        "review-override",
+        "close-exception",
+      ].includes(action)
+    )
+      throw new Error("Akun auditor tidak memiliki izin mutasi ini.");
     if (action === "review-override") {
       permit(actor, "review");
       const p = z.object({ id, reason: text }).parse(input);
@@ -450,6 +473,17 @@ export async function execute(
           parent = row.parentId;
         }
       }
+      if (
+        before &&
+        p.kind === "location" &&
+        !p.active &&
+        (await tx.master.count({
+          where: { parentId: before.id, active: true },
+        }))
+      )
+        throw new Error(
+          "Nonaktifkan atau pindahkan lokasi turunan terlebih dahulu.",
+        );
       for (const [field, kind] of [
         ["defaultTypeId", "type"],
         ["defaultUnitId", "unit"],
@@ -1220,7 +1254,14 @@ export async function execute(
       });
       own(actor, l.document.actorId);
       if (l.fulfilled.lte(0)) throw new Error("Barang belum dikeluarkan.");
-      const { qty } = await validateQuantity(tx, l.itemId, p.quantity);
+      const { item, qty } = await validateQuantity(
+        tx,
+        l.itemId,
+        p.quantity,
+        true,
+      );
+      if (item.tracking !== "quantity")
+        throw new Error("Sisa/waste hanya untuk consumable quantity.");
       assertReturn(
         l.fulfilled.toString(),
         l.returned.toString(),
@@ -1274,7 +1315,14 @@ export async function execute(
       const l = await tx.line.findUniqueOrThrow({
         where: { id: record.referenceId! },
       });
-      const { qty } = await validateQuantity(tx, l.itemId, payload.quantity);
+      const { item, qty } = await validateQuantity(
+        tx,
+        l.itemId,
+        payload.quantity,
+        true,
+      );
+      if (item.tracking !== "quantity")
+        throw new Error("Pengembalian ini bukan consumable.");
       assertReturn(
         l.fulfilled.toString(),
         l.returned.toString(),

@@ -22,11 +22,18 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
 CMD ["node","server.js"]
 
-FROM builder AS tools
-RUN npx playwright install --with-deps chromium
-RUN npx prisma -v && chown -R node:node /app/node_modules/@prisma/engines
-ENV NODE_ENV=production STORAGE_PATH=/app/storage
-RUN mkdir -p /app/storage && chown node:node /app/storage && chmod -R a+rX /root/.cache/ms-playwright && cp -r /root/.cache/ms-playwright /ms-playwright
+FROM dependencies AS browser-tools
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN npx playwright install --with-deps chromium && chmod -R a+rX /ms-playwright
+RUN npx prisma -v && chown -R node:node /app/node_modules/@prisma/engines
+
+FROM browser-tools AS tools
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/prisma.config.ts /app/tsconfig.json ./
+ENV NODE_ENV=production STORAGE_PATH=/app/storage
+RUN mkdir -p /app/storage && chown node:node /app/storage
 USER node
 CMD ["node","dist/worker.mjs"]
