@@ -2,6 +2,14 @@
 
 Tanggal: 18 Oktober 2026. Status: **siap untuk pilot dalam mode preparation**, bukan persetujuan cutover operasional.
 
+## Rilis redesign aktif
+
+Rilis aplikasi terbaru: `a1fb4800c3d5`, menggantikan image awal `6934cf53b011`. [CI redesign](https://github.com/Frey210/Inventory/actions/runs/39128868102) hijau: sembilan tes domain/integrasi, dua alur Playwright, lint, typecheck, build dan tiga fixture nota. Tes katalog meliputi filter kategori/tracking/rak, stok hanya pada rak terpilih, unit kalibrasi kedaluwarsa tidak tersedia, prefill ke permintaan, pengajuan tanpa perubahan stok, pergantian mode alat/komponen serta responsif 375–1440 px.
+
+App/worker healthy, kedua node Cloudflare mengakses origin, login publik memuat desain baru dan font WOFF2 sama persis dengan source. Mode preparation tetap aktif. Backup sebelum rilis berhasil dan salinan terenkripsi berada di workstation. Tidak ada migration atau perubahan akun/stock operasional. Review independen memberi **ship untuk pilot** setelah temuan diperbaiki; DESIGN.md dan sidecar disinkronkan. Bukti screenshot memakai data simulasi pada DB uji, bukan stok produksi.
+
+Gate bisnis/UAT/perangkat dan backup off-host berulang tetap terbuka. Bagian berikut merekam bukti rilis awal dan tetap menjadi histori, bukan klaim bahwa setiap angka snapshot adalah kondisi produksi terkini.
+
 ## Kode dan pengujian
 
 - Image web/worker berasal dari commit `6934cf53b011bec80a6e61dec45644a77ed483c3` pada repository Frey210/Inventory. Perubahan dokumentasi dan script backup setelah commit tersebut tidak mengganti image aplikasi.

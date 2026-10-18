@@ -1,6 +1,6 @@
 # Status implementasi MTC Inventory
 
-Pembaruan: 18 Oktober 2026. Tahap: aplikasi persiapan/pilot telah di-deploy dan sehat pada LXC Docker dengan PostgreSQL CT102. Rilis kode aplikasi `6934cf53b011` telah lulus CI. Ini bukan pernyataan seluruh V1/UAT/gate operasional lulus.
+Pembaruan: 18 Oktober 2026. Tahap: aplikasi persiapan/pilot telah di-deploy dan sehat pada LXC Docker dengan PostgreSQL CT102. Rilis redesign `a1fb4800c3d5` aktif dan telah lulus CI. Ini bukan pernyataan seluruh V1/UAT/gate operasional lulus.
 
 ## Implementasi tersedia
 
@@ -50,4 +50,4 @@ Verifikasi lokal: lint/typecheck/build produksi lulus; Playwright lama dan tes k
 
 Excel `list nama barang .xlsx` dibaca sebagai konteks kategori/lokasi. Tidak di-posting menjadi stok; file sumber tetap lokal, tidak masuk repository/image. Foto/angka yang belum ada di produksi tidak diganti data simulasi. Data screenshot berasal dari DB uji terisolasi.
 
-Rilis redesign: menunggu commit/push/CI dan aktivasi image baru; metadata rilis final diperbarui setelah verifikasi host. Gate UAT/data fisik/backup off-host rutin dari bagian sebelumnya tetap terbuka.
+Rilis redesign: commit `a1fb4800c3d5` sudah di-push; CI https://github.com/Frey210/Inventory/actions/runs/39128868102 hijau (9 tes domain/integrasi, 2 Playwright, lint/typecheck/build dan 3 fixture nota). Image web/worker bertag commit yang sama telah aktif dan healthy. URL publik login baru dan byte font lokal terverifikasi, health preparation serta ekspor tanpa sesi ditolak 403. Origin kembali lulus dari CT160 dan CT161. Backup terenkripsi sebelum rilis mtc-inventory-20261018T124926Z.tar.cms berhasil dan disalin off-host ke workstation. Tidak ada migration, reset akun atau impor stok pada rilis ini; container DB uji dihentikan setelah pengecekan. Gate UAT/data fisik/backup off-host rutin dari bagian sebelumnya tetap terbuka.
