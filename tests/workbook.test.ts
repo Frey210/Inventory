@@ -7,6 +7,8 @@ import { planWorkbook } from "../src/server/workbook-import";
 import {
   applyWorkbook,
   postWorkbookQuantities,
+  reviewedEquipmentRows,
+  postReviewedEquipment,
 } from "../src/server/workbook-apply";
 import { db } from "../src/server/db";
 
@@ -229,9 +231,85 @@ test("PostgreSQL: workbook setup retries safely, creates opening drafts without 
       where: { item: { sku: plan.items[0].sku } },
     });
     assert.equal(balance.onHand.toString(), "12");
+    await assert.rejects(postReviewedEquipment(plan, actor, ""), /kondisi/);
+    await assert.rejects(
+      postReviewedEquipment(
+        plan,
+        { ...actor, role: "TECHNICIAN" },
+        "Owner inspected tools and confirmed good condition.",
+      ),
+      /izin/,
+    );
+    const tools = await postReviewedEquipment(
+      plan,
+      actor,
+      "Owner inspected tools and confirmed good condition.",
+    );
+    assert.equal(tools.units, 2);
+    assert.equal(tools.posted, 1);
+    const retry = await postReviewedEquipment(
+      plan,
+      actor,
+      "Owner inspected tools and confirmed good condition.",
+    );
+    assert.equal(retry.posted, 0);
+    assert.deepEqual(retry.documents, tools.documents);
+    const assets = await db.asset.findMany({
+      where: { item: { sku: plan.items[1].sku } },
+      orderBy: { tag: "asc" },
+    });
+    assert.equal(assets.length, 2);
+    assert.deepEqual(
+      assets.map((a) => a.tag),
+      [1, 2].map(
+        (n) => `MTC-${plan.items[1].sku}-${String(n).padStart(3, "0")}`,
+      ),
+    );
+    assert.ok(
+      assets.every(
+        (a) =>
+          a.serial === null &&
+          a.condition === "Baik" &&
+          a.availability === "available" &&
+          !a.calibrationRequired,
+      ),
+    );
+    assert.equal(await db.balance.count(), before.balance + 1);
+    assert.equal(await db.ledger.count(), before.ledger + 1);
+    assert.equal(await db.asset.count(), before.asset + 2);
     plan.items[0].name = "Changed source";
     await assert.rejects(applyWorkbook(plan, actor), /tidak ditimpa/);
   } finally {
     await db.$disconnect();
   }
+});
+
+test("reviewed tools preserve source counts, create internal identities and hold measurement/sensor/product stock", async () => {
+  const plan = await planWorkbook(await fixture());
+  const template = plan.items[1];
+  for (const name of [
+    "Jangka Sorong",
+    "Meteran 2m",
+    "Obeng Tespen",
+    "Gelas Beaker",
+  ])
+    plan.items.push({
+      ...template,
+      sku: name.toUpperCase().replaceAll(" ", "-"),
+      name,
+    });
+  plan.items.push({ ...template, sku: "SENSOR-TEST", type: "SENSOR" });
+  const result = reviewedEquipmentRows(plan);
+  assert.equal(result.acceptedSkus, 1);
+  assert.equal(result.rows.length, 2);
+  assert.equal(result.heldSkus.length, 4);
+  assert.deepEqual(
+    result.rows.map((i) => i.tag),
+    ["MTC-TEST-B-001", "MTC-TEST-B-002"],
+  );
+  assert.ok(
+    result.rows.every((i) => i.quantity === "1" && i.location === "C3-TB"),
+  );
+  template.quantity = "1.5";
+  assert.throws(() => reviewedEquipmentRows(plan), /Jumlah/);
 });

@@ -4,6 +4,7 @@ import { planWorkbook } from "../src/server/workbook-import";
 import {
   applyWorkbook,
   postWorkbookQuantities,
+  postReviewedEquipment,
 } from "../src/server/workbook-apply";
 import { db } from "../src/server/db";
 
@@ -11,11 +12,14 @@ try {
   const [file, mode, actorId] = process.argv.slice(2);
   if (
     !file ||
-    (mode && !["--apply", "--post-quantities"].includes(mode)) ||
+    (mode &&
+      !["--apply", "--post-quantities", "--post-reviewed-tools"].includes(
+        mode,
+      )) ||
     (mode && !actorId)
   )
     throw Error(
-      "Usage: tsx scripts/import-workbook.ts <private.xlsx> [--apply|--post-quantities <admin-id>]",
+      "Usage: tsx scripts/import-workbook.ts <private.xlsx> [--apply|--post-quantities|--post-reviewed-tools <admin-id>]",
     );
   const plan = await planWorkbook(await readFile(file));
   await mkdir(".local", { recursive: true });
@@ -27,6 +31,14 @@ try {
   if (mode) {
     const actor = await db.user.findUniqueOrThrow({ where: { id: actorId } });
     if (!actor.isActive) throw Error("Akun pelaksana tidak aktif.");
+    const inspection = process.env.INVENTORY_TOOL_INSPECTION?.trim();
+    if (
+      mode === "--post-reviewed-tools" &&
+      (!inspection || inspection.length < 15 || inspection.length > 500)
+    )
+      throw Error(
+        "INVENTORY_TOOL_INSPECTION harus berisi konfirmasi pemeriksaan kondisi alat.",
+      );
     const reconciliation = process.env.INVENTORY_OPENING_RECONCILIATION?.trim();
     if (
       mode === "--post-quantities" &&
@@ -42,11 +54,17 @@ try {
       mode === "--post-quantities"
         ? await postWorkbookQuantities(plan, actor, reconciliation!)
         : 0;
+    const tools =
+      mode === "--post-reviewed-tools"
+        ? await postReviewedEquipment(plan, actor, inspection!)
+        : undefined;
     console.log(
       JSON.stringify({
         ...result,
-        stockPosted: mode === "--post-quantities",
+        stockPosted:
+          mode === "--post-quantities" || mode === "--post-reviewed-tools",
         posted,
+        tools,
       }),
     );
   } else

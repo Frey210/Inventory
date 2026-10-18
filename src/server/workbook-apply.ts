@@ -217,6 +217,105 @@ export async function applyWorkbook(plan: Plan, actor: Actor) {
   };
 }
 
+export function reviewedEquipmentRows(plan: Plan) {
+  // These source items measure length/electrical state/volume; good condition alone does not settle calibration.
+  const held = plan.items.filter(
+    (i) =>
+      i.type === "EQUIPMENT" &&
+      /jangka sorong|meteran|tespen|gelas beaker/i.test(i.name),
+  );
+  const accepted = plan.items.filter(
+    (i) => i.type === "EQUIPMENT" && !held.includes(i),
+  );
+  const rows = accepted.flatMap((item) => {
+    const count = Number(item.quantity);
+    if (
+      !Number.isSafeInteger(count) ||
+      count < 1 ||
+      count > 10000 ||
+      item.sku.length > 80
+    )
+      throw Error("Jumlah/kode alat tidak sesuai untuk penomoran unit.");
+    return Array.from({ length: count }, (_, index) => ({
+      sku: item.sku,
+      location: item.location,
+      quantity: "1",
+      // Internal inventory identity, never an invented manufacturer serial.
+      tag: `MTC-${item.sku}-${String(index + 1).padStart(3, "0")}`,
+    }));
+  });
+  return {
+    rows,
+    acceptedSkus: accepted.length,
+    heldSkus: held.map((i) => i.sku),
+  };
+}
+
+export async function postReviewedEquipment(
+  plan: Plan,
+  actor: Actor,
+  reason: string,
+) {
+  permit(actor, "users");
+  if (reason.trim().length < 15 || reason.length > 500)
+    throw Error("Konfirmasi pemeriksaan kondisi alat wajib diisi.");
+  const selection = reviewedEquipmentRows(plan);
+  let posted = 0;
+  const documents: string[] = [];
+  for (let offset = 0; offset < selection.rows.length; offset += 100) {
+    const expected = selection.rows.slice(offset, offset + 100);
+    const csv = [
+      openingColumns.join(","),
+      ...expected.map((row) =>
+        [row.sku, row.location, "1", row.tag, "", "Baik", "false", ""].join(
+          ",",
+        ),
+      ),
+    ].join("\n");
+    const result = (await execute(actor, randomUUID(), "opening-import", {
+      batchId: `xlsx-tools-${plan.hash.slice(0, 16)}-${offset / 100 + 1}`,
+      csv,
+      reason,
+    })) as { id: string };
+    const doc = await db.document.findUnique({
+      where: { id: result.id },
+      include: { lines: true },
+    });
+    if (
+      !doc ||
+      doc.kind !== "receipt" ||
+      !["draft", "posted"].includes(doc.status) ||
+      doc.lines.length !== expected.length ||
+      expected.some(
+        (row) =>
+          !doc.lines.some(
+            (line) =>
+              (line.details as { tag?: string }).tag === row.tag &&
+              line.quantity.eq(1),
+          ),
+      )
+    )
+      throw Error(
+        "Draf unit alat tidak cocok dengan sumber; periksa opening import.",
+      );
+    if (doc.status === "draft") {
+      await execute(actor, randomUUID(), "post-receipt", {
+        id: doc.id,
+        reason,
+      });
+      posted++;
+    }
+    documents.push(doc.number);
+  }
+  return {
+    acceptedSkus: selection.acceptedSkus,
+    units: selection.rows.length,
+    heldSkus: selection.heldSkus,
+    documents,
+    posted,
+  };
+}
+
 export async function postWorkbookQuantities(
   plan: Plan,
   actor: Actor,

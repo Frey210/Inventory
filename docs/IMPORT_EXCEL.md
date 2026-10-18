@@ -28,3 +28,17 @@ Apply membuat katalog/master serta draf saldo pembukaan quantity dalam batch mak
 Pemilik/petugas mencocokkan jumlah fisik, menuntaskan SKU/lokasi bentrok, menetapkan klasifikasi dan memeriksa unit/kalibrasi sebelum posting dengan alur penerimaan yang ada. Mode persiapan tetap aktif. Konfirmasi jumlah saja tidak membuktikan kondisi atau kelayakan kalibrasi.
 
 Dry-run sumber pengguna: 354 baris utama, 354 SKU diterima setelah pemetaan yang dikonfirmasi pemilik: cutter tetap AK057 dan knob menjadi AK058. Label fisik knob lama AK057 perlu diganti menjadi AK058. Enam model Aquanotes memuat 19 unit rincian tanpa penjumlahan ulang. Ini hasil pembacaan sumber, bukan bukti sudah tersimpan di produksi.
+
+## Alat yang telah diperiksa
+
+Setelah pemilik mengonfirmasi kondisi alat baik, isi `INVENTORY_TOOL_INSPECTION` dengan catatan pemeriksaan dan gunakan:
+
+```powershell
+npx.cmd tsx scripts/import-workbook.ts "list nama barang .xlsx" --post-reviewed-tools <admin-id>
+```
+
+Opsi ini hanya memproses jenis EQUIPMENT. Jangka sorong, meteran, tespen dan gelas beaker tetap ditahan karena kondisi baik belum menetapkan kebutuhan/validitas kalibrasi. SENSOR dan PRODUCT tidak dimasukkan oleh opsi ini. Pemetaan sumber saat ini mencakup64 SKU/160 unit yang memenuhi cakupan konfirmasi.
+
+Setiap unit mendapat tag internal `MTC-<SKU>-001` dan seterusnya. Pasang tag pada unit/kit yang bersangkutan melalui label aplikasi sebelum peminjaman agar identitas fisik tidak tertukar. Nomor seri pabrikan kosong jika tidak ada data yang dapat dibuktikan. Qty1 pada kit tetap satu kit, bukan dipecah berdasarkan daftar ukuran di nama barang.
+
+Service opening-import membuat penerimaan per maksimal100 unit; posting memakai service penerimaan yang ada. Batch/checksum/tag unik dan status dokumen mencegah retry menggandakan unit. Saldo quantity/ledger quantity tidak diubah untuk serialized. Backup dan rekonsiliasi per SKU/lokasi/tag wajib dilakukan sebelum dan sesudah impor.
