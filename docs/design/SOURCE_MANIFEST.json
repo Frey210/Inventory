@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "status": "source-reference-only",
+  "sources": [
+    {
+      "file": "Rancangan_Terpadu_Sistem_Inventory_PT_MTC_Revisi_Nota_Terintegrasi.docx",
+      "sha256": "0c7dc3750aa4a1c84413dc6b99154c6517ba060bc1b2e7083803d49fa0008cb9"
+    },
+    {
+      "file": "Template_Nota_Terintegrasi_Peminjaman_Pengembalian_MTC.docx",
+      "sha256": "21f1008ba2eabfae36e5301eb9614cba4035cf6dcaad4433b924271884bf4c11"
+    }
+  ],
+  "images": [
+    {
+      "file": "docs/design/references/image1.png",
+      "origin": "Rancangan_Terpadu_Sistem_Inventory_PT_MTC_Revisi_Nota_Terintegrasi.docx#word/media/image1.png",
+      "sha256": "2c237a1f1d1a46a34038ce4e00a835da843be9b8a533070e75d8a7362ebc62b7",
+      "width": 1800,
+      "height": 360,
+      "bodyElementIndex": 34,
+      "shippingUse": "development-reference-only"
+    },
+    {
+      "file": "docs/design/references/image2.png",
+      "origin": "Rancangan_Terpadu_Sistem_Inventory_PT_MTC_Revisi_Nota_Terintegrasi.docx#word/media/image2.png",
+      "sha256": "9e9981181e6e3e751f07fce5a853a104ec3141c9fd35ff46eea922213fb78fa4",
+      "width": 1800,
+      "height": 360,
+      "bodyElementIndex": 45,
+      "shippingUse": "development-reference-only"
+    },
+    {
+      "file": "docs/design/references/image3.png",
+      "origin": "Rancangan_Terpadu_Sistem_Inventory_PT_MTC_Revisi_Nota_Terintegrasi.docx#word/media/image3.png",
+      "sha256": "9a173537d3057df4161468fcecbd6e875a0eb050ffe62dc2c199ff59ba774a16",
+      "width": 1800,
+      "height": 360,
+      "bodyElementIndex": 55,
+      "shippingUse": "development-reference-only"
+    },
+    {
+      "file": "docs/design/references/image4.jpeg",
+      "origin": "Rancangan_Terpadu_Sistem_Inventory_PT_MTC_Revisi_Nota_Terintegrasi.docx#word/media/image4.jpeg",
+      "sha256": "073ca3bd0aaa50125bf26eb5f4251740df5258fb7da8b76c6eaa4ddfe0d5b036",
+      "width": 1536,
+      "height": 1024,
+      "bodyElementIndex": 90,
+      "shippingUse": "development-reference-only"
+    },
+    {
+      "file": "docs/design/references/image5.jpeg",
+      "origin": "Rancangan_Terpadu_Sistem_Inventory_PT_MTC_Revisi_Nota_Terintegrasi.docx#word/media/image5.jpeg",
+      "sha256": "0e6f623c43551f0cf294ffedfd1888aec63315783436abae9308dee90048761d",
+      "width": 1536,
+      "height": 1024,
+      "bodyElementIndex": 92,
+      "shippingUse": "development-reference-only"
+    }
+  ]
+}

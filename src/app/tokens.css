@@ -1,0 +1,25 @@
+:root {
+  --admin-shell: #0b2e59;
+  --primary: #1565c0;
+  --primary-hover: #0d47a1;
+  --technician: #00897b;
+  --technician-strong: #00695c;
+  --technician-hover: #00574b;
+  --canvas: #f4f7fb;
+  --surface: #ffffff;
+  --surface-muted: #edf2f7;
+  --text: #172b4d;
+  --text-muted: #52647a;
+  --border: #d8e1ec;
+  --control-border: #7c8a9b;
+  --on-brand: #ffffff;
+  --selected-bg: #e8f1fd;
+  --success: #166534;
+  --success-bg: #ecfdf3;
+  --warning: #92400e;
+  --warning-bg: #fffbeb;
+  --danger: #b91c1c;
+  --danger-bg: #fef2f2;
+  --info: #1d4ed8;
+  --info-bg: #eff6ff;
+}

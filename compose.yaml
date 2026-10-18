@@ -1,0 +1,51 @@
+name: mtc-inventory
+services:
+  app:
+    image: mtc-inventory-web:${IMAGE_TAG:-local}
+    restart: unless-stopped
+    env_file: .env.production
+    extra_hosts: ["postgresql.epi:192.168.10.69"]
+    ports:
+      - "192.168.10.68:3030:3000"
+    volumes:
+      - inventory-storage:/app/storage
+      - ./db-ca.crt:/app/db-ca.crt:ro
+    mem_limit: 512m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+  worker:
+    image: mtc-inventory-tools:${IMAGE_TAG:-local}
+    restart: unless-stopped
+    env_file: [.env.production, .env.worker]
+    extra_hosts: ["postgresql.epi:192.168.10.69"]
+    volumes:
+      - inventory-storage:/app/storage
+      - ./db-ca.crt:/app/db-ca.crt:ro
+    mem_limit: 768m
+    init: true
+    security_opt:
+      - no-new-privileges:true
+      - seccomp=./deploy/chromium-seccomp.json
+    cap_drop: [ALL]
+  migrate:
+    image: mtc-inventory-tools:${IMAGE_TAG:-local}
+    env_file: [.env.production, .env.migrate]
+    extra_hosts: ["postgresql.epi:192.168.10.69"]
+    volumes:
+      - ./db-ca.crt:/app/db-ca.crt:ro
+    profiles: [tools]
+    command: ["npx","prisma","migrate","deploy"]
+  backup:
+    image: postgres:17-bookworm
+    env_file: [.env.production, .env.backup]
+    extra_hosts: ["postgresql.epi:192.168.10.69"]
+    profiles: [tools]
+    entrypoint: ["sh","/scripts/backup.sh"]
+    volumes:
+      - ./scripts:/scripts:ro
+      - inventory-storage:/storage:ro
+      - ./backups:/backup
+      - ./db-ca.crt:/app/db-ca.crt:ro
+volumes:
+  inventory-storage:

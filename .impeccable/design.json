@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-18T03:12:05.806014+00:00",
+  "title": "Design System: MTC Inventory",
+  "extensions": {
+    "shadows": [
+      {
+        "name": "panel",
+        "value": "0 1px 3px rgba(11,46,89,0.08)",
+        "purpose": "Baseline panel separation"
+      },
+      {
+        "name": "overlay",
+        "value": "0 12px 32px rgba(11,46,89,0.18)",
+        "purpose": "Baseline drawer/dialog"
+      }
+    ],
+    "motion": [
+      {
+        "name": "control",
+        "value": "150ms ease-out",
+        "purpose": "Hover and focus"
+      },
+      {
+        "name": "overlay",
+        "value": "200ms ease-out",
+        "purpose": "Drawer/dialog; respect reduced motion"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "tablet",
+        "value": "768px"
+      },
+      {
+        "name": "desktop",
+        "value": "1024px"
+      },
+      {
+        "name": "detail-columns",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary admin",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Preview baseline dari DESIGN.md, bukan komponen aplikasi yang telah diuji.",
+      "html": "<button class=\"ds-demo ds-primary\">Simpan Draft</button>",
+      "css": ".ds-demo{font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;}.ds-primary{background:#1565C0;color:#fff;border:0;border-radius:6px;min-height:44px;padding:10px 16px;font-weight:600}.ds-primary:hover{background:#0D47A1}.ds-primary:focus-visible{outline:2px solid #1565C0;outline-offset:2px}"
+    },
+    {
+      "name": "Primary technician",
+      "kind": "button",
+      "refersTo": "button-technician",
+      "description": "Preview baseline dari DESIGN.md, bukan komponen aplikasi yang telah diuji.",
+      "html": "<button class=\"ds-demo ds-tech\">Kirim Request</button>",
+      "css": ".ds-demo{font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;}.ds-tech{background:#00695C;color:#fff;border:0;border-radius:6px;min-height:44px;padding:10px 16px;font-weight:600}.ds-tech:hover{background:#00574B}.ds-tech:focus-visible{outline:2px solid #00695C;outline-offset:2px}"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Preview baseline dari DESIGN.md, bukan komponen aplikasi yang telah diuji.",
+      "html": "<label class=\"ds-demo\" for=\"ds-code\">Kode aset</label><input id=\"ds-code\" class=\"ds-demo ds-input\" placeholder=\"AST-MUL-0003\">",
+      "css": ".ds-demo{font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;}.ds-input{display:block;background:#fff;color:#172B4D;border:1px solid #7C8A9B;border-radius:6px;min-height:44px;padding:10px 12px;box-sizing:border-box;font-size:16px}.ds-input:focus-visible{outline:2px solid #1565C0;outline-offset:2px}"
+    },
+    {
+      "name": "Inspection status",
+      "kind": "chip",
+      "refersTo": "badge-warning",
+      "description": "Preview baseline dari DESIGN.md, bukan komponen aplikasi yang telah diuji.",
+      "html": "<span class=\"ds-demo ds-warning\">Menunggu Pemeriksaan</span>",
+      "css": ".ds-demo{font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;}.ds-warning{display:inline-block;color:#92400E;background:#FFFBEB;border-radius:999px;padding:4px 8px}"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Preview baseline dari DESIGN.md, bukan komponen aplikasi yang telah diuji.",
+      "html": "<section class=\"ds-demo ds-panel\"><strong>Belum Kembali</strong><p>1 unit</p></section>",
+      "css": ".ds-demo{font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;}.ds-panel{background:#fff;color:#172B4D;border:1px solid #D8E1EC;border-radius:10px;padding:24px;box-shadow:0 1px 3px rgba(11,46,89,0.08)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Meja kerja gudang MTC",
+    "overview": "Ini baseline implementasi sebelum kode, berdasarkan desain tertulis dan mockup DOCX; bukan hasil ekstraksi aplikasi yang sudah berjalan. Identitasnya berupa rail berwarna, ruang kerja terang, tabel padat yang terbaca dan formulir sederhana. Admin menggunakan navy/biru; teknisi menggunakan hijau/teal. Satu sistem komponen melayani keduanya.\n\nSumber primer: DOCX utama bagian Desain informasi website, Palet dan komponen, Desain layar admin/teknisi, serta tabel Perubahan terhadap mockup. Mockup image4 dan image5 dipertahankan sebagai referensi komposisi, bukan target pixel-perfect. docs/design/SOURCE_MAP.md membedakan keputusan sumber, pelengkapan engineering dan konflik. Nilai tambahan pada frontmatter adalah keputusan baseline implementasi; dapat disesuaikan setelah uji render dengan mencatat alasannya.",
+    "keyCharacteristics": [
+      "Rail navy/hijau, konten putih pada canvas dingin.",
+      "Hierarki judul pendek, filter di atas data, satu aksi utama per konteks.",
+      "Stok, satuan, identitas unit dan progres inspeksi selalu mudah dibaca.",
+      "Status berupa teks dan warna; detail historis tersedia dari halaman transaksi."
+    ],
+    "rules": [
+      {
+        "name": "The Status Rule",
+        "body": "Warna tidak menjadi satu-satunya pembeda. Badge Disetujui bukan bukti bahwa stok sudah diserahkan; label berbeda mengikuti UI_SPEC.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "**Do** pertahankan identitas, komposisi kerja dan nama MTC dari sumber; lihat gambar admin/teknisi sebelum membuat shell.",
+      "**Do** gunakan token semantik; terapkan varian role di shell dan aksi, bukan dua aplikasi frontend.",
+      "**Do** beri label alasan penolakan, override, koreksi dan selisih; tampilkan konsekuensi sebelum posting.",
+      "**Do** uji 390, 768, 1024 dan 1440 px, zoom 200%, keyboard, kontras dan teks panjang."
+    ],
+    "donts": [
+      "**Don't** menyalin InventorPro, data contoh, bangunan/logo ilustratif atau teks rusak dari mockup ke produksi.",
+      "**Don't** menyalin ukuran teks kecil pada collage; minimum 14 px web tetap berlaku.",
+      "**Don't** membuat scan otomatis mengeluarkan stok, pengajuan kembali otomatis Tersedia, atau admin otomatis menyetujui sendiri.",
+      "**Don't** memberi angka stok sukses secara optimistis sebelum server memastikan commit.",
+      "**Don't** mengklaim desain telah dirender/diuji atau dokumen QMS telah disahkan hanya karena spesifikasi ini lengkap."
+    ]
+  }
+}

@@ -1,0 +1,538 @@
+{
+  "schemaVersion": 1,
+  "source": "Template_Nota_Terintegrasi_Peminjaman_Pengembalian_MTC.docx",
+  "status": "source-placeholders-not-implemented-api",
+  "uniquePlaceholderCount": 47,
+  "fields": [
+    {
+      "name": "status_transaksi",
+      "placeholder": "{{status_transaksi}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 2,
+          "section": "Header"
+        },
+        {
+          "bodyElementIndex": 13,
+          "section": "D. STATUS DAN REFERENSI BUKTI"
+        },
+        {
+          "bodyElementIndex": 18,
+          "section": "Header"
+        },
+        {
+          "bodyElementIndex": 24,
+          "section": "F. HASIL PEMERIKSAAN DAN PENYELESAIAN"
+        }
+      ]
+    },
+    {
+      "name": "kode_formulir",
+      "placeholder": "{{kode_formulir}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 3,
+          "section": "Header"
+        },
+        {
+          "bodyElementIndex": 19,
+          "section": "Header"
+        }
+      ]
+    },
+    {
+      "name": "revisi_formulir",
+      "placeholder": "{{revisi_formulir}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 3,
+          "section": "Header"
+        },
+        {
+          "bodyElementIndex": 19,
+          "section": "Header"
+        }
+      ]
+    },
+    {
+      "name": "nomor_peminjaman",
+      "placeholder": "{{nomor_peminjaman}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 3,
+          "section": "Header"
+        },
+        {
+          "bodyElementIndex": 19,
+          "section": "Header"
+        }
+      ]
+    },
+    {
+      "name": "tanggal_cetak",
+      "placeholder": "{{tanggal_cetak}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 3,
+          "section": "Header"
+        },
+        {
+          "bodyElementIndex": 19,
+          "section": "Header"
+        }
+      ]
+    },
+    {
+      "name": "nama_peminjam",
+      "placeholder": "{{nama_peminjam}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 5,
+          "section": "A. IDENTITAS PEMINJAMAN"
+        }
+      ]
+    },
+    {
+      "name": "id_peminjam",
+      "placeholder": "{{id_peminjam}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 5,
+          "section": "A. IDENTITAS PEMINJAMAN"
+        }
+      ]
+    },
+    {
+      "name": "unit_kerja",
+      "placeholder": "{{unit_kerja}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 5,
+          "section": "A. IDENTITAS PEMINJAMAN"
+        }
+      ]
+    },
+    {
+      "name": "nama_proyek",
+      "placeholder": "{{nama_proyek}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 5,
+          "section": "A. IDENTITAS PEMINJAMAN"
+        }
+      ]
+    },
+    {
+      "name": "keperluan",
+      "placeholder": "{{keperluan}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 5,
+          "section": "A. IDENTITAS PEMINJAMAN"
+        }
+      ]
+    },
+    {
+      "name": "lokasi_penggunaan",
+      "placeholder": "{{lokasi_penggunaan}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 5,
+          "section": "A. IDENTITAS PEMINJAMAN"
+        }
+      ]
+    },
+    {
+      "name": "tanggal_pinjam",
+      "placeholder": "{{tanggal_pinjam}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 5,
+          "section": "A. IDENTITAS PEMINJAMAN"
+        }
+      ]
+    },
+    {
+      "name": "tanggal_rencana_kembali",
+      "placeholder": "{{tanggal_rencana_kembali}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 5,
+          "section": "A. IDENTITAS PEMINJAMAN"
+        }
+      ]
+    },
+    {
+      "name": "no",
+      "placeholder": "{{no}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 7,
+          "section": "B. DAFTAR BARANG DAN KONDISI AWAL"
+        }
+      ]
+    },
+    {
+      "name": "kode_aset",
+      "placeholder": "{{kode_aset}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 7,
+          "section": "B. DAFTAR BARANG DAN KONDISI AWAL"
+        }
+      ]
+    },
+    {
+      "name": "nama_barang",
+      "placeholder": "{{nama_barang}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 7,
+          "section": "B. DAFTAR BARANG DAN KONDISI AWAL"
+        }
+      ]
+    },
+    {
+      "name": "serial_number",
+      "placeholder": "{{serial_number}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 7,
+          "section": "B. DAFTAR BARANG DAN KONDISI AWAL"
+        }
+      ]
+    },
+    {
+      "name": "qty_pinjam",
+      "placeholder": "{{qty_pinjam}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 7,
+          "section": "B. DAFTAR BARANG DAN KONDISI AWAL"
+        }
+      ]
+    },
+    {
+      "name": "satuan",
+      "placeholder": "{{satuan}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 7,
+          "section": "B. DAFTAR BARANG DAN KONDISI AWAL"
+        }
+      ]
+    },
+    {
+      "name": "kondisi_awal",
+      "placeholder": "{{kondisi_awal}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 7,
+          "section": "B. DAFTAR BARANG DAN KONDISI AWAL"
+        }
+      ]
+    },
+    {
+      "name": "kelengkapan_awal",
+      "placeholder": "{{kelengkapan_awal}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 7,
+          "section": "B. DAFTAR BARANG DAN KONDISI AWAL"
+        }
+      ]
+    },
+    {
+      "name": "nama_penyetuju",
+      "placeholder": "{{nama_penyetuju}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 10,
+          "section": "C. OTORISASI DAN SERAH TERIMA PEMINJAMAN"
+        },
+        {
+          "bodyElementIndex": 28,
+          "section": "G. VALIDASI REKAMAN DIGITAL"
+        }
+      ]
+    },
+    {
+      "name": "waktu_persetujuan",
+      "placeholder": "{{waktu_persetujuan}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 10,
+          "section": "C. OTORISASI DAN SERAH TERIMA PEMINJAMAN"
+        },
+        {
+          "bodyElementIndex": 28,
+          "section": "G. VALIDASI REKAMAN DIGITAL"
+        }
+      ]
+    },
+    {
+      "name": "nama_petugas_serah",
+      "placeholder": "{{nama_petugas_serah}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 10,
+          "section": "C. OTORISASI DAN SERAH TERIMA PEMINJAMAN"
+        },
+        {
+          "bodyElementIndex": 28,
+          "section": "G. VALIDASI REKAMAN DIGITAL"
+        }
+      ]
+    },
+    {
+      "name": "waktu_checkout",
+      "placeholder": "{{waktu_checkout}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 10,
+          "section": "C. OTORISASI DAN SERAH TERIMA PEMINJAMAN"
+        },
+        {
+          "bodyElementIndex": 28,
+          "section": "G. VALIDASI REKAMAN DIGITAL"
+        }
+      ]
+    },
+    {
+      "name": "nama_penerima",
+      "placeholder": "{{nama_penerima}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 10,
+          "section": "C. OTORISASI DAN SERAH TERIMA PEMINJAMAN"
+        },
+        {
+          "bodyElementIndex": 28,
+          "section": "G. VALIDASI REKAMAN DIGITAL"
+        }
+      ]
+    },
+    {
+      "name": "metode_konfirmasi_awal",
+      "placeholder": "{{metode_konfirmasi_awal}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 10,
+          "section": "C. OTORISASI DAN SERAH TERIMA PEMINJAMAN"
+        }
+      ]
+    },
+    {
+      "name": "jumlah_unit_belum_kembali",
+      "placeholder": "{{jumlah_unit_belum_kembali}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 13,
+          "section": "D. STATUS DAN REFERENSI BUKTI"
+        },
+        {
+          "bodyElementIndex": 24,
+          "section": "F. HASIL PEMERIKSAAN DAN PENYELESAIAN"
+        }
+      ]
+    },
+    {
+      "name": "referensi_foto_awal",
+      "placeholder": "{{referensi_foto_awal}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 13,
+          "section": "D. STATUS DAN REFERENSI BUKTI"
+        }
+      ]
+    },
+    {
+      "name": "url_qr_transaksi",
+      "placeholder": "{{url_qr_transaksi}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 13,
+          "section": "D. STATUS DAN REFERENSI BUKTI"
+        }
+      ]
+    },
+    {
+      "name": "waktu_pengembalian",
+      "placeholder": "{{waktu_pengembalian}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 22,
+          "section": "E. RIWAYAT PENGEMBALIAN BARANG (DIPERBARUI BERTAHAP)"
+        }
+      ]
+    },
+    {
+      "name": "id_pengembalian",
+      "placeholder": "{{id_pengembalian}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 22,
+          "section": "E. RIWAYAT PENGEMBALIAN BARANG (DIPERBARUI BERTAHAP)"
+        }
+      ]
+    },
+    {
+      "name": "kode_aset_kembali",
+      "placeholder": "{{kode_aset_kembali}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 22,
+          "section": "E. RIWAYAT PENGEMBALIAN BARANG (DIPERBARUI BERTAHAP)"
+        }
+      ]
+    },
+    {
+      "name": "nama_barang_kembali",
+      "placeholder": "{{nama_barang_kembali}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 22,
+          "section": "E. RIWAYAT PENGEMBALIAN BARANG (DIPERBARUI BERTAHAP)"
+        }
+      ]
+    },
+    {
+      "name": "qty_kembali",
+      "placeholder": "{{qty_kembali}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 22,
+          "section": "E. RIWAYAT PENGEMBALIAN BARANG (DIPERBARUI BERTAHAP)"
+        }
+      ]
+    },
+    {
+      "name": "satuan_kembali",
+      "placeholder": "{{satuan_kembali}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 22,
+          "section": "E. RIWAYAT PENGEMBALIAN BARANG (DIPERBARUI BERTAHAP)"
+        }
+      ]
+    },
+    {
+      "name": "kondisi_akhir",
+      "placeholder": "{{kondisi_akhir}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 22,
+          "section": "E. RIWAYAT PENGEMBALIAN BARANG (DIPERBARUI BERTAHAP)"
+        }
+      ]
+    },
+    {
+      "name": "keputusan_pemeriksaan",
+      "placeholder": "{{keputusan_pemeriksaan}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 22,
+          "section": "E. RIWAYAT PENGEMBALIAN BARANG (DIPERBARUI BERTAHAP)"
+        }
+      ]
+    },
+    {
+      "name": "nama_pemeriksa",
+      "placeholder": "{{nama_pemeriksa}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 24,
+          "section": "F. HASIL PEMERIKSAAN DAN PENYELESAIAN"
+        },
+        {
+          "bodyElementIndex": 28,
+          "section": "G. VALIDASI REKAMAN DIGITAL"
+        }
+      ]
+    },
+    {
+      "name": "waktu_verifikasi",
+      "placeholder": "{{waktu_verifikasi}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 24,
+          "section": "F. HASIL PEMERIKSAAN DAN PENYELESAIAN"
+        },
+        {
+          "bodyElementIndex": 28,
+          "section": "G. VALIDASI REKAMAN DIGITAL"
+        }
+      ]
+    },
+    {
+      "name": "nama_pengembali",
+      "placeholder": "{{nama_pengembali}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 24,
+          "section": "F. HASIL PEMERIKSAAN DAN PENYELESAIAN"
+        }
+      ]
+    },
+    {
+      "name": "metode_konfirmasi_kembali",
+      "placeholder": "{{metode_konfirmasi_kembali}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 24,
+          "section": "F. HASIL PEMERIKSAAN DAN PENYELESAIAN"
+        }
+      ]
+    },
+    {
+      "name": "nomor_tiket_tindak_lanjut",
+      "placeholder": "{{nomor_tiket_tindak_lanjut}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 24,
+          "section": "F. HASIL PEMERIKSAAN DAN PENYELESAIAN"
+        }
+      ]
+    },
+    {
+      "name": "referensi_foto_akhir",
+      "placeholder": "{{referensi_foto_akhir}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 24,
+          "section": "F. HASIL PEMERIKSAAN DAN PENYELESAIAN"
+        }
+      ]
+    },
+    {
+      "name": "catatan_ketidaksesuaian",
+      "placeholder": "{{catatan_ketidaksesuaian}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 25,
+          "section": "F. HASIL PEMERIKSAAN DAN PENYELESAIAN"
+        }
+      ]
+    },
+    {
+      "name": "kode_verifikasi",
+      "placeholder": "{{kode_verifikasi}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 29,
+          "section": "G. VALIDASI REKAMAN DIGITAL"
+        }
+      ]
+    },
+    {
+      "name": "versi_snapshot",
+      "placeholder": "{{versi_snapshot}}",
+      "occurrences": [
+        {
+          "bodyElementIndex": 29,
+          "section": "G. VALIDASI REKAMAN DIGITAL"
+        }
+      ]
+    }
+  ]
+}

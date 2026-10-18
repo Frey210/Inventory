@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+.local
+.env
+.env.*
+account.md
+repo&deploy.txt
+storage
+test-results
+playwright-report
+*.log
+
+backups
+.backup-key
+db-ca.crt
+.impeccable/review

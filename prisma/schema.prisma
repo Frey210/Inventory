@@ -1,0 +1,302 @@
+generator client {
+  provider = "prisma-client"
+  output = "../src/generated/prisma"
+}
+datasource db {
+  provider = "postgresql"
+}
+model User {
+  id String @id
+  name String
+  email String @unique
+  emailVerified Boolean @default(false)
+  image String?
+  username String? @unique
+  displayUsername String?
+  role String @default("TECHNICIAN")
+  isActive Boolean @default(true)
+  mustChangePassword Boolean @default(true)
+  twoFactorEnabled Boolean @default(false)
+  emergencyIssue Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sessions Session[]
+  accounts Account[]
+  twoFactors TwoFactor[]
+}
+model Session {
+  id String @id
+  expiresAt DateTime
+  token String @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId String
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  @@index([userId])
+}
+model Account {
+  id String @id
+  accountId String
+  providerId String
+  userId String
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  accessToken String?
+  refreshToken String?
+  idToken String?
+  accessTokenExpiresAt DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope String?
+  password String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId])
+}
+model Verification {
+  id String @id
+  identifier String
+  value String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([identifier])
+}
+model TwoFactor {
+  id String @id
+  secret String
+  backupCodes String
+  verified Boolean @default(false)
+  failedVerificationCount Int @default(0)
+  lockedUntil DateTime?
+  userId String
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@index([userId])
+}
+model RateLimit {
+  id String @id
+  key String @unique
+  count Int
+  lastRequest BigInt
+}
+model Master {
+  id String @id @default(cuid())
+  kind String
+  code String
+  name String
+  parentId String?
+  parent Master? @relation("Hierarchy",fields:[parentId],references:[id],onDelete:Restrict)
+  children Master[] @relation("Hierarchy")
+  active Boolean @default(true)
+  details Json @default("{}")
+  version Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([kind,code])
+  @@index([kind,active])
+}
+model Item {
+  id String @id @default(cuid())
+  sku String @unique
+  name String
+  typeId String
+  categoryId String
+  unitId String
+  locationId String
+  tracking String
+  minStock Decimal @default(0) @db.Decimal(18,4)
+  description String @default("")
+  photoId String?
+  active Boolean @default(true)
+  version Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  balances Balance[]
+  assets Asset[]
+  @@index([categoryId,active])
+}
+model Balance {
+  id String @id @default(cuid())
+  itemId String
+  item Item @relation(fields:[itemId],references:[id],onDelete:Restrict)
+  locationId String
+  onHand Decimal @default(0) @db.Decimal(18,4)
+  reserved Decimal @default(0) @db.Decimal(18,4)
+  @@unique([itemId,locationId])
+}
+model Asset {
+  id String @id @default(cuid())
+  itemId String
+  item Item @relation(fields:[itemId],references:[id],onDelete:Restrict)
+  tag String @unique
+  serial String? @unique
+  locationId String
+  availability String @default("available")
+  condition String @default("Baik")
+  technical String @default("Normal")
+  calibrationRequired Boolean @default(false)
+  validUntil DateTime?
+  custodianId String?
+  requestId String?
+  loanId String?
+  createdAt DateTime @default(now())
+  @@index([availability,loanId])
+}
+model Document {
+  id String @id @default(cuid())
+  number String @unique
+  kind String
+  status String @default("draft")
+  actorId String
+  projectId String?
+  locationId String?
+  targetLocationId String?
+  reference String @default("")
+  purpose String @default("")
+  dueAt DateTime?
+  pickupDeadline DateTime?
+  approverId String?
+  reason String @default("")
+  acknowledgedAt DateTime?
+  postedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lines Line[]
+  @@index([kind,status])
+  @@index([actorId])
+}
+model Line {
+  id String @id @default(cuid())
+  documentId String
+  document Document @relation(fields:[documentId],references:[id],onDelete:Restrict)
+  itemId String
+  assetId String?
+  locationId String
+  quantity Decimal @db.Decimal(18,4)
+  approved Decimal @default(0) @db.Decimal(18,4)
+  fulfilled Decimal @default(0) @db.Decimal(18,4)
+  returned Decimal @default(0) @db.Decimal(18,4)
+  waste Decimal @default(0) @db.Decimal(18,4)
+  details Json @default("{}")
+  @@index([documentId])
+}
+model Loan {
+  id String @id @default(cuid())
+  number String @unique
+  requestId String @unique
+  borrowerId String
+  projectId String
+  dueAt DateTime
+  status String @default("active")
+  snapshot Json
+  createdAt DateTime @default(now())
+  lines LoanLine[]
+  events LoanEvent[]
+  versions Snapshot[]
+  @@index([borrowerId,status])
+}
+model LoanLine {
+  id String @id @default(cuid())
+  loanId String
+  loan Loan @relation(fields:[loanId],references:[id],onDelete:Restrict)
+  assetId String
+  initial Json
+  receivedAt DateTime?
+  inspectedAt DateTime?
+  inspection Json?
+  @@unique([loanId,assetId])
+}
+model LoanEvent {
+  id String @id @default(cuid())
+  loanId String
+  loan Loan @relation(fields:[loanId],references:[id],onDelete:Restrict)
+  type String
+  actorId String
+  payload Json
+  createdAt DateTime @default(now())
+  @@index([loanId,createdAt])
+}
+model Snapshot {
+  id String @id @default(cuid())
+  loanId String
+  loan Loan @relation(fields:[loanId],references:[id],onDelete:Restrict)
+  version Int
+  payload Json
+  status String @default("pending")
+  storageKey String?
+  checksum String?
+  createdAt DateTime @default(now())
+  @@unique([loanId,version])
+}
+model Ledger {
+  id String @id @default(cuid())
+  itemId String
+  locationId String
+  quantity Decimal @db.Decimal(18,4)
+  referenceId String
+  action String
+  actorId String
+  createdAt DateTime @default(now())
+  @@index([itemId,locationId,createdAt])
+}
+model Audit {
+  id String @id @default(cuid())
+  actorId String
+  action String
+  entityId String
+  payload Json
+  createdAt DateTime @default(now())
+  @@index([createdAt])
+}
+model Idempotency {
+  key String @id
+  actorId String
+  hash String
+  result Json
+  createdAt DateTime @default(now())
+}
+model Outbox {
+  id String @id @default(cuid())
+  type String
+  payload Json
+  sentAt DateTime?
+  createdAt DateTime @default(now())
+}
+model File {
+  id String @id @default(cuid())
+  ownerId String
+  name String
+  mime String
+  storageKey String @unique
+  hash String
+  size Int
+  createdAt DateTime @default(now())
+}
+model Record {
+  id String @id @default(cuid())
+  kind String
+  actorId String
+  referenceId String?
+  status String @default("open")
+  payload Json
+  createdAt DateTime @default(now())
+  @@index([kind,status])
+}
+model Freeze {
+  locationId String @id
+  documentId String @unique
+}
+model Counter {
+  key String @id
+  value Int @default(0)
+}
+model Notification {
+  id String @id @default(cuid())
+  recipientId String
+  eventKey String @unique
+  message String
+  path String
+  readAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([recipientId,readAt])
+}

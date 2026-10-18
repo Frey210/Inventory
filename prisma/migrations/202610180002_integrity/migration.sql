@@ -1,0 +1,26 @@
+ALTER TABLE "Balance" ADD CONSTRAINT "balance_nonnegative" CHECK ("onHand" >= 0 AND "reserved" >= 0 AND "reserved" <= "onHand");
+ALTER TABLE "Item" ADD CONSTRAINT "item_tracking" CHECK ("tracking" IN ('quantity','serialized'));
+ALTER TABLE "Item" ADD CONSTRAINT "item_minimum" CHECK ("minStock" >= 0);
+ALTER TABLE "Line" ADD CONSTRAINT "line_quantities" CHECK (quantity >= 0 AND approved >= 0 AND fulfilled >= 0 AND returned >= 0 AND waste >= 0 AND approved <= quantity AND fulfilled <= approved AND returned + waste <= fulfilled);
+ALTER TABLE "Asset" ADD CONSTRAINT "asset_availability" CHECK (availability IN ('available','reserved','borrowed','installed','pending_inspection','blocked'));
+ALTER TABLE "Item" ADD FOREIGN KEY ("typeId") REFERENCES "Master"(id), ADD FOREIGN KEY ("categoryId") REFERENCES "Master"(id), ADD FOREIGN KEY ("unitId") REFERENCES "Master"(id), ADD FOREIGN KEY ("locationId") REFERENCES "Master"(id), ADD FOREIGN KEY ("photoId") REFERENCES "File"(id);
+ALTER TABLE "Balance" ADD FOREIGN KEY ("locationId") REFERENCES "Master"(id);
+ALTER TABLE "Asset" ADD FOREIGN KEY ("locationId") REFERENCES "Master"(id), ADD FOREIGN KEY ("loanId") REFERENCES "Loan"(id), ADD FOREIGN KEY ("requestId") REFERENCES "Document"(id), ADD FOREIGN KEY ("custodianId") REFERENCES "User"(id);
+ALTER TABLE "Document" ADD FOREIGN KEY ("actorId") REFERENCES "User"(id), ADD FOREIGN KEY ("approverId") REFERENCES "User"(id), ADD FOREIGN KEY ("projectId") REFERENCES "Master"(id), ADD FOREIGN KEY ("locationId") REFERENCES "Master"(id), ADD FOREIGN KEY ("targetLocationId") REFERENCES "Master"(id);
+ALTER TABLE "Line" ADD FOREIGN KEY ("itemId") REFERENCES "Item"(id), ADD FOREIGN KEY ("assetId") REFERENCES "Asset"(id), ADD FOREIGN KEY ("locationId") REFERENCES "Master"(id);
+ALTER TABLE "Loan" ADD FOREIGN KEY ("requestId") REFERENCES "Document"(id), ADD FOREIGN KEY ("borrowerId") REFERENCES "User"(id), ADD FOREIGN KEY ("projectId") REFERENCES "Master"(id);
+ALTER TABLE "LoanLine" ADD FOREIGN KEY ("assetId") REFERENCES "Asset"(id);
+ALTER TABLE "LoanEvent" ADD FOREIGN KEY ("actorId") REFERENCES "User"(id);
+ALTER TABLE "Ledger" ADD FOREIGN KEY ("itemId") REFERENCES "Item"(id), ADD FOREIGN KEY ("locationId") REFERENCES "Master"(id), ADD FOREIGN KEY ("actorId") REFERENCES "User"(id);
+ALTER TABLE "Audit" ADD FOREIGN KEY ("actorId") REFERENCES "User"(id);
+ALTER TABLE "File" ADD FOREIGN KEY ("ownerId") REFERENCES "User"(id);
+ALTER TABLE "Record" ADD FOREIGN KEY ("actorId") REFERENCES "User"(id);
+ALTER TABLE "Freeze" ADD FOREIGN KEY ("locationId") REFERENCES "Master"(id), ADD FOREIGN KEY ("documentId") REFERENCES "Document"(id);
+CREATE FUNCTION inventory_no_edit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'Append-only inventory record'; END; $$;
+CREATE TRIGGER audit_immutable BEFORE UPDATE OR DELETE ON "Audit" FOR EACH ROW EXECUTE FUNCTION inventory_no_edit();
+CREATE TRIGGER ledger_immutable BEFORE UPDATE OR DELETE ON "Ledger" FOR EACH ROW EXECUTE FUNCTION inventory_no_edit();
+CREATE TRIGGER loan_events_immutable BEFORE UPDATE OR DELETE ON "LoanEvent" FOR EACH ROW EXECUTE FUNCTION inventory_no_edit();
+CREATE FUNCTION inventory_snapshot_guard() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+ IF TG_OP = 'DELETE' OR OLD.status = 'ready' OR OLD.payload IS DISTINCT FROM NEW.payload OR OLD.version IS DISTINCT FROM NEW.version THEN RAISE EXCEPTION 'Immutable snapshot'; END IF; RETURN NEW;
+END; $$;
+CREATE TRIGGER snapshot_immutable BEFORE UPDATE OR DELETE ON "Snapshot" FOR EACH ROW EXECUTE FUNCTION inventory_snapshot_guard();

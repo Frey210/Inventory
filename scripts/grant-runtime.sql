@@ -1,0 +1,16 @@
+DO $$ BEGIN IF current_database() <> 'mtc_inventory' THEN RAISE EXCEPTION 'Inventory database required'; END IF; END $$;
+GRANT CONNECT ON DATABASE mtc_inventory TO mtc_inventory_app, mtc_inventory_worker, mtc_inventory_backup;
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+GRANT USAGE ON SCHEMA public TO mtc_inventory_app, mtc_inventory_worker, mtc_inventory_backup;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO mtc_inventory_app;
+REVOKE ALL ON "_prisma_migrations" FROM mtc_inventory_app;
+REVOKE UPDATE, DELETE ON "Audit", "Ledger", "LoanEvent" FROM mtc_inventory_app;
+GRANT SELECT ON "User", "Master", "Item", "Asset", "Balance", "Document", "Line", "Loan", "LoanLine", "LoanEvent", "Snapshot", "Outbox", "File", "Record", "Freeze", "Counter", "Idempotency", "Notification", "Audit" TO mtc_inventory_worker;
+GRANT UPDATE ON "Asset", "Balance", "Document", "Snapshot", "Outbox" TO mtc_inventory_worker;
+GRANT INSERT ON "Audit", "Idempotency" TO mtc_inventory_worker;
+GRANT INSERT, UPDATE ON "Counter", "Notification" TO mtc_inventory_worker;
+GRANT USAGE ON SCHEMA inventory_jobs TO mtc_inventory_backup;
+GRANT SELECT ON ALL TABLES IN SCHEMA public, inventory_jobs TO mtc_inventory_backup;
+GRANT SELECT ON ALL SEQUENCES IN SCHEMA public, inventory_jobs TO mtc_inventory_backup;
+ALTER DEFAULT PRIVILEGES FOR ROLE mtc_inventory_worker IN SCHEMA inventory_jobs GRANT SELECT ON TABLES TO mtc_inventory_backup;
+ALTER DEFAULT PRIVILEGES FOR ROLE mtc_inventory_worker IN SCHEMA inventory_jobs GRANT SELECT ON SEQUENCES TO mtc_inventory_backup;
