@@ -1,4 +1,9 @@
 import Link from "next/link";
+import Form from "next/form";
+import { Suspense } from "react";
+import { pageDataNeeds } from "@/server/page-data";
+import { PageSkeleton } from "@/components/page-skeleton";
+import { SearchSubmit } from "@/components/navigation";
 import Image from "next/image";
 import QRCode from "qrcode";
 import {
@@ -64,7 +69,6 @@ export default async function Page({
   const segments = (await params).path || [];
   const path = "/" + segments.join("/");
   const query = await searchParams;
-  const user = await currentUser();
   if (
     ["/login", "/forgot-password", "/reset-password", "/verify-2fa"].includes(
       path,
@@ -112,6 +116,7 @@ export default async function Page({
         </div>
       </main>
     );
+  const user = await currentUser();
   if (!user) redirect("/login");
   const tech = user.role === "TECHNICIAN";
   const base = tech ? "/me" : "/admin";
@@ -130,14 +135,15 @@ export default async function Page({
     redirect("/profile");
   if (tech && path.startsWith("/admin")) notFound();
   if (!tech && path.startsWith("/me")) redirect("/admin/dashboard");
-  const page = await content();
   return (
     <Shell actor={user} path={path}>
-      {page}
+      <Suspense key={path + JSON.stringify(query)} fallback={<PageSkeleton />}>
+        <Content />
+      </Suspense>
     </Shell>
   );
 
-  async function content() {
+  async function Content() {
     if (!user) return null;
     const canWrite = ["ADMIN", "WAREHOUSE"].includes(user.role);
     if (path === "/admin/imports") {
@@ -286,11 +292,56 @@ export default async function Page({
         </>
       );
     }
-    const masters = await db.master.findMany({
-      orderBy: [{ kind: "asc" }, { name: "asc" }],
-    });
+    const needs = pageDataNeeds(path);
+    const [masters, rawItems] = await Promise.all([
+      needs.masters
+        ? db.master.findMany({ orderBy: [{ kind: "asc" }, { name: "asc" }] })
+        : Promise.resolve([]),
+      needs.items
+        ? db.item.findMany({
+            where: {
+              ...(tech ? { active: true } : {}),
+              ...(query.q
+                ? {
+                    OR: [
+                      { name: { contains: query.q, mode: "insensitive" } },
+                      { sku: { contains: query.q, mode: "insensitive" } },
+                      {
+                        assets: {
+                          some: {
+                            OR: [
+                              { tag: { equals: query.q, mode: "insensitive" } },
+                              {
+                                serial: {
+                                  equals: query.q,
+                                  mode: "insensitive",
+                                },
+                              },
+                            ],
+                          },
+                        },
+                      },
+                    ],
+                  }
+                : {}),
+            },
+            include: { balances: needs.stock, assets: needs.stock },
+            orderBy: { sku: "asc" },
+            take: 1000,
+          })
+        : Promise.resolve([]),
+    ]);
+    const items = rawItems.map((i) => ({
+      ...i,
+      balances: i.balances ?? [],
+      assets: i.assets ?? [],
+    }));
+    const masterById = new Map(masters.map((m) => [m.id, m]));
+    const activeMasterIds = new Set(
+      masters.filter((m) => m.active).map((m) => m.id),
+    );
     const lookup = (id: string | null | undefined) =>
-      masters.find((m) => m.id === id)?.name || id || "—";
+      masterById.get(id || "")?.name || id || "—";
     const options = (kind: string): Option[] =>
       serialize(
         masters
@@ -311,37 +362,11 @@ export default async function Page({
       required,
       value,
     });
-    const items = await db.item.findMany({
-      where: {
-        ...(tech ? { active: true } : {}),
-        ...(query.q
-          ? {
-              OR: [
-                { name: { contains: query.q, mode: "insensitive" } },
-                { sku: { contains: query.q, mode: "insensitive" } },
-                {
-                  assets: {
-                    some: {
-                      OR: [
-                        { tag: { equals: query.q, mode: "insensitive" } },
-                        { serial: { equals: query.q, mode: "insensitive" } },
-                      ],
-                    },
-                  },
-                },
-              ],
-            }
-          : {}),
-      },
-      include: { balances: true, assets: true },
-      orderBy: { sku: "asc" },
-      take: 1000,
-    });
     const selectableItems = items.filter(
       (i) =>
         i.active &&
         [i.typeId, i.categoryId, i.unitId].every((id) =>
-          masters.some((m) => m.id === id && m.active),
+          activeMasterIds.has(id),
         ),
     );
     const scope = tech ? { actorId: user.id } : {};
@@ -465,12 +490,12 @@ export default async function Page({
                 Temukan komponen, cek letak barang, atau pinjam alat untuk
                 proyek tim.
               </p>
-              <form action={`${base}/items`} className="home-search">
+              <Form action={`${base}/items`} className="home-search">
                 <SearchBox placeholder="Cari ESP32, sensor, solder…" />
-                <button aria-label="Cari barang">
+                <SearchSubmit aria-label="Cari barang">
                   <ArrowRight size={22} aria-hidden />
-                </button>
-              </form>
+                </SearchSubmit>
+              </Form>
             </div>
             <div className="quick-actions">
               <Link
@@ -890,7 +915,7 @@ export default async function Page({
           </nav>
           <section className="panel">
             <h2>{names[kind]}</h2>
-            <form className="form-grid" method="get">
+            <Form className="form-grid" action={path}>
               <input type="hidden" name="tab" value={kind} />
               <label>
                 Cari kode/nama
@@ -920,7 +945,7 @@ export default async function Page({
                 </label>
               )}
               <button type="submit">Terapkan Filter</button>
-            </form>
+            </Form>
             <Table
               headers={["Kode", "Nama", "Induk/Default", "Status", "Aksi"]}
               rows={filtered
@@ -1123,7 +1148,7 @@ export default async function Page({
             href={canWrite ? "/admin/items/new" : undefined}
             action="Tambah barang"
           />
-          <form className="catalog-toolbar">
+          <Form className="catalog-toolbar" action={path}>
             <SearchBox value={query.q} />
             <input type="hidden" name="tracking" value={query.tracking || ""} />
             <input type="hidden" name="view" value={query.view || ""} />
@@ -1149,11 +1174,11 @@ export default async function Page({
                 ))}
               </select>
             </label>
-            <button>
+            <SearchSubmit>
               <SlidersHorizontal size={18} aria-hidden />
               Terapkan
-            </button>
-          </form>
+            </SearchSubmit>
+          </Form>
           <div className="catalog-controls">
             <div className="filter-chips" aria-label="Jenis tampilan barang">
               {[

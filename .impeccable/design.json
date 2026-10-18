@@ -359,6 +359,21 @@
         "name": "control",
         "value": "0.18s",
         "purpose": "Warna, border dan shadow; reduced motion meniadakannya."
+      },
+      {
+        "name": "loading-spinner",
+        "value": "900ms linear infinite",
+        "purpose": "Pending operation; disabled under reduced motion"
+      },
+      {
+        "name": "navigation-progress",
+        "value": "1100ms ease-in-out infinite",
+        "purpose": "Indeterminate navigation feedback; static under reduced motion"
+      },
+      {
+        "name": "loading-skeleton",
+        "value": "1500ms ease-in-out infinite",
+        "purpose": "Data wait opacity pulse; static under reduced motion"
       }
     ],
     "breakpoints": [

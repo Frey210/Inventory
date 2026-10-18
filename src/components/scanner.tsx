@@ -1,12 +1,22 @@
 "use client";
 import { useRef, useState, useEffect } from "react";
-import { BrowserMultiFormatReader } from "@zxing/browser";
+import Form from "next/form";
+import { LoaderCircle } from "lucide-react";
+import { SearchSubmit } from "./navigation";
 export function Scanner() {
   const video = useRef<HTMLVideoElement>(null);
   const controls = useRef<{ stop: () => void } | null>(null);
+  const attempt = useRef(0);
+  const [starting, setStarting] = useState(false);
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
-  useEffect(() => () => controls.current?.stop(), []);
+  useEffect(
+    () => () => {
+      attempt.current++;
+      controls.current?.stop();
+    },
+    [],
+  );
   return (
     <section className="panel">
       <h3>Scan atau masukkan kode</h3>
@@ -17,11 +27,18 @@ export function Scanner() {
       <button
         className="secondary"
         type="button"
+        disabled={starting}
+        aria-busy={starting}
         onClick={async () => {
+          const current = ++attempt.current;
+          setStarting(true);
+          setError("");
           try {
+            const { BrowserMultiFormatReader } = await import("@zxing/browser");
+            if (current !== attempt.current) return;
             if (!video.current) return;
             controls.current?.stop();
-            controls.current =
+            const active =
               await new BrowserMultiFormatReader().decodeFromVideoDevice(
                 undefined,
                 video.current,
@@ -32,22 +49,40 @@ export function Scanner() {
                   }
                 },
               );
+            if (current === attempt.current) controls.current = active;
+            else active.stop();
           } catch {
-            setError("Akses kamera belum tersedia. Gunakan input kode manual.");
+            if (current === attempt.current)
+              setError(
+                "Akses kamera belum tersedia. Gunakan input kode manual.",
+              );
+          } finally {
+            if (current === attempt.current) setStarting(false);
           }
         }}
       >
-        Aktifkan Kamera
+        {starting ? (
+          <>
+            <LoaderCircle size={18} className="loading-spinner" aria-hidden />
+            Menyiapkan kamera…
+          </>
+        ) : (
+          "Aktifkan Kamera"
+        )}
       </button>
       <button
         className="secondary"
         type="button"
-        onClick={() => controls.current?.stop()}
+        onClick={() => {
+          attempt.current++;
+          controls.current?.stop();
+          setStarting(false);
+        }}
       >
         Hentikan Kamera
       </button>
       <video ref={video} muted playsInline className="scanner-video" />
-      <form action="/me/items">
+      <Form action="/me/items">
         <label>
           Kode manual
           <input
@@ -56,8 +91,8 @@ export function Scanner() {
             onChange={(e) => setValue(e.target.value)}
           />
         </label>
-        <button>Cari Barang</button>
-      </form>
+        <SearchSubmit>Cari Barang</SearchSubmit>
+      </Form>
       {error && <p role="alert">{error}</p>}
     </section>
   );

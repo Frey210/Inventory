@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NavigationLink as Link } from "./navigation";
 import { Plus, PackageOpen } from "lucide-react";
 import { getSettings } from "@/server/settings";
 export const labels: Record<string, string> = {

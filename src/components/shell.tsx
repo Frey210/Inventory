@@ -1,4 +1,5 @@
-﻿import Link from "next/link";
+import { NavigationLink as Link, SearchSubmit } from "./navigation";
+import Form from "next/form";
 import Image from "next/image";
 import {
   LayoutDashboard,
@@ -148,7 +149,7 @@ export function Shell({
             <Image src="/logo.jpg" alt="MTC" width={34} height={34} />
             <strong>MTC Inventory</strong>
           </div>
-          <form
+          <Form
             className="global-search"
             action={tech ? "/me/items" : "/admin/items"}
           >
@@ -158,10 +159,10 @@ export function Shell({
               name="q"
               placeholder="Cari barang, kode, atau sensor…"
             />
-            <button type="submit" className="search-submit" aria-label="Cari">
+            <SearchSubmit className="search-submit" aria-label="Cari">
               <Search size={18} aria-hidden />
-            </button>
-          </form>
+            </SearchSubmit>
+          </Form>
           <div className="account">
             <Link
               className="icon-button"

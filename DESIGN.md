@@ -209,3 +209,9 @@ Transisi warna/border/shadow 0.18 detik; reduced motion meniadakan animasi/trans
 - **Don't** memakai foto referensi, data demo atau ikon kategori sebagai bukti barang/kondisi riil.
 - **Don't** menjumlahkan meter, pcs dan unit menjadi satu saldo atau memberi sukses sebelum commit server.
 - **Don't** menyamakan approval dengan penyerahan, pengajuan kembali dengan Tersedia, atau screenshot dengan kelulusan UAT/cutover.
+
+### Loading dan navigasi
+
+Navigasi menu memakai progress bar indeterminate tipis pada tepi atas saat link pending. Konten data berada dalam Suspense sehingga shell/menu tetap tersedia; fallback berupa skeleton netral berlabel “Halaman sedang disiapkan…”, tanpa angka atau persentase fiktif. Pencarian internal memakai navigasi client melalui Next Form, dengan spinner pada area tombol yang tetap berukuran sama. Ekspor ke tab baru tetap memakai form native.
+
+Animasi hanya menyatakan proses: rotasi spinner 900 ms linear, progress bar 1100 ms ease-in-out dan pulse skeleton 1500 ms ease-in-out. `prefers-reduced-motion: reduce` menonaktifkan semuanya; indikator dan status teks tetap terlihat. Kamera menampilkan “Menyiapkan kamera…” saat decoder dimuat; Hentikan Kamera membatalkan upaya yang tertunda, dan input manual tetap tersedia.

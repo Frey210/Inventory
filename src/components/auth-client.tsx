@@ -5,7 +5,6 @@ import { createAuthClient } from "better-auth/react";
 import { usernameClient, twoFactorClient } from "better-auth/client/plugins";
 import { useState } from "react";
 
-import QRCode from "qrcode";
 const client = createAuthClient({
   plugins: [usernameClient(), twoFactorClient()],
 });
@@ -138,6 +137,7 @@ export function MfaSetup() {
             return;
           }
           setUri(r.data.totpURI);
+          const QRCode = (await import("qrcode")).default;
           setQr(await QRCode.toDataURL(r.data.totpURI));
           setCodes(r.data.backupCodes);
         } else {
