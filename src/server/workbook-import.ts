@@ -15,6 +15,7 @@ const categories: Record<string, string> = {
 export type WorkbookItem = {
   row: number;
   sku: string;
+  sourceSku: string;
   name: string;
   category: string;
   type: string;
@@ -45,6 +46,7 @@ export async function planWorkbook(buffer: Buffer) {
     const item: WorkbookItem = {
       row,
       sku: value(9).toUpperCase(),
+      sourceSku: value(9).toUpperCase(),
       name: value(2),
       category,
       type:
@@ -59,6 +61,12 @@ export async function planWorkbook(buffer: Buffer) {
       sourceSerial: value(6),
       units: [],
     };
+    // Owner confirmed cutter AK057 / knob AK058; the physical knob label must be replaced.
+    if (
+      item.sku === "AK057" &&
+      item.name.toLowerCase() === "knob door (gagang pintu bulat)"
+    )
+      item.sku = "AK058";
     const reason =
       !item.name || item.name.length > 500
         ? "Nama tidak valid."

@@ -27,4 +27,4 @@ Apply membuat katalog/master serta draf saldo pembukaan quantity dalam batch mak
 
 Pemilik/petugas mencocokkan jumlah fisik, menuntaskan SKU/lokasi bentrok, menetapkan klasifikasi dan memeriksa unit/kalibrasi sebelum posting dengan alur penerimaan yang ada. Mode persiapan tetap aktif. Konfirmasi jumlah saja tidak membuktikan kondisi atau kelayakan kalibrasi.
 
-Dry-run sumber pengguna: 354 baris utama, 352 SKU diterima, dua baris ditahan karena satu kode dipakai dua barang. Enam model Aquanotes memuat 19 unit rincian tanpa penjumlahan ulang. Ini hasil pembacaan sumber, bukan bukti sudah tersimpan di produksi.
+Dry-run sumber pengguna: 354 baris utama, 354 SKU diterima setelah pemetaan yang dikonfirmasi pemilik: cutter tetap AK057 dan knob menjadi AK058. Label fisik knob lama AK057 perlu diganti menjadi AK058. Enam model Aquanotes memuat 19 unit rincian tanpa penjumlahan ulang. Ini hasil pembacaan sumber, bukan bukti sudah tersimpan di produksi.

@@ -112,6 +112,37 @@ test("workbook parser holds conflicting rows, ignores repeated rack stock and re
   const book = new ExcelJS.Workbook();
   await book.xlsx.load(new Uint8Array(buffer).buffer);
   book
+    .getWorksheet("List Barang")!
+    .addRow([
+      6,
+      "cutter foam",
+      1,
+      "pcs",
+      "",
+      "",
+      "Aset/alat kerja",
+      "",
+      "AK057",
+      "C!",
+    ]);
+  book
+    .getWorksheet("List Barang")!
+    .addRow([
+      7,
+      "knob door (gagang pintu bulat)",
+      1,
+      "pcs",
+      "",
+      "",
+      "Aset/alat kerja",
+      "",
+      "AK057",
+      "C2",
+    ]);
+  const mapped = await planWorkbook(Buffer.from(await book.xlsx.writeBuffer()));
+  assert.equal(mapped.items.find((i) => i.sku === "AK057")?.location, "C1");
+  assert.equal(mapped.items.find((i) => i.sku === "AK058")?.sourceSku, "AK057");
+  book
     .getWorksheet("Aquanotes")!
     .addRow([2, "Duplicate", "AQNSV1B2", "SERIAL-001"]);
   await assert.rejects(
