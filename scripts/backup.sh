@@ -1,11 +1,13 @@
 #!/bin/sh
 set -eu
 umask 077
-: "${INVENTORY_DATABASE_URL:?Inventory database URL required}"
+: "${PGDATABASE:?Inventory database required}"
+: "${PGUSER:?Backup database role required}"
+test "$PGDATABASE" = mtc_inventory
 backup_dir="${BACKUP_PATH:-/backup}"
 mkdir -p "$backup_dir"
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
-pg_dump --dbname="$INVENTORY_DATABASE_URL" --format=custom --file="$backup_dir/db-$stamp.dump.pending"
+pg_dump --format=custom --file="$backup_dir/db-$stamp.dump.pending"
 mv "$backup_dir/db-$stamp.dump.pending" "$backup_dir/db-$stamp.dump"
 tar --exclude='*.tmp' --exclude='worker-heartbeat' -czf "$backup_dir/files-$stamp.tar.gz.pending" -C /storage .
 mv "$backup_dir/files-$stamp.tar.gz.pending" "$backup_dir/files-$stamp.tar.gz"

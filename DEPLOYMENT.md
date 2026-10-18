@@ -1,39 +1,58 @@
-# Deployment dan pemulihan MTC Inventory
+﻿# Deployment dan pemulihan MTC Inventory
 
-## Target
+## Rilis aktif
 
-Repository: https://github.com/Frey210/Inventory. Host aplikasi: LXC Docker yang dirujuk catatan lokal; direktori khusus `/opt/mtc-inventory`. PostgreSQL produksi **wajib pada LXC PostgreSQL**, bukan container database di LXC Docker. Container `inventory-test-db` yang dibuat selama development hanya database pengujian terisolasi, tidak menjadi database produksi.
+Aplikasi berjalan dalam mode **preparation** pada `/opt/mtc-inventory`, LXC Docker `192.168.10.68`. Image aplikasi/worker bertag `6934cf53b011`; kode ada pada https://github.com/Frey210/Inventory. Konfigurasi runtime dan script operasi mengikuti repository. Lihat `docs/VERIFIKASI_RILIS.md` untuk bukti pengujian.
 
-Origin Cloudflare Tunnel yang direncanakan: `http://192.168.10.68:3030`, hostname `inventory.farlabs.my.id`. Ini baru rencana origin sampai service benar-benar terpasang dan healthcheck diverifikasi; jangan mengumumkannya sebagai deployment aktif sebelum itu. Jangan memakai localhost:3030 pada tunnel yang berjalan di host lain.
+Cloudflare Tunnel: hostname `inventory.farlabs.my.id`, service **HTTP**, URL `192.168.10.68:3030`. Origin `http://192.168.10.68:3030` telah diuji dari CT160 dan CT161. URL publik `/login` juga telah merespons HTTP 200. Jika hostname diubah, perbarui BETTER_AUTH_URL agar origin dan cookie tetap sesuai.
 
-## Konfigurasi privat dan peran database
+PostgreSQL tetap pada **CT102, 192.168.10.69**, database terpisah `mtc_inventory`. Jalur administrasi melalui LXC Docker → SSH Proxmox legacy → `pct exec 102`. Catatan akses ada di `repo&deploy.txt` lokal, tidak di Git. Database uji `inventory-test-db` di Docker telah dihentikan setelah verifikasi; bukan database produksi.
 
-`.env.production` hanya pada host aplikasi, permission 600. Isi INVENTORY_DATABASE_URL, BETTER_AUTH_URL=https://inventory.farlabs.my.id, BETTER_AUTH_SECRET acak, APP_MODE=preparation dan STORAGE_PATH=/app/storage. Jangan menyalin secret ke Dockerfile/build args. File akun awal tidak masuk image atau Git.
+## Konfigurasi dan peran
 
-Buat database Inventory tersendiri. Pisahkan role migrasi/owner dari role runtime non-superuser. Role runtime hanya CONNECT/USAGE dan privilege tabel/sequence yang diperlukan; tanpa DDL public dan tanpa UPDATE/DELETE untuk Audit/Ledger/LoanEvent. Schema pg-boss dimiliki role worker dan diinisialisasi melalui `scripts/init-queue.mjs` satu kali sebelum worker berjalan tanpa migrasi otomatis. Role worker tidak memiliki DDL public. Terapkan `scripts/grant-runtime.sql` melalui administrator database setelah migrasi; backup memakai role read-only tersendiri. Koneksi memakai hostname sertifikat PostgreSQL yang dipetakan melalui extra_hosts, sslmode verify-full dan sertifikat publik yang dipasang read-only. File .env.migrate/.env.worker/.env.backup mengoverride koneksi base sesuai fungsi; semuanya private.
+File runtime privat permission 600, tidak masuk image/repository:
 
-## Rilis
+- `.env.production`: koneksi role web, BETTER_AUTH_URL/SECRET, APP_MODE dan STORAGE_PATH.
+- `.env.worker`: koneksi role worker, URL publik, mode, storage dan CHROMIUM_SANDBOX=on. Worker tidak menerima secret autentikasi web.
+- `.env.migrate`: koneksi pemilik schema khusus migrasi/provisioning.
+- `.env.backup`: PGHOST/PGPORT/PGDATABASE/PGUSER/PGPASSWORD/PGSSLMODE/PGSSLROOTCERT untuk role backup read-only. Password tidak dimasukkan ke argumen pg_dump.
+- `.env`: IMAGE_TAG dari commit aplikasi yang dipasang.
 
-1. Pipeline lint/type/unit/integrasi/build hijau; tinjau diff, secret exclusion dan versi image bertag commit. Periksa ruang disk dan kapasitas host bersama aplikasi lain.
-2. Buat backup terbaru DB+private storage yang sudah dapat direstore. Jangan menjalankan migrasi Inventory pada database Finance/Absensi.
-3. Build image web dan tools dari commit yang sama. Jalankan migrasi satu kali melalui service migrate dengan credential migrasi, bukan saat startup tiap replica.
-4. Provision akun sekali dari file privat, lalu hapus file provisioning dari host apabila telah diserahkan aman. Seed tidak mengisi saldo/katalog contoh operasional.
-5. Jalankan app dan worker. Periksa `/api/health`, login, session/secure cookie, header proxy/origin, ganti password/MFA, upload privat, antrean PDF dan heartbeat. Pastikan aplikasi lain tetap sehat dan port tidak bertabrakan.
-6. Setelah service sehat, arahkan Cloudflare Tunnel ke origin di atas. Cloudflare dashboard dikelola pengguna; tidak diubah otomatis oleh aplikasi.
-7. Tetap mode preparation sampai seluruh gate bisnis, UAT, backup off-host dan perangkat nyata lulus. Jangan mengganti ke live hanya untuk menghilangkan banner.
+Koneksi DB memakai `postgresql.epi` melalui extra_hosts, TLS `verify-full` dan `db-ca.crt` read-only. Sertifikat server sudah diverifikasi. Tidak ada DDL public untuk role web/worker; web tidak dapat update/delete audit, ledger atau event loan. Worker tidak dapat membaca tabel credential Account. Backup memiliki SELECT tanpa UPDATE.
 
-`docker compose --profile tools run --rm migrate` menjalankan migrasi yang versioned. `docker compose up -d app worker` menjalankan service. Worker memakai image tools terpisah dari output standalone web. Chromium membutuhkan sandbox yang sesuai; jangan memakai privileged container atau mematikan sandbox untuk mengatasi masalah tanpa pemeriksaan host.
+Schema `inventory_jobs` dimiliki worker; inisialisasi antrean satu kali memakai `node scripts/init-queue.mjs`. Worker berjalan tanpa migrasi schema otomatis. Setelah migrasi, administrator PostgreSQL menerapkan `scripts/grant-runtime.sql` pada database Inventory. Script ini menolak database lain.
 
-## Backup dan restore
+## Prosedur rilis berikutnya
 
-Service backup menggunakan client PostgreSQL 17; cocokkan major client dengan server sebelum pemakaian. Jalankan `docker compose --profile tools run --rm backup` dari root deployment. Script menyimpan dump custom, arsip storage, checksum dan marker last-success. Atur scheduler host setiap empat jam operasional dan backup harian setelah timezone bisnis disetujui. Kegagalan job harus dipantau; keberadaan script saja bukan backup otomatis yang sudah berjalan.
+1. CI hijau dan source bebas secret. Build image dari source commit yang sama pada direktori release; tag `mtc-inventory-web:<commit>` dan `mtc-inventory-tools:<commit>`. Dockerfile memisahkan cache browser dari perubahan kode aplikasi.
+2. Jalankan backup terenkripsi dan pastikan dapat dipulihkan sebelum migrasi data. Jangan mengarahkan migrasi ke DB aplikasi lain.
+3. Perbarui IMAGE_TAG, lalu `docker compose --profile tools run --rm migrate`. Terapkan grant runtime bila schema berubah.
+4. Provision akun baru hanya dari file privat lewat SEED_USERS_FILE; seed tidak mereset password yang sudah ada. Hapus file provisioning dari host sesudah dipakai. Tidak ada stok operasional yang otomatis di-seed.
+5. `docker compose up -d app worker`. Verifikasi health, origin dari node Tunnel, auth/origin/cookie, batas password awal, privilege DB, upload/bukti, heartbeat dan aplikasi tetangga.
+6. Jangan menyebut V1 operasional hanya karena deployment sehat. Selesaikan saldo/loan pembukaan, keputusan bisnis/QMS, UAT, perangkat nyata dan operasi backup off-host.
 
-Salin backup terenkripsi ke host/media lain; direktori backups pada host aplikasi tidak cukup. Restore ke database kosong pada lingkungan terisolasi, restore file, cocokkan manifest dan periksa login/saldo/loan/PDF lama. Jangan restore di atas transaksi baru untuk rollback sehari-hari. Selama backup, lampiran arsip tidak boleh dihapus; file yang belum dirujuk bukan bukti yang boleh hilang dari snapshot lama.
+Chromium berjalan non-root dengan sandbox aktif, cap-drop ALL dan profil seccomp khusus di `deploy/`. Tidak memakai privileged, SYS_ADMIN atau IPC host. `CHROMIUM_SANDBOX=off` terbatas pada fixture CI tepercaya; tidak digunakan worker deployment.
 
-RPO usulan empat jam, RTO usulan 4–8 jam; hanya dinyatakan tercapai setelah diuji pada deployment sebenarnya. Pengujian development telah memakai database kosong terpisah, tetapi tidak membuktikan kesiapan backup off-host/produksi.
+## Backup dan pemulihan
+
+Backup otomatis empat jam menggunakan `mtc-inventory-backup.timer`; unit ada di `deploy/`. Jadwal UTC 00/04/08/12/16/20:17 dengan jitter satu menit. Jalankan manual melalui `systemctl start mtc-inventory-backup.service`. Periksa `systemctl list-timers mtc-inventory-backup.timer`, `systemctl show mtc-inventory-backup.service -p Result` dan `journalctl -u mtc-inventory-backup.service`.
+
+`run-backup.sh` memakai flock, pg_dump custom PostgreSQL 17, arsip private storage, checksum, dan konfigurasi recovery termasuk secret autentikasi. Bundle dienkripsi CMS AES-256-GCM dengan RSA-OAEP SHA-256. Server hanya menyimpan sertifikat recipient publik; private key dekripsi tetap di luar server. Marker sukses pipeline adalah `backups/last-encrypted-success`. Backup lokal lebih dari tujuh hari dibersihkan hanya setelah backup baru berhasil.
+
+Salinan terenkripsi telah dipindahkan ke `.local/production-backups` pada workstation dan diuji autentikasi/dekripsinya. Kunci dekripsi ada pada `.local/backup-private.key` dan sertifikat pasangannya `.local/backup-recipient.crt`, keduanya diabaikan Git. **Simpan salinan kunci ke vault/media aman terpisah sebelum memakai data riil**; kehilangan kunci membuat backup terenkripsi tidak dapat dipulihkan. Pengiriman off-host berulang dan kanal alarm eksternal belum dikonfigurasi; salinan awal bukan bukti pengiriman otomatis berkelanjutan.
+
+Urutan restore:
+
+1. Verifikasi SHA-256 file CMS, lalu dekripsi memakai `openssl cms -decrypt -binary -inform DER -in <backup.cms> -inkey <private.key> -recip <recipient.crt> -out <restore.tar>`. Jangan ekstrak output jika dekripsi gagal.
+2. Ekstrak hanya ke direktori privat terisolasi, cocokkan manifest dump/berkas. Konfigurasi berisi secret: jangan dicetak atau di-commit.
+3. Buat DB kosong khusus restore. Gunakan pg_restore exit-on-error; buat role/grant yang sesuai dan atur ulang URL serta TLS lingkungan restore.
+4. Pulihkan private storage; cocokkan saldo/ledger/reservasi/loan, file/checksum, akun/MFA, worker dan bukti lama. Pertahankan BETTER_AUTH_SECRET dari backup agar secret MFA dapat didekripsi.
+5. Restore di atas transaksi baru bukan prosedur rollback harian. Pengujian awal memakai database restore kosong terpisah dan telah dibersihkan setelah lulus.
+
+RPO usulan empat jam dan RTO usulan 4–8 jam belum menjadi SLA operasional. Alarm eksternal dan pengiriman off-host rutin perlu ditutup sebelum cutover riil.
 
 ## Rollback dan diagnosis
 
-Pertahankan image commit sebelumnya. Kembalikan image hanya bila schema kompatibel; migrasi destructive memerlukan expand–migrate–contract. Sebelum rollback hentikan posting bila integritas belum pasti, simpan log bebas secret, periksa ledger/balance/reservation dan antrean, lalu rekonsiliasi. Jangan membatalkan loan committed hanya karena PDF pending/failed.
+Pertahankan image sebelumnya. Rollback image hanya jika schema kompatibel; gunakan expand–migrate–contract untuk perubahan schema. Jangan membatalkan loan committed karena PDF pending/failed. Simpan bukti kegagalan bebas secret, periksa ledger/reservasi/outbox, lalu rekonsiliasi.
 
-Pantau health DB/web, RAM/disk, umur backup, umur outbox/failed jobs dan `worker-heartbeat` pada private storage. Catatan credential SSH tetap hanya di file lokal yang dikecualikan Git. Saat sesi terputus, baca STATUS_IMPLEMENTASI.md sebelum melanjutkan rilis.
+Pantau health app/worker, disk/RAM, umur backup, failed jobs dan heartbeat. Semua metadata operasional ada di STATUS_IMPLEMENTASI.md dan dokumen verifikasi; credential tetap di catatan/file privat.

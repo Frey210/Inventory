@@ -1,13 +1,13 @@
-﻿# Status implementasi MTC Inventory
+# Status implementasi MTC Inventory
 
-Pembaruan: 18 Oktober 2026. Tahap: aplikasi persiapan/pilot telah dibangun; persiapan rilis ke LXC Docker dan PostgreSQL CT102 sedang diverifikasi. Ini bukan pernyataan seluruh V1/UAT/gate operasional lulus.
+Pembaruan: 18 Oktober 2026. Tahap: aplikasi persiapan/pilot telah di-deploy dan sehat pada LXC Docker dengan PostgreSQL CT102. Rilis kode aplikasi `6934cf53b011` telah lulus CI. Ini bukan pernyataan seluruh V1/UAT/gate operasional lulus.
 
 ## Implementasi tersedia
 
 | Backlog   | Bukti implementasi                                                                                                                                                                                    | Acceptance yang masih perlu ditutup                                                                                       |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| INV-01–04 | Next/React/TS, Prisma PostgreSQL, CI; username internal, ganti password awal, TOTP/recovery, role/ownership, session DB/rate limit                                                                    | Pengesahan kewenangan bisnis dan uji akses pada domain HTTPS sesudah Tunnel diarahkan                                     |
-| INV-05–06 | Master aktif/nonaktif/version, parent tanpa siklus, kategori/default, katalog/foto; filter/pagination/path lokasi; metadata SKU pada penerimaan                                                       | Drill-down tree penuh, draft lintas halaman, perangkat nyata dan acceptance semua state master                            |
+| INV-01–04 | Next/React/TS, Prisma PostgreSQL, CI; username internal, ganti password awal, TOTP/recovery, role/ownership, session DB/rate limit                                                                    | Pengesahan kewenangan bisnis dan UAT semua role pada domain HTTPS                                     |
+| INV-05–06 | Master aktif/nonaktif/version, validasi referensi aktif untuk transaksi baru, pengembalian historis tetap dapat diterima, parent tanpa siklus, kategori/default, katalog/foto; filter/pagination/path lokasi; metadata SKU pada penerimaan                                                       | Drill-down tree penuh, draft lintas halaman, perangkat nyata dan acceptance semua state master                            |
 | INV-07–09 | Ledger/reservasi/audit/outbox/idempotency atomik, constraint DB; dry run CSV per baris dan batch antiulang; draft/posting penerimaan                                                                  | Rekonsiliasi saldo awal riil dan format/data pinjaman legacy harus disahkan sebelum migrasi riil                          |
 | INV-10–14 | Request terpisah tracking; approval tanpa self-approval, alokasi, expiry, acknowledgement, issue; permission darurat default mati + review; checkout kondisi/kelengkapan tiap unit, LOAN dan snapshot | UAT pemilik proses; kebijakan override/acknowledgement dan tenggat; seluruh skenario fault/retry lintas modul             |
 | INV-15–19 | Label QR/manual/USB/kamera; return parsial, receipt fisik terpisah inspeksi; foto masalah, blocked/insiden, koreksi event dan exception; worker PDF/version/checksum/retry                            | Kamera/USB/printer/grayscale nyata; kebijakan exception/QMS/retensi; integrasi semua skenario bukti masalah               |
@@ -20,21 +20,21 @@ Revisi request material membuat transaksi baru dan melepas reservasi lama; riway
 
 ## Verifikasi yang telah dilakukan
 
-- Lint, TypeScript dan build Next standalone + bundle worker telah lulus pada batch sebelumnya; diulang sesudah perubahan akhir. Lockfile dipin; audit dependency terakhir tanpa kerentanan yang dilaporkan.
+- Lint, TypeScript dan build Next standalone + bundle worker lulus pada CI rilis aplikasi terakhir. Lockfile dipin; audit dependency terakhir tanpa kerentanan yang dilaporkan.
 - Tes PostgreSQL terisolasi membuktikan draft tanpa stok, posting idempoten, konflik payload retry, dua approval berebut saldo, issue terbatas, waste kumulatif, checkout terkontrol, physical return bersamaan, inspeksi parsial/final, audit immutable, opname quantity/unit/freeze/cancel, dry run/batch dan override/review. Batch terakhir menambah revisi request dan dedup reminder.
 - Playwright lulus login/setup master, private export, simpan/buka pengaturan, empat viewport, TOTP dan recovery code. Screenshot simulasi disimpan lokal di `.impeccable/review`, tidak di Git.
 - Renderer nota produksi diuji satu unit awal, 35 unit dengan teks panjang dan partial return, serta final. Letter 612×792 pt, A–G, footer LOAN/versi/halaman dan header tabel diperiksa. Review independen menyetujui UI serta layout cetak **untuk pilot**; bukan pengesahan operasional.
-- Restore dump database uji ke database kosong terpisah telah lulus. Ini tidak menggantikan restore DB+file rilis produksi dan backup off-host.
+- Restore dump database uji ke database kosong terpisah telah lulus. Restore DB+file rilis produksi dan salinan off-host juga telah diverifikasi sebagaimana bagian infrastruktur di bawah.
 
 ## Infrastruktur dan rilis
 
-Repository remote Frey210/Inventory terverifikasi kosong sebelum bootstrap. Local Git sudah dibuat; hash commit dan hasil push dicatat sesudah rilis.
+Repository remote Frey210/Inventory terverifikasi kosong sebelum bootstrap. Commit aplikasi `6934cf53b011` sudah di-push dan di-deploy; CI https://github.com/Frey210/Inventory/actions/runs/39110280482 lulus sembilan tes domain/integrasi, lint, typecheck, build, renderer nota dan Playwright.
 
 Jalur administrasi CT102 berhasil melalui LXC Docker → Proxmox legacy → pct exec; detail akses ada pada catatan lokal yang diabaikan Git. PostgreSQL 17 aktif; database `mtc_inventory` dan role migrasi/web/worker/backup terpisah telah dibuat. Koneksi TLS dari host aplikasi dengan verifikasi sertifikat sudah lulus. Database aplikasi lain tidak menjadi target migrasi.
 
-Target aplikasi: `/opt/mtc-inventory` pada LXC Docker. Origin rencana `http://192.168.10.68:3030`, domain `inventory.farlabs.my.id`; baru dinyatakan aktif setelah deployment dan healthcheck lulus. Mode preparation tetap berlaku sampai gate bisnis selesai.
+Target aplikasi: `/opt/mtc-inventory` pada LXC Docker. Origin aktif `http://192.168.10.68:3030`, domain `inventory.farlabs.my.id`; app/worker healthy, origin diuji dari dua node Tunnel dan URL publik login merespons 200. Backup terenkripsi dan konfigurasi recovery sudah dibuat, disalin off-host serta diuji; restore DB kosong dan berkas lulus. Timer empat jam aktif dan service backup berhasil. Pengiriman off-host berulang/kanal alarm eksternal masih perlu ditetapkan. Mode preparation tetap berlaku sampai gate bisnis selesai. Bukti rinci: `docs/VERIFIKASI_RILIS.md`.
 
-Akun awal dibuat dengan password baru pada `account.md` lokal, bukan password Absensi. File akun, secret, catatan akses dan artefak backup dikecualikan dari Git/image. Identitas awal mengacu data lokal Absensi; cocokkan roster pegawai sebelum operasional.
+Akun awal dibuat dengan password baru pada `account.md` lokal, bukan password Absensi. File akun, secret, catatan akses dan artefak backup dikecualikan dari Git/image. Roster telah dicocokkan read-only ke Absensi produksi: 13 pengguna aktif + 3 akun bootstrap fungsi, total 16 akun aktif. Satu identitas contoh development dinonaktifkan. Password admin yang sudah diubah pemilik melalui Profil dipertahankan dan ditandai di file akun.
 
 ## Handoff
 
