@@ -17,3 +17,6 @@ backups
 .backup.lock
 db-ca.crt
 .impeccable/review
+
+*.xlsx
+.impeccable/questions

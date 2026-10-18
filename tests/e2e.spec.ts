@@ -46,6 +46,7 @@ test("login, master setup, private access and desktop/mobile layout", async ({
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Masuk", exact: true }).click();
   await expect(page).toHaveURL(/admin\/dashboard/);
+  await page.getByText("Kelola gudang", { exact: true }).click();
   await page.getByRole("link", { name: "Master Data", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Master Data", exact: true }),

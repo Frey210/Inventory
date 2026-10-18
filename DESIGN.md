@@ -1,232 +1,211 @@
 ---
 name: MTC Inventory
-description: Acuan visual implementasi dari DOCX MTC untuk aplikasi inventory internal
+description: Ruang kerja inventory modern untuk tim IoT MTC
 colors:
-  admin-shell: "#0B2E59"
-  primary: "#1565C0"
-  primary-hover: "#0D47A1"
-  technician: "#00897B"
-  technician-strong: "#00695C"
-  technician-hover: "#00574B"
-  canvas: "#F4F7FB"
-  surface: "#FFFFFF"
-  surface-muted: "#EDF2F7"
-  text: "#172B4D"
-  text-muted: "#52647A"
-  border: "#D8E1EC"
-  control-border: "#7C8A9B"
-  on-brand: "#FFFFFF"
-  selected-bg: "#E8F1FD"
-  success: "#166534"
-  success-bg: "#ECFDF3"
-  warning: "#92400E"
-  warning-bg: "#FFFBEB"
-  danger: "#B91C1C"
-  danger-bg: "#FEF2F2"
-  info: "#1D4ED8"
-  info-bg: "#EFF6FF"
+  admin-shell: "#10366d"
+  primary: "#1763da"
+  primary-hover: "#104fba"
+  technician: "#1763da"
+  technician-strong: "#1763da"
+  technician-hover: "#104fba"
+  canvas: "#f4f6fa"
+  surface: "#fff"
+  surface-muted: "#f0f3f8"
+  text: "#1c2b42"
+  text-muted: "#627187"
+  border: "#e3e9f1"
+  control-border: "#98a7bb"
+  on-brand: "#fff"
+  selected-bg: "#e9f1ff"
+  success: "#18704e"
+  success-bg: "#eaf8f1"
+  warning: "#925409"
+  warning-bg: "#fff6e7"
+  danger: "#b43343"
+  danger-bg: "#fff0f2"
+  info: "#185dc1"
+  info-bg: "#edf4ff"
 typography:
   headline:
-    fontFamily: "Arial, Helvetica, sans-serif"
-    fontSize: "28px"
-    fontWeight: 700
-    lineHeight: 1.25
+    fontFamily: "Jakarta, system-ui, sans-serif"
+    fontSize: "30px"
+    fontWeight: 750
+    lineHeight: 1.3
   title:
-    fontFamily: "Arial, Helvetica, sans-serif"
-    fontSize: "20px"
+    fontFamily: "Jakarta, system-ui, sans-serif"
+    fontSize: "19px"
     fontWeight: 700
     lineHeight: 1.4
   body:
-    fontFamily: "Arial, Helvetica, sans-serif"
+    fontFamily: "Jakarta, system-ui, sans-serif"
     fontSize: "16px"
     fontWeight: 400
-    lineHeight: 1.5
+    lineHeight: 1.55
   label:
-    fontFamily: "Arial, Helvetica, sans-serif"
+    fontFamily: "Jakarta, system-ui, sans-serif"
     fontSize: "14px"
     fontWeight: 600
-    lineHeight: 1.5
-  table:
-    fontFamily: "Arial, Helvetica, sans-serif"
-    fontSize: "14px"
+    lineHeight: 1.45
+  metadata:
+    fontFamily: "Jakarta, system-ui, sans-serif"
+    fontSize: "12px"
     fontWeight: 400
-    lineHeight: 1.5
+    lineHeight: 1.55
 rounded:
-  control: "6px"
-  panel: "10px"
-  badge: "999px"
+  control: "10px"
+  panel: "14px"
+  badge: "7px"
+  tab: "9px"
 spacing:
-  xs: "4px"
   sm: "8px"
-  md: "16px"
-  lg: "24px"
-  xl: "32px"
+  md: "12px"
+  lg: "18px"
+  xl: "24px"
+  panel: "26px"
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.on-brand}"
     typography: "{typography.label}"
     rounded: "{rounded.control}"
-    padding: "10px 16px"
-    height: "44px"
+    padding: "11px 18px"
+    height: "46px"
   button-primary-hover:
     backgroundColor: "{colors.primary-hover}"
     textColor: "{colors.on-brand}"
-  button-technician:
-    backgroundColor: "{colors.technician-strong}"
-    textColor: "{colors.on-brand}"
+  button-secondary:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text}"
     rounded: "{rounded.control}"
-    padding: "10px 16px"
-    height: "44px"
+    padding: "11px 18px"
+    height: "46px"
   button-danger:
     backgroundColor: "{colors.danger}"
     textColor: "{colors.on-brand}"
     rounded: "{rounded.control}"
-    height: "44px"
+    height: "46px"
   panel:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
     rounded: "{rounded.panel}"
-    padding: "24px"
+    padding: "26px"
   input:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
     rounded: "{rounded.control}"
-    height: "44px"
-    padding: "10px 12px"
+    height: "48px"
+    padding: "11px 13px"
   badge-warning:
     backgroundColor: "{colors.warning-bg}"
     textColor: "{colors.warning}"
     rounded: "{rounded.badge}"
-    padding: "4px 8px"
+    padding: "5px 10px"
+  navigation-selected:
+    backgroundColor: "{colors.selected-bg}"
+    textColor: "{colors.primary}"
+    rounded: "{rounded.control}"
+    padding: "12px"
+    height: "47px"
 ---
-
 # Design System: MTC Inventory
 
 ## Overview
 
-**Creative North Star: "Meja kerja gudang MTC"**
+**Creative North Star: "Ruang kerja tim MTC"**
 
-Ini baseline implementasi sebelum kode, berdasarkan desain tertulis dan mockup DOCX; bukan hasil ekstraksi aplikasi yang sudah berjalan. Identitasnya berupa rail berwarna, ruang kerja terang, tabel padat yang terbaca dan formulir sederhana. Admin menggunakan navy/biru; teknisi menggunakan hijau/teal. Satu sistem komponen melayani keduanya.
+Sistem visual yang telah diterapkan: ruang kerja terang, kartu barang visual, pencarian langsung dan aksi singkat untuk tim startup IoT MTC. Biru dan logo MTC dipertahankan; admin dan teknisi memakai keluarga visual yang sama, dengan menu sesuai peran.
 
-Sumber primer: DOCX utama bagian Desain informasi website, Palet dan komponen, Desain layar admin/teknisi, serta tabel Perubahan terhadap mockup. Mockup image4 dan image5 dipertahankan sebagai referensi komposisi, bukan target pixel-perfect. docs/design/SOURCE_MAP.md membedakan keputusan sumber, pelengkapan engineering dan konflik. Nilai tambahan pada frontmatter adalah keputusan baseline implementasi; dapat disesuaikan setelah uji render dengan mencatat alasannya.
+Instruksi redesign pengguna tanggal 18 Oktober 2026 menggantikan gaya administratif DOCX, rail gelap/hijau dan Arial lama. Implementasi code-led mengikuti referensi pengguna, tanpa comp baru. DOCX tetap mengikat proses, bukti dan integritas inventory; detail keputusan ada di docs/design/REDESIGN_2026_10.md. Dokumen ini diekstrak dari tokens.css, globals.css, shell.tsx dan inventory-visuals.tsx setelah implementasi. Status pengujian/rilis mengikuti STATUS_IMPLEMENTASI.md, bukan keberadaan dokumen ini.
 
 **Key Characteristics:**
 
-- Rail navy/hijau, konten putih pada canvas dingin.
-- Hierarki judul pendek, filter di atas data, satu aksi utama per konteks.
-- Stok, satuan, identitas unit dan progres inspeksi selalu mudah dibaca.
-- Status berupa teks dan warna; detail historis tersedia dari halaman transaksi.
+- Shell putih, canvas dingin dan biru untuk aksi/seleksi.
+- Foto barang asli atau ikon kategori yang konsisten.
+- Tugas Ambil komponen dan Pinjam alat mudah ditemukan.
+- Navigasi bawah semua peran dan daftar berlabel pada ponsel.
 
 ## Colors
 
+Palet dingin yang bersih memakai satu aksen biru; nilai frontmatter adalah nilai CSS normatif, termasuk alias technician yang kini mengikuti biru.
+
 ### Primary
 
-`admin-shell`, `primary` dan `technician` berasal dari nilai eksplisit DOCX. Sidebar admin memakai admin-shell; sidebar teknisi memakai technician-strong dengan detail technician. Primary mengendalikan aksi admin/gudang. Technician-strong mengendalikan aksi teknisi.
-
-Hijau asli technician dipertahankan sebagai identitas/aksen. Tombol teks putih menggunakan varian lebih gelap technician-strong untuk kontras. Tidak semua permukaan hijau bermakna sukses: identitas role, status dan aksi tetap dibedakan lewat label/lokasi.
+Biru kerja (`primary`) untuk tindakan, tautan, ikon aktif dan seleksi; varian `primary-hover` untuk hover. Navy MTC (`admin-shell`) mengisi blok awal pekerjaan dan identitas login, bukan sidebar penuh. Semua role berbagi biru; token technician tetap kompatibel dengan source.
 
 ### Secondary
 
-Success untuk Tersedia/Disetujui/Selesai yang benar-benar sah; warning untuk Menunggu/Jatuh Tempo/Stok Menipis; danger untuk Ditolak/Rusak/Diblokir; info untuk informasi proses. Token latar lembut dan teks gelap dipakai berpasangan. Badge tetap memuat label, opsional ikon dan jumlah.
+Pasangan success/success-bg, warning/warning-bg, danger/danger-bg dan info/info-bg menyampaikan hasil/proses. Ini warna semantik status, bukan identitas role. Stok menipis, gagal, diblokir dan menunggu pemeriksaan harus tetap diberi teks.
 
 ### Neutral
 
-Canvas untuk ruang di belakang panel, surface untuk panel/form, surface-muted untuk header tabel/read-only, text untuk isi dan text-muted untuk bantuan. Border memisahkan panel; control-border memperjelas batas input. Jangan memakai border panel yang pucat sebagai satu-satunya penanda field.
+Canvas adalah ruang belakang, surface adalah kartu/form/sidebar/topbar putih, surface-muted untuk lapisan informasi sekunder. Text dan text-muted memisahkan data inti dari metadata; border memisahkan struktur, control-border menandai field. Selected-bg menandai tujuan/filter aktif.
 
-**The Status Rule.** Warna tidak menjadi satu-satunya pembeda. Badge Disetujui bukan bukti bahwa stok sudah diserahkan; label berbeda mengikuti UI_SPEC.
+**The Status Rule.** Warna selalu ditemani label; Disetujui tidak berarti barang sudah diserahkan.
 
 ## Typography
 
-Arial/Inter diperbolehkan DOCX. Baseline memilih **Arial** agar satu keluarga, tanpa unduhan font dan sesuai teks sumber. Inter hanya bila ada keputusan perubahan yang dicatat. Jangan mewarisi Poppins/Roboto Absensi secara otomatis.
+**Display Font / Body Font:** Jakarta, system-ui, sans-serif. Alias CSS **Jakarta** memuat **Plus Jakarta Sans** lokal dari public/fonts/jakarta-latin.woff2, rentang bobot 400?800, font-display swap; lisensi OFL di public/fonts/OFL.txt. Tidak bergantung unduhan font runtime. Arial lama telah diganti.
 
-Headline 28 px untuk judul halaman desktop, 24 px pada HP; title 20 px untuk panel; body/input 16 px; label/tabel/bantuan 14 px. Minimum web 14 px mengikuti DOCX; teks print memiliki skala tersendiri pada PRINT_SPEC. Semibold dapat dirender sebagai bold bila Arial pada perangkat tidak menyediakan 600.
+Judul halaman 30 px/750 (26 px ponsel); panel 19 px/700 (17 px ponsel); body 16 px/1.55; label 14 px/600. Nama barang 15 px desktop, minimum 14 px ponsel. Angka ringkasan menggunakan angka tabular; paragraf umum maksimum 72ch. Sentence case dan bahasa Indonesia dipakai untuk pekerjaan utama.
 
-Gunakan sentence case, label Indonesia normal, angka tabular untuk jumlah/tanggal tabel, dan rata kanan untuk quantity. Kode/serial boleh memakai `ui-monospace, Consolas, monospace` pada bagian kecil, tetap dapat disalin. Tidak memotong asset tag/LOAN yang menjadi pembeda penting. Angka mengikuti locale id-ID; tanggal tampilan `18 Okt 2026, 09.30 WITA` hanya setelah timezone dikonfirmasi; jangan menempelkan WITA pada UTC mentah.
+**The Main Text Rule.** Nama barang dan aksi utama harus tetap terbaca: minimum 14 px pada ponsel; input teks/select/textarea minimum 16 px. Metadata pendukung (kode, kategori, waktu, satuan, navigasi bawah) boleh 11?13 px sesuai konteks; badge stok ringkas 10 px tetap didampingi rincian stok pada kartu. Ini menggantikan aturan lama minimum 14 px untuk seluruh teks web, bukan izin mengecilkan nama barang atau nilai input.
 
 ## Layout
 
-Baseline ukuran berikut melengkapi DOCX yang belum menetapkan breakpoint/pixel:
+Desktop memakai sidebar putih 236 px dan workspace fleksibel; sidebar 210 px pada lebar maksimal 1270 px. Topbar 86 px, konten maksimum 1620 px dengan padding 26 px 36 px 44 px. Panel/form mengikuti ruang tersedia; form utama maksimum 960 px. Dua kolom kerja runtuh saat ruang tidak cukup.
 
-| Lebar | Struktur |
-|---|---|
-| <768 px | Header 56 px; satu kolom; menu drawer; teknisi memakai bottom nav maksimal 5 tujuan; konten padding 16 px |
-| 768–1023 px | Header 64 px; menu drawer dengan label; grid form dua kolom bila field cukup lebar; padding 24 px |
-| ≥1024 px | Sidebar 240 px; header 64 px; konten padding 24 px (32 px mulai 1440 px); tabel memanfaatkan lebar yang tersisa |
+Pada lebar maksimal 1023 px sidebar hilang, menu Semua menu dapat dibuka, dan navigasi bawah lima tujuan tampil untuk semua peran. Bottom nav memberi safe-area serta ruang bawah konten. Di bawah 768 px topbar menjadi 68 px, pencarian global digantikan pencarian dalam halaman, konten memakai padding 20 px 18 px 112 px. Form satu kolom; tabel transaksi menjadi kartu dengan label field, bukan bergantung geser horizontal. Di bawah 360 px kartu katalog dan pintasan menjadi satu kolom.
 
-Body tidak scroll horizontal. Tabel lebar boleh scroll dalam region berlabel; header sticky berada di bawah header aplikasi, tidak menutup focus. Batas nyaman form 960 px; teks penjelasan 70ch. Detail/pinjam memakai kolom utama dan ringkasan 320 px mulai 1280 px; di bawahnya ringkasan berada sebelum aksi akhir.
-
-Sidebar: identitas MTC Inventory, kelompok menu sesuai role, active item berwarna dengan ikon/label dan `aria-current`. Header: breadcrumb, judul konteks bila diperlukan, notifikasi dan menu akun. Tidak menambah jam bergerak atau splash untuk meniru aplikasi lain. Judul halaman, deskripsi satu kalimat, dan aksi utama berada sebelum KPI/filter/data.
-
-HP teknisi: Beranda, Cari, Request, Pinjaman, Lainnya. Halaman Ambil/Kembali/Riwayat/Profil/masalah tetap terjangkau lewat daftar tugas/Lainnya. Bottom nav tidak boleh menutupi CTA; beri safe-area/padding bawah. Aksi final sticky hanya pada form panjang, dengan label konsekuensi dan tanpa menutupi keyboard/focus.
-
-### First viewport
-
-Dashboard admin menampilkan heading, antrean tindakan utama, ringkasan dan awal daftar; grafik sekunder di bawah pekerjaan mendesak. Dashboard teknisi mendahulukan pinjaman/jatuh tempo dan request miliknya, lalu aksi cepat. Tidak ada hero pemasaran.
+Katalog memakai tiga kolom desktop, empat mulai 1600 px dan dua pada ponsel. Foto/ikon berada di atas nama, stok dan lokasi; mode daftar tersedia. Grid, filter dan heading boleh membungkus tanpa memotong aksi. Urutan tugas/dashboard dan pemetaan rute terbaru ada pada UI_SPEC dan brief shell, bukan kontrak universal semua halaman.
 
 ## Elevation & Depth
 
-Panel putih dipisahkan oleh border dan jarak; shadow ringan `0 1px 3px rgba(11,46,89,0.08)` hanya untuk panel/header bila perlu. Overlay memakai `0 12px 32px rgba(11,46,89,0.18)` dan backdrop gelap 35%. Tidak memakai glow, glass atau bayangan berat pada tiap baris.
+Permukaan putih dan canvas dingin memisahkan area; bayangan panel lembut berasal dari token --shadow (0 6px 24px rgba(25, 47, 79, 0.06)). Kartu barang saat hover memakai 0 8px 30px rgba(25, 65, 120, 0.13). Login memakai bayangan lebih luas 0 20px 70px rgba(20, 45, 90, 0.1). Border tetap digunakan pada input, tabel dan pemisah navigasi. Tidak menambahkan glow atau lapisan dekoratif di setiap baris.
 
 ## Shapes
 
-Control 6 px, panel 10 px dan badge pill mengikuti token. Border input 1 px, focus outline 2 px primary dengan offset 2 px; ring focus teknisi memakai technician-strong. Tombol/input minimal tinggi 44 px, jarak antartarget 8 px; kontrol ikon juga target 44 px dengan ikon 18–20 px. Foto menggunakan rasio tetap dan object-contain untuk identitas barang; tidak memangkas bagian identifikasi.
+Sudut lembut: panel/kartu 14 px, kontrol/nav 10 px, tab 9 px, badge 7 px. Blok awal pekerjaan 16 px desktop dan 14 px ponsel. Foto memakai object-contain supaya identitas barang utuh. Avatar berbentuk lingkaran. Outline focus 3 px primary, offset 3 px.
 
 ## Components
 
 ### Buttons
 
-Primary admin biru; primary teknisi hijau gelap; secondary putih dengan border-control dan text; tertiary berupa tautan jelas. Danger hanya aksi berisiko. Hindari dua tombol primary setara pada satu keputusan; approval memiliki Setujui sebagai primary dan Tolak sebagai secondary berlabel danger. Tombol berikon menyertakan teks atau accessible name.
+Tombol primary biru dengan teks putih, padding 11 px 18 px dan tinggi minimum 46 px; secondary putih dengan border dan teks utama. Danger digunakan untuk aksi destruktif. Hover memakai varian primary-hover; pressed bergeser 1 px. Disabled opacity 0.6; label proses/error tetap jujur. Kontrol sentuh utama minimal 44 px termasuk filter, view switch dan tautan aksi mobile. Tombol ikon memiliki accessible name.
 
-Semua tombol memiliki hover, focus-visible, pressed, disabled dan pending. Pending mempertahankan lebar/label, menonaktifkan submit ganda dan mengumumkan proses. Disabled memuat alasan di dekatnya; jangan menyembunyikan satu-satunya penjelasan pada tooltip.
+### Inputs / Fields
 
-### Forms
+Field putih dengan control-border 1 px, sudut 10 px, padding 11 px 13 px, tinggi minimum 48 px. Label permanen; input teks/select/textarea 16 px. SearchBox menggabungkan ikon dan input, label aksesibel tidak bergantung placeholder. Checkbox 22 px ditempatkan dengan label yang dapat dipilih. Error inline/summary, invalid dan pemulihan input mengikuti kontrak UI_SPEC; jangan mengganti validasi server dengan styling.
 
-Label permanen, penanda Wajib + penjelasan di awal form; placeholder hanya contoh. Input jumlah berpasangan dengan satuan. Nilai server/read-only dibedakan dari disabled. Aksi penting memakai halaman dengan ringkasan konsekuensi, bukan modal bertingkat. Dialog hanya untuk konfirmasi singkat/alasan, dengan focus trap, Escape dan pengembalian focus.
+### Chips / Status
 
-Error inline memakai aria-describedby dan invalid; submit gagal menampilkan summary berfokus yang menaut ke field. Pertahankan input yang valid. Upload menunjukkan batas format/ukuran, preview, progres dan retry; foto masalah wajib menurut keputusan proses. Jangan memerlukan upload ulang ketika hanya field lain salah.
+Filter/tab putih menjadi selected-bg dengan teks primary saat aktif; target filter minimum 44 px. Badge status memuat label dan titik currentColor, padding 5 px 10 px. Badge merupakan informasi, bukan tombol; label status tidak memindahkan stok.
 
-### Tables and lists
+### Cards / Containers
 
-Header tetap, pencarian, filter, sortir, pagination dan ekspor sesuai izin. Header sort berupa tombol dengan aria-sort; angka/satuan eksplisit. Default halaman 25, pilihan 25/50/100; pencarian debounce 300 ms dan state filter/page tersimpan di URL. Perubahan filter kembali ke halaman pertama. Selected row selalu berbeda dari status badge.
+Panel putih padding 26 px desktop, 22 px 18 px ponsel, memakai radius/shadow bersama. Kartu katalog memakai ItemVisual: foto dari file berpolicy bila tersedia; fallback ikon Lucide konsisten menurut kategori/nama. Detail fallback berlabel Ilustrasi kategori. Foto produksi tidak diambil dari mockup. EmptyState menyatakan keadaan dan hanya menampilkan aksi yang benar-benar tersedia.
 
-Tabel admin memiliki kolom identitas, data inti, status dan aksi Lihat; edit/posting tidak disembunyikan sebagai ikon tanpa label. Teknisi HP menggunakan daftar tugas berisi kode, nama, due date dan aksi; detail menjaga seluruh informasi penting yang tidak muat di daftar.
+### Navigation
 
-### Master Data setup
+Sidebar menampilkan logo MTC, ruang kerja, tujuan utama dan kelompok Kelola gudang yang dapat dibuka. Tujuan aktif memakai aria-current. Topbar menyediakan pencarian/notifikasi/profil; ponsel memakai brand ringkas, Semua menu dan bottom nav lima tujuan. Menu lain dan logout tetap terjangkau. Pemilihan menu bukan pengganti pemeriksaan policy server. Mode uji coba adalah penjelasan ringkas yang dapat dibuka, bukan klaim kesiapan operasional.
 
-Halaman Master Data memakai shell office, subnavigasi berlabel, pencarian/filter dan daftar/tree yang dapat diedit sesuai izin. Lokasi bertingkat memakai tree+detail desktop dan drill-down HP; kategori memperlihatkan default jenis/satuan/lokasi secara eksplisit. Katalog & Foto memakai editor SKU yang sama dengan Inventory. Thumbnail membedakan foto barang dan ilustrasi kategori; preview upload/ganti/fallback mengikuti form states. Tautan setup yang belum lengkap mendahului daftar tanpa menambah dashboard KPI besar. Rincian pada docs/design/MASTER_DATA_SPEC.md.
+### Transaction lists / Feedback
 
-### Stock and unit summary
+Desktop mempertahankan tabel; ponsel mengubah baris menjadi kartu dengan data-label. Identitas transaksi, quantity+satuan dan aksi berlabel tetap tersedia. Loading, empty, no-results, forbidden, conflict dan network-uncertain harus dibedakan; kegagalan PDF tidak meminta checkout ulang. Semua mutasi menggunakan service/policy yang ada.
 
-Quantity: Fisik Layak, Direservasi, Tersedia, Karantina beserta satuan; Tersedia = Fisik Layak − Direservasi. Serialized: hitung unit per availability; tampilkan kondisi dan status teknis terpisah. Jangan menjumlahkan meter dan pcs, atau menampilkan total quantity ditambah total unit sebagai total stok tunggal.
-
-### Loan progress and evidence
-
-Komponen khas berupa ringkasan tiga angka: Diserahkan, Belum Kembali, Menunggu Pemeriksaan, lalu timeline checkout/return/inspection/correction. Label Dikembalikan Sebagian, Menunggu Pemeriksaan dan Overdue dapat tampil bersamaan. Tab Ringkasan, Pengembalian, Riwayat dan Bukti memakai satu nomor LOAN tetap. Bukti Awal/Versi Terbaru berupa tautan terpisah dengan versi/tahap/tanggal, bukan satu tombol yang diam-diam menimpa file.
-
-### Scanner
-
-Panel kamera client-only, tombol Aktifkan Kamera dan input kode manual selalu tersedia. Kamera gagal/izin ditolak menampilkan fallback dan instruksi. Hasil scan memilih baris/unit dan mengumumkan duplikat; belum memposting. Kamera berhenti saat panel ditutup/halaman ditinggalkan.
-
-### Feedback, empty and error states
-
-Skeleton/aria-busy untuk pemuatan, empty state dengan tindakan yang sah, no-results dengan Hapus Filter, forbidden dengan penjelasan tanpa membocorkan data, conflict dengan jumlah terbaru dan opsi Muat Ulang. Saat timeout mutasi: “Hasil belum dapat dipastikan. Periksa status transaksi sebelum mencoba lagi.” Retry menggunakan key awal. Kegagalan PDF menampilkan “Bukti sedang diproses”/“Pembuatan bukti gagal” dan retry berizin tanpa checkout ulang.
-
-Transisi focus/hover 150 ms, drawer/dialog 200 ms, ease-out. Reduced motion mematikan pergerakan nonesensial. Tidak ada animasi masuk halaman yang menunda tugas. Pengumuman status lewat aria-live polite; error penting lewat alert tanpa pengumuman duplikat.
+Transisi warna/border/shadow 0.18 detik; reduced motion meniadakan animasi/transisi nonesensial. Tidak menunda akses pekerjaan dengan animasi masuk halaman.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- **Do** pertahankan identitas, komposisi kerja dan nama MTC dari sumber; lihat gambar admin/teknisi sebelum membuat shell.
-- **Do** gunakan token semantik; terapkan varian role di shell dan aksi, bukan dua aplikasi frontend.
-- **Do** beri label alasan penolakan, override, koreksi dan selisih; tampilkan konsekuensi sebelum posting.
-- **Do** uji 390, 768, 1024 dan 1440 px, zoom 200%, keyboard, kontras dan teks panjang.
+- **Do** gunakan token semantik dan logo MTC yang tersedia.
+- **Do** bedakan nama/aksi utama dari metadata sekunder; jaga input 16 px dan target sentuh 44 px.
+- **Do** tampilkan satuan, status dengan teks, lokasi dan konsekuensi posting.
+- **Do** periksa desktop/ponsel, keyboard, teks panjang dan kegagalan server sebelum menyatakan sebuah perubahan selesai.
 
 ### Don't:
 
-- **Don't** menyalin InventorPro, data contoh, bangunan/logo ilustratif atau teks rusak dari mockup ke produksi.
-- **Don't** menyalin ukuran teks kecil pada collage; minimum 14 px web tetap berlaku.
-- **Don't** membuat scan otomatis mengeluarkan stok, pengajuan kembali otomatis Tersedia, atau admin otomatis menyetujui sendiri.
-- **Don't** memberi angka stok sukses secara optimistis sebelum server memastikan commit.
-- **Don't** mengklaim desain telah dirender/diuji atau dokumen QMS telah disahkan hanya karena spesifikasi ini lengkap.
+- **Don't** mengembalikan rail navy/hijau atau Arial sebagai default visual lama.
+- **Don't** memakai foto referensi, data demo atau ikon kategori sebagai bukti barang/kondisi riil.
+- **Don't** menjumlahkan meter, pcs dan unit menjadi satu saldo atau memberi sukses sebelum commit server.
+- **Don't** menyamakan approval dengan penyerahan, pengajuan kembali dengan Tersedia, atau screenshot dengan kelulusan UAT/cutover.

@@ -8,11 +8,11 @@ web
 
 ## Stack
 
-Baseline perencanaan yang telah direvisi: Next.js App Router, React, TypeScript strict, Tailwind 4, Prisma 7 dan PostgreSQL. Implementasi dikerjakan Codex, dengan satu pemilik/pemelihara aplikasi. Detail versi dan deployment mengikuti RENCANA_IMPLEMENTASI_MTC_INVENTORY.md; belum ada aplikasi yang dibangun.
+Baseline perencanaan yang telah direvisi: Next.js App Router, React, TypeScript strict, Tailwind 4, Prisma 7 dan PostgreSQL. Implementasi dikerjakan Codex, dengan satu pemilik/pemelihara aplikasi. Aplikasi telah diimplementasikan; versi terpin dan bukti verifikasi/rilis mengikuti package.json serta STATUS_IMPLEMENTASI.md. Rencana cakupan tidak menyatakan seluruh acceptance V1/UAT atau cutover lulus.
 
 ## Users
 
-Perusahaan memiliki kurang dari 20 karyawan. Empat peran mengikuti DOCX: Admin Sistem, Penanggung Jawab Gudang, Teknisi/Pengguna, Auditor/Manajemen. Admin mengelola akses/konfigurasi; gudang menerima, menyerahkan dan memeriksa; teknisi mencari, mengajukan, mengakui penerimaan dan mengembalikan; auditor/manajemen meninjau sesuai kewenangan. Admin tidak otomatis menjadi approver bisnis dan pemohon tidak menyetujui request sendiri.
+Startup IoT dengan kurang dari 20 karyawan, satu gudang dengan lemari/rak. Aktivitas rutin adalah konsumsi komponen kecil dan peminjaman alat kerja. Empat peran mengikuti DOCX: Admin Sistem, Penanggung Jawab Gudang, Teknisi/Pengguna, Auditor/Manajemen. Admin mengelola akses/konfigurasi; gudang menerima, menyerahkan dan memeriksa; teknisi mencari, mengajukan, mengakui penerimaan dan mengembalikan; auditor/manajemen meninjau sesuai kewenangan. Admin tidak otomatis menjadi approver bisnis dan pemohon tidak menyetujui request sendiri.
 
 ## Product Purpose
 
@@ -24,9 +24,9 @@ Aplikasi operasional internal PT MEDIA TEKNOLOGI CELEBES. Satu pinjaman mengguna
 
 ## Operating Context
 
-- Gudang/admin bekerja dengan tabel dan formulir desktop/tablet; teknisi juga menggunakan HP, kamera QR dan scanner USB mode keyboard.
+- Semua peran memakai web responsif desktop/tablet/HP. Katalog visual, pencarian dan lokasi rak membantu aktivitas harian; tabel transaksi menjadi kartu berlabel pada ponsel. Kamera QR dan scanner USB mode keyboard memiliki fallback input manual.
 - Semua transaksi memerlukan server. Gangguan jaringan harus memperlihatkan hasil yang belum pasti dan menyediakan pemeriksaan status/retry idempotent.
-- Referensi utama: dua DOCX di root. Rancangan utama memiliki addendum revisi 1.1 tanggal 16 Oktober 2026. Mockup di dalamnya adalah referensi tampilan yang harus diselaraskan dengan aturan tertulis.
+- Dua DOCX di root tetap menjadi acuan proses/bukti; rancangan utama memiliki addendum revisi 1.1 tanggal 16 Oktober 2026. Instruksi redesign pengguna 18 Oktober 2026 menggantikan gaya visual administratif dan mockup lama; acuan visual aktif adalah DESIGN.md dan docs/design/REDESIGN_2026_10.md.
 - Finance dan Absensi menjadi referensi pola internal. Inventory memiliki repository/database/session/storage terpisah; tidak ada SSO atau sinkronisasi data lintas aplikasi pada baseline.
 
 ## Capabilities and Constraints
@@ -47,14 +47,16 @@ Tidak termasuk V1: procurement penuh, BOM/work order, valuasi lanjutan, jurnal F
 
 ## Brand Commitments
 
-Nama di UI adalah **MTC Inventory**; nama perusahaan **PT MEDIA TEKNOLOGI CELEBES**. Pengguna meminta desain mengikuti DOCX. Pertahankan identitas admin biru tua dan teknisi hijau, struktur kerja dan bahasa Indonesia. Detail visual ada di DESIGN.md. “InventorPro”, kontak, angka dan nama contoh pada mockup tidak menjadi identitas/data produksi.
+Nama di UI adalah **MTC Inventory**; nama perusahaan **PT MEDIA TEKNOLOGI CELEBES**. Pengguna mengganti arah visual DOCX menjadi clean, modern, fluid dan nyaman pada ponsel, sambil mempertahankan biru dan logo MTC. Semua peran berbagi shell terang, katalog visual, pencarian dan navigasi bawah pada ponsel. Plus Jakarta Sans lokal menggantikan Arial. Struktur proses dan bahasa Indonesia tetap dipertahankan. Detail visual aktif ada di DESIGN.md. “InventorPro”, kontak, angka dan nama contoh pada mockup tidak menjadi identitas/data produksi.
 
 ## Evidence on Hand
 
 - Rancangan_Terpadu_Sistem_Inventory_PT_MTC_Revisi_Nota_Terintegrasi.docx: SOP, role, layar, warna, field, UAT dan addendum nota.
 - Template_Nota_Terintegrasi_Peminjaman_Pengembalian_MTC.docx: judul, placeholder, dua tahap dan bagian A–G.
 - docs/design/references/: lima gambar asli yang diekstrak tanpa perubahan dari DOCX utama. Inventaris sumber dan konflik terdapat di docs/design/SOURCE_MAP.md.
-- Belum tersedia dalam Inventory: logo perusahaan mandiri yang telah disahkan, foto barang produksi, master/saldo fisik, data pengguna operasional, penetapan QMS dan bukti uji perangkat. Logo/gambar bangunan dalam mockup bukan asset produksi yang dapat dipotong dan dipakai.
+- Logo MTC tersedia sebagai public/logo.jpg dan digunakan pada shell/login; bukan potongan logo ilustratif mockup. Foto barang produksi, master/saldo fisik, data pengguna operasional, penetapan QMS dan bukti uji perangkat tetap memerlukan penerimaan sesuai STATUS_IMPLEMENTASI.md.
+- Implementasi lokal dan review render redesign tercatat pada STATUS_IMPLEMENTASI.md serta .impeccable/review/redesign/. Bukti ini bukan kelulusan seluruh V1/UAT atau persetujuan penggunaan data operasional.
+- Workbook daftar barang hanya dipakai memahami kategori/lokasi dan frekuensi pekerjaan; tidak menjadi impor/posting saldo produksi pada batch desain.
 
 ## Product Principles
 
@@ -70,4 +72,4 @@ DOCX mewajibkan status dengan teks dan warna, label form terlihat, validasi inli
 
 ## Open Decisions
 
-D1–D12 pada rencana tetap berlaku; terutama deadline reservasi, alokasi unit, emergency override, exception, acknowledgement, kode/revisi/retensi QMS dan freeze opname. Timezone kerja diusulkan Asia/Makassar, belum dikonfirmasi. Detail visual yang belum ditentukan DOCX ditetapkan sebagai baseline implementasi di DESIGN.md dan bukan kebijakan operasional yang disahkan. Keputusan terbuka tidak menghalangi pengerjaan dengan data simulasi, tetapi memblokir gate data riil yang terkait.
+D1–D12 pada rencana tetap berlaku; terutama deadline reservasi, alokasi unit, emergency override, exception, acknowledgement, kode/revisi/retensi QMS dan freeze opname. Timezone kerja diusulkan Asia/Makassar, belum dikonfirmasi. Detail visual kini mengikuti instruksi redesign pengguna dan DESIGN.md; perubahan tampilan tidak menetapkan kebijakan operasional yang belum disahkan. Keputusan terbuka tidak menghalangi pengerjaan dengan data simulasi, tetapi memblokir gate data riil yang terkait.

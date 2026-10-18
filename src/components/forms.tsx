@@ -158,124 +158,6 @@ export function ActionForm({
           {state.success}
         </div>
       )}
-      <div className="form-grid">
-        {fields.map((field) => (
-          <label
-            key={field.name}
-            className={field.type === "textarea" ? "full" : ""}
-          >
-            <span>
-              {field.label}
-              {field.required && <span className="required"> (Wajib)</span>}
-            </span>
-            {field.type === "multiselect" ? (
-              <select
-                multiple
-                id={`${prefix}-${field.name}`}
-                required={field.required}
-                aria-invalid={!!state.fieldErrors?.[field.name]}
-                aria-describedby={
-                  state.fieldErrors?.[field.name]
-                    ? `${prefix}-${field.name}-error`
-                    : undefined
-                }
-                size={5}
-                name={field.name}
-                value={values[field.name] as string[]}
-                onChange={(e) =>
-                  change(
-                    field.name,
-                    Array.from(e.target.selectedOptions, (o) => o.value),
-                  )
-                }
-              >
-                {field.options?.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.name}
-                  </option>
-                ))}
-              </select>
-            ) : field.type === "select" ? (
-              <select
-                id={`${prefix}-${field.name}`}
-                aria-invalid={!!state.fieldErrors?.[field.name]}
-                aria-describedby={
-                  state.fieldErrors?.[field.name]
-                    ? `${prefix}-${field.name}-error`
-                    : undefined
-                }
-                name={field.name}
-                required={field.required}
-                value={String(values[field.name] ?? "")}
-                onChange={(e) => change(field.name, e.target.value)}
-              >
-                <option value="">Pilih {field.label.toLowerCase()}</option>
-                {field.options?.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.name}
-                  </option>
-                ))}
-              </select>
-            ) : field.type === "checkbox" ? (
-              <input
-                type="checkbox"
-                name={field.name}
-                checked={!!values[field.name]}
-                onChange={(e) => change(field.name, e.target.checked)}
-              />
-            ) : field.type === "textarea" ? (
-              <textarea
-                id={`${prefix}-${field.name}`}
-                aria-invalid={!!state.fieldErrors?.[field.name]}
-                aria-describedby={
-                  state.fieldErrors?.[field.name]
-                    ? `${prefix}-${field.name}-error`
-                    : undefined
-                }
-                name={field.name}
-                required={field.required}
-                maxLength={5000}
-                value={String(values[field.name] ?? "")}
-                onChange={(e) => change(field.name, e.target.value)}
-              />
-            ) : field.type === "photo" ? (
-              <Photo
-                value={String(values[field.name] || "")}
-                onChange={(v) => change(field.name, v)}
-              />
-            ) : (
-              <input
-                id={`${prefix}-${field.name}`}
-                aria-invalid={!!state.fieldErrors?.[field.name]}
-                aria-describedby={
-                  state.fieldErrors?.[field.name]
-                    ? `${prefix}-${field.name}-error`
-                    : undefined
-                }
-                name={field.name}
-                type={field.type || "text"}
-                step={field.type === "number" ? "0.0001" : undefined}
-                min={field.type === "number" ? "0" : undefined}
-                required={field.required}
-                value={String(values[field.name] ?? "")}
-                onChange={(e) => change(field.name, e.target.value)}
-                autoComplete={
-                  field.type === "password" ? "new-password" : undefined
-                }
-              />
-            )}
-            {state.fieldErrors?.[field.name] && (
-              <small
-                className="field-error"
-                id={`${prefix}-${field.name}-error`}
-              >
-                {state.fieldErrors[field.name]}
-              </small>
-            )}
-            {field.help && <small>{field.help}</small>}
-          </label>
-        ))}
-      </div>
       {items && (
         <fieldset>
           <legend>Daftar barang</legend>
@@ -304,10 +186,14 @@ export function ActionForm({
                       )
                     }
                   >
-                    <option value="">Pilih SKU</option>
+                    <option value="">Pilih barang</option>
                     {items.map((i) => (
                       <option key={i.id} value={i.id}>
-                        {i.sku} — {i.name} ({i.tracking})
+                        {i.sku} — {i.name} (
+                        {i.tracking === "quantity"
+                          ? "komponen / bahan"
+                          : "alat / aset"}
+                        )
                       </option>
                     ))}
                   </select>
@@ -358,7 +244,9 @@ export function ActionForm({
                     · {String(item.specifications || "Spesifikasi belum diisi")}
                     .{" "}
                     {item.tracking === "serialized"
-                      ? "Identitas unit dicatat satu per baris penerimaan."
+                      ? action === "receipt"
+                        ? "Satu unit alat per baris penerimaan."
+                        : "Alat dikembalikan setelah digunakan."
                       : "Jumlah menggunakan satuan dasar katalog."}
                   </small>
                 )}
@@ -482,6 +370,124 @@ export function ActionForm({
           </button>
         </fieldset>
       )}
+      <div className="form-grid">
+        {fields.map((field) => (
+          <label
+            key={field.name}
+            className={field.type === "textarea" ? "full" : ""}
+          >
+            <span>
+              {field.label}
+              {field.required && <span className="required"> (Wajib)</span>}
+            </span>
+            {field.type === "multiselect" ? (
+              <select
+                multiple
+                id={`${prefix}-${field.name}`}
+                required={field.required}
+                aria-invalid={!!state.fieldErrors?.[field.name]}
+                aria-describedby={
+                  state.fieldErrors?.[field.name]
+                    ? `${prefix}-${field.name}-error`
+                    : undefined
+                }
+                size={5}
+                name={field.name}
+                value={values[field.name] as string[]}
+                onChange={(e) =>
+                  change(
+                    field.name,
+                    Array.from(e.target.selectedOptions, (o) => o.value),
+                  )
+                }
+              >
+                {field.options?.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name}
+                  </option>
+                ))}
+              </select>
+            ) : field.type === "select" ? (
+              <select
+                id={`${prefix}-${field.name}`}
+                aria-invalid={!!state.fieldErrors?.[field.name]}
+                aria-describedby={
+                  state.fieldErrors?.[field.name]
+                    ? `${prefix}-${field.name}-error`
+                    : undefined
+                }
+                name={field.name}
+                required={field.required}
+                value={String(values[field.name] ?? "")}
+                onChange={(e) => change(field.name, e.target.value)}
+              >
+                <option value="">Pilih {field.label.toLowerCase()}</option>
+                {field.options?.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name}
+                  </option>
+                ))}
+              </select>
+            ) : field.type === "checkbox" ? (
+              <input
+                type="checkbox"
+                name={field.name}
+                checked={!!values[field.name]}
+                onChange={(e) => change(field.name, e.target.checked)}
+              />
+            ) : field.type === "textarea" ? (
+              <textarea
+                id={`${prefix}-${field.name}`}
+                aria-invalid={!!state.fieldErrors?.[field.name]}
+                aria-describedby={
+                  state.fieldErrors?.[field.name]
+                    ? `${prefix}-${field.name}-error`
+                    : undefined
+                }
+                name={field.name}
+                required={field.required}
+                maxLength={5000}
+                value={String(values[field.name] ?? "")}
+                onChange={(e) => change(field.name, e.target.value)}
+              />
+            ) : field.type === "photo" ? (
+              <Photo
+                value={String(values[field.name] || "")}
+                onChange={(v) => change(field.name, v)}
+              />
+            ) : (
+              <input
+                id={`${prefix}-${field.name}`}
+                aria-invalid={!!state.fieldErrors?.[field.name]}
+                aria-describedby={
+                  state.fieldErrors?.[field.name]
+                    ? `${prefix}-${field.name}-error`
+                    : undefined
+                }
+                name={field.name}
+                type={field.type || "text"}
+                step={field.type === "number" ? "0.0001" : undefined}
+                min={field.type === "number" ? "0" : undefined}
+                required={field.required}
+                value={String(values[field.name] ?? "")}
+                onChange={(e) => change(field.name, e.target.value)}
+                autoComplete={
+                  field.type === "password" ? "new-password" : undefined
+                }
+              />
+            )}
+            {state.fieldErrors?.[field.name] && (
+              <small
+                className="field-error"
+                id={`${prefix}-${field.name}-error`}
+              >
+                {state.fieldErrors[field.name]}
+              </small>
+            )}
+            {field.help && <small>{field.help}</small>}
+          </label>
+        ))}
+      </div>
       {children}
       <div className="form-footer">
         <button disabled={pending} type="submit">
@@ -490,7 +496,7 @@ export function ActionForm({
         <span aria-live="polite">
           {pending
             ? "Permintaan sedang diproses. Jangan tutup halaman."
-            : "Perubahan divalidasi dan dicatat oleh server."}
+            : "Periksa kembali sebelum menyimpan."}
         </span>
       </div>
     </form>

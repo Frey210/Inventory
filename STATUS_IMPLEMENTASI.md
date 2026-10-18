@@ -39,3 +39,15 @@ Akun awal dibuat dengan password baru pada `account.md` lokal, bukan password Ab
 ## Handoff
 
 Jangan menghapus banner persiapan atau memasukkan stok riil hanya karena service sehat. Tutup keputusan D1–D12 yang relevan, master/saldo/loan pembukaan, QMS, backup/pemulihan, UAT dan penanggung jawab operasi. Lanjutkan acceptance tersisa berdasarkan backlog asli; jangan menandai INV-01–32 selesai secara massal.
+
+## Batch redesign untuk startup IoT (18 Oktober 2026)
+
+Arahan pengguna mengganti baseline tampilan lama: modern/visual, biru dan logo MTC, nyaman di ponsel, satu gudang. Alur utama terkonfirmasi: ambil komponen kecil dan pinjam alat. Backlog terdampak INV-04–06, INV-10, INV-15, INV-25 dan tampilan lintas modul. Acuan keputusan: `docs/design/REDESIGN_2026_10.md`.
+
+Implementasi: shell terang/menu berkelompok; navigasi bawah semua role; beranda pencarian dan dua aksi; grafik jumlah SKU per kategori; katalog kartu/daftar dengan filter kategori/rak/tracking/stok; detail visual; tabel menjadi kartu berlabel di HP; form barang mendahului metadata; mode komponen tanpa tanggal kembali. `/admin/requests/new` memakai service permintaan yang sama untuk admin/gudang, tanpa self-approval atau posting mandiri; auditor tetap baca-saja. Pergantian mode mereset form agar pilihan komponen tidak terbawa ke form alat. Font Plus Jakarta Sans dan lisensi OFL disimpan lokal; tidak ada dependensi runtime baru atau migration.
+
+Verifikasi lokal: lint/typecheck/build produksi lulus; Playwright lama dan tes katalog baru lulus. Tes baru membuktikan filter, unit kalibrasi kedaluwarsa tidak tersedia, prefill barang, pengajuan admin tidak mengubah stok, mode alat mewajibkan tanggal kembali, responsif 375/390/768/1024/1440 dan target aksi mobile. Capture produksi desktop1440/HP390 tersimpan lokal di `.impeccable/review/redesign/`. Review visual independen menyatakan temuan selesai setelah satu batch perbaikan. Detektor hanya memperingatkan font/tangga token DESIGN lama; DESIGN dan sidecar telah disinkronkan oleh documenter. Review akhir: ship untuk pilot. Sembilan tes domain/integrasi lulus; suite dijalankan berurutan untuk menghindari konflik antarfixture pada satu DB, sementara skenario concurrency di dalam suite tetap memakai koneksi terpisah.
+
+Excel `list nama barang .xlsx` dibaca sebagai konteks kategori/lokasi. Tidak di-posting menjadi stok; file sumber tetap lokal, tidak masuk repository/image. Foto/angka yang belum ada di produksi tidak diganti data simulasi. Data screenshot berasal dari DB uji terisolasi.
+
+Rilis redesign: menunggu commit/push/CI dan aktivasi image baru; metadata rilis final diperbarui setelah verifikasi host. Gate UAT/data fisik/backup off-host rutin dari bagian sebelumnya tetap terbuka.

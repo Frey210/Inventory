@@ -19,7 +19,7 @@ Gunakan dokumen ini sebagai konteks untuk semua perubahan pada aplikasi Inventor
 - Untuk pekerjaan kode aplikasi, gunakan `$ponytail:ponytail` level full untuk menjaga perubahan sekecil mungkin dan tetap aman. Terapkan validasi, error handling, keamanan, aksesibilitas, serta tes logika non-trivial yang diwajibkan skill.
 - Untuk komunikasi langsung, pertahankan gaya ringkas `$caveman` dalam bahasa pengguna. Kode, nama API, error, konfigurasi, dan artefak proyek tetap memakai bahasa normal yang dapat dibaca sesuai pengecualian Ponytail.
 - Untuk setiap perubahan frontend, desain halaman, atau interaksi pengguna, baca dan terapkan `$ui-ux-pro-max` **dan** `$impeccable`.
-- Desain mengikuti DOCX yang diberikan pengguna. Pertahankan token/shell/komponen pada DESIGN.md, brief target pada `.impeccable/surfaces/`, dan kontrak UI_SPEC. Detail tambahan ditandai baseline engineering; jangan membuat redesign atau menyalin brand/data/logo ilustratif mockup. Referensi gambar hanya untuk development, tidak disalin ke public aplikasi.
+- Arahan redesign pengguna 18 Oktober 2026 menggantikan baseline visual DOCX: clean, modern, visual dan nyaman di ponsel, tetap biru dan logo MTC. Ikuti DESIGN.md, `docs/design/REDESIGN_2026_10.md`, brief target pada `.impeccable/surfaces/` dan kontrak UI_SPEC. Startup IoT satu gudang memprioritaskan ambil komponen kecil dan pinjam alat. SOP/transaksi serta template nota DOCX tetap berlaku; jangan menyalin brand/data/logo ilustratif mockup. Referensi gambar hanya untuk development, tidak disalin ke public aplikasi.
 - Tambahan pengguna: Master Data admin sebagai pusat setup lokasi, jenis, kategori/default, satuan, katalog/foto sebelum penambahan inventory; ikuti `docs/design/MASTER_DATA_SPEC.md`. Katalog SKU dipakai bersama form penerimaan, tanpa data ganda; simpan/default master tidak mengubah stok atau bukti historis.
 - Pada setiap sesi frontend, jalankan `impeccable context` sekali dari direktori proyek melalui `C:\Users\ASUS TUF\.agents\skills\impeccable\scripts\impeccable.cmd`. Ikuti surface brief dan DESIGN.md/PRODUCT.md jika ada. Baca playbook yang cocok; tepat sebelum mengedit UI baca `reference/craft-floor.md`. Untuk UI yang sudah ada, pertahankan perilaku dan identitas yang masih berlaku kecuali pengguna meminta redesign.
 - Stack perencanaan revisi: Next.js App Router, React, TypeScript strict, Tailwind 4, Prisma 7 dan PostgreSQL. Gunakan panduan Next/React yang sesuai versi terpin; rekomendasi Laravel/Livewire lama telah digantikan. Verifikasi versi/kompatibilitas saat bootstrap, bukan menyalin versi manifest aplikasi tetangga.
@@ -61,3 +61,13 @@ Repository `headroomlabs-ai/headroom` menyediakan tool/proxy agent, bukan Codex 
 - Gunakan Better Auth untuk autentikasi/MFA, pg-boss untuk job dengan outbox atomik dan handler idempotent; spike kompatibilitas sebelum fitur banyak. Worker Node/Chromium dibangun dan diuji terpisah dari output standalone web.
 - Implementasi penuh dikerjakan Codex per batch reviewable; pemilik/gudang menetapkan kebijakan dan menerima UAT/data fisik. Setelah bootstrap, baca/perbarui STATUS_IMPLEMENTASI.md setiap sesi dengan ID backlog, keputusan terbuka, migration dan bukti tes. Jangan mengklaim gate lulus tanpa bukti.
 - Estimasi lama 78 hari adalah baseline manual/bobot relatif, bukan durasi Codex. Ukur ulang setelah lima batch dan tiap gate; kalender pada dokumen adalah hipotesis, bukan komitmen.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

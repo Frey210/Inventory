@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  devIndicators: false,
   outputFileTracingExcludes: {
     "/*": [
       "./.local/**/*",
@@ -10,6 +11,7 @@ const config: NextConfig = {
       "./.env*",
       "./docs/**/*",
       "./*.docx",
+      "./*.xlsx",
     ],
   },
   experimental: { serverActions: { bodySizeLimit: "6mb" } },

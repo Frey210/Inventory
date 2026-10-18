@@ -1,6 +1,32 @@
 import Link from "next/link";
 import Image from "next/image";
 import QRCode from "qrcode";
+import {
+  Boxes,
+  Radio,
+  CircuitBoard,
+  Wrench,
+  ArrowUpRight,
+  ArrowDownToLine,
+  Plus,
+  Clock3,
+  ClipboardCheck,
+  RotateCcw,
+  MapPin,
+  ArrowRight,
+  LayoutGrid,
+  List,
+  SlidersHorizontal,
+  PackageCheck,
+} from "lucide-react";
+import {
+  ItemVisual,
+  SearchBox,
+  EmptyState,
+  LocationTag,
+  SectionLink,
+} from "@/components/inventory-visuals";
+import { eligible } from "@/server/rules";
 import { redirect, notFound } from "next/navigation";
 import { db, Prisma } from "@/server/db";
 import { getSettings } from "@/server/settings";
@@ -53,7 +79,22 @@ export default async function Page({
               <h2 style={{ marginTop: 24 }}>MTC Inventory</h2>
               <p>PT MEDIA TEKNOLOGI CELEBES</p>
             </div>
-            <p>Satu tempat untuk persediaan, aset dan bukti serah terima.</p>
+            <div className="login-illustration">
+              <CircuitBoard size={72} strokeWidth={1} aria-hidden />
+              <Wrench size={40} strokeWidth={1.2} aria-hidden />
+              <Radio size={42} strokeWidth={1.2} aria-hidden />
+            </div>
+            <div>
+              <h2>
+                Barang tertata.
+                <br />
+                Tim siap berkarya.
+              </h2>
+              <p>
+                Temukan komponen dan alat yang dibutuhkan untuk ide IoT
+                berikutnya.
+              </p>
+            </div>
           </section>
           <section className="login-content">
             <h1>{path === "/login" ? "Selamat datang" : "Pemulihan akses"}</h1>
@@ -304,6 +345,24 @@ export default async function Page({
         ),
     );
     const scope = tech ? { actorId: user.id } : {};
+    const available = (item: (typeof items)[number], locationId?: string) =>
+      item.tracking === "quantity"
+        ? item.balances
+            .filter((b) => !locationId || b.locationId === locationId)
+            .reduce(
+              (n, b) => n.add(b.onHand.sub(b.reserved)),
+              new Prisma.Decimal(0),
+            )
+        : new Prisma.Decimal(
+            item.assets.filter(
+              (a) =>
+                eligible(a) && (!locationId || a.locationId === locationId),
+            ).length,
+          );
+    const number = (value: Prisma.Decimal | number) =>
+      new Intl.NumberFormat("id-ID", { maximumFractionDigits: 4 }).format(
+        Number(value),
+      );
     if (path === "/profile")
       return (
         <>
@@ -346,7 +405,7 @@ export default async function Page({
         </>
       );
     if (path === "/admin/dashboard" || path === "/me") {
-      const [pending, loans, low, inspection, overdue] = await Promise.all([
+      const [pending, loans, inspection, overdue, recent] = await Promise.all([
         db.document.count({
           where: { kind: "request", status: "submitted", ...scope },
         }),
@@ -354,10 +413,11 @@ export default async function Page({
           where: { status: "active", ...(tech ? { borrowerId: user.id } : {}) },
           include: { lines: true },
           orderBy: { dueAt: "asc" },
-          take: 8,
+          take: 5,
         }),
-        db.balance.findMany({ include: { item: true } }),
-        db.asset.count({ where: { availability: "pending_inspection" } }),
+        tech
+          ? Promise.resolve(0)
+          : db.asset.count({ where: { availability: "pending_inspection" } }),
         db.loan.count({
           where: {
             status: "active",
@@ -366,96 +426,322 @@ export default async function Page({
             ...(tech ? { borrowerId: user.id } : {}),
           },
         }),
+        db.document.findMany({
+          where: scope,
+          orderBy: { createdAt: "desc" },
+          take: 4,
+        }),
       ]);
+      const activeItems = items.filter((i) => i.active);
+      const low = activeItems.filter((i) => available(i).lte(i.minStock));
+      const categories = masters
+        .filter((m) => m.kind === "category" && m.active)
+        .map((m) => ({
+          ...m,
+          count: activeItems.filter((i) => i.categoryId === m.id).length,
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+      const locations = masters.filter(
+        (m) =>
+          m.kind === "location" &&
+          m.active &&
+          !masters.some((child) => child.parentId === m.id && child.active),
+      );
       return (
         <>
           <Heading
-            title={tech ? "Beranda" : "Dashboard"}
+            title={`Halo, ${user.name.split(" ")[0]}!`}
             description={
               tech
-                ? `Halo, ${user.name}. Pantau request dan pinjaman Anda.`
-                : "Ringkasan pekerjaan gudang dan kondisi inventory."
+                ? "Komponen untuk ide berikutnya. Alat untuk menyelesaikannya."
+                : "Semua barang dan pekerjaan gudang, dalam satu tempat."
             }
-            href={tech ? "/me/requests/new" : "/admin/receipts/new"}
-            action={tech ? "Buat Request" : "Barang Masuk"}
           />
-          <div className="stats">
-            <Link className="stat" href={tech ? "/me/history" : "/admin/items"}>
-              SKU aktif<strong>{items.filter((i) => i.active).length}</strong>
-              <small>Katalog barang</small>
+          <section className="start-work">
+            <div className="start-copy">
+              <h2>Apa yang ingin dikerjakan?</h2>
+              <p>
+                Temukan komponen, cek letak barang, atau pinjam alat untuk
+                proyek tim.
+              </p>
+              <form action={`${base}/items`} className="home-search">
+                <SearchBox placeholder="Cari ESP32, sensor, solder…" />
+                <button aria-label="Cari barang">
+                  <ArrowRight size={22} aria-hidden />
+                </button>
+              </form>
+            </div>
+            <div className="quick-actions">
+              <Link
+                href={
+                  tech
+                    ? "/me/requests/new?mode=quantity"
+                    : canWrite
+                      ? "/admin/requests/new?mode=quantity"
+                      : "/admin/items?tracking=quantity"
+                }
+              >
+                <CircuitBoard size={27} strokeWidth={1.5} aria-hidden />
+                <span>
+                  <strong>
+                    {tech || canWrite ? "Ambil komponen" : "Lihat komponen"}
+                  </strong>
+                  <small>Untuk dipakai di proyek</small>
+                </span>
+                <ArrowUpRight size={20} aria-hidden />
+              </Link>
+              <Link
+                href={
+                  tech
+                    ? "/me/requests/new?mode=serialized"
+                    : canWrite
+                      ? "/admin/requests/new?mode=serialized"
+                      : "/admin/items?tracking=serialized"
+                }
+              >
+                <Wrench size={27} strokeWidth={1.5} aria-hidden />
+                <span>
+                  <strong>
+                    {tech || canWrite ? "Pinjam alat" : "Lihat alat"}
+                  </strong>
+                  <small>Gunakan, lalu kembalikan</small>
+                </span>
+                <ArrowUpRight size={20} aria-hidden />
+              </Link>
+            </div>
+          </section>
+          <div className="stats dashboard-stats">
+            <Link className="stat" href={`${base}/items`}>
+              <span className="stat-label">
+                <Boxes size={20} aria-hidden />
+                Jenis barang
+              </span>
+              <strong>{activeItems.length}</strong>
+              <small>Di katalog gudang</small>
             </Link>
             <Link
               className="stat"
-              href={base + (tech ? "/history" : "/requests")}
+              href={tech ? "/me/history" : "/admin/requests"}
             >
-              Request menunggu<strong>{pending}</strong>
-              <small>Belum diputuskan</small>
+              <span className="stat-label">
+                <ClipboardCheck size={20} aria-hidden />
+                Permintaan
+              </span>
+              <strong>{pending}</strong>
+              <small>Menunggu persetujuan</small>
             </Link>
-            <Link className="stat" href={base + "/loans?overdue=true"}>
-              Overdue
+            <Link className="stat" href={`${base}/loans?overdue=true`}>
+              <span className="stat-label">
+                <Clock3 size={20} aria-hidden />
+                Lewat tenggat
+              </span>
               <strong>{overdue}</strong>
-              <small>Belum diterima fisik</small>
+              <small>Perlu dikembalikan</small>
             </Link>
-            {!tech && (
-              <Link className="stat" href="/admin/returns">
-                Menunggu inspeksi<strong>{inspection}</strong>
-                <small>Unit belum tersedia</small>
-              </Link>
-            )}
+            <Link className="stat" href={tech ? "/me/loans" : "/admin/returns"}>
+              <span className="stat-label">
+                <RotateCcw size={20} aria-hidden />
+                {tech ? "Pinjaman saya" : "Perlu diperiksa"}
+              </span>
+              <strong>
+                {tech
+                  ? await db.loan.count({
+                      where: { status: "active", borrowerId: user.id },
+                    })
+                  : inspection}
+              </strong>
+              <small>{tech ? "Sedang digunakan" : "Barang kembali"}</small>
+            </Link>
           </div>
-          <div className="columns">
-            <section className="panel">
-              <h2>Pinjaman aktif & jatuh tempo</h2>
-              <Table
-                headers={["LOAN", "Rencana kembali", "Belum kembali"]}
-                rows={loans.map((l) => [
-                  <Link key={l.id} href={`${base}/loans/${l.id}`}>
-                    {l.number}
-                  </Link>,
-                  <DateLabel key="date" value={l.dueAt} />,
-                  l.lines.filter((x) => !x.receivedAt).length,
-                ])}
-              />
-            </section>
-            <section className="panel">
-              <h2>{tech ? "Tindakan berikutnya" : "Stok menipis"}</h2>
-              {tech ? (
-                <div className="actions">
-                  <Link href="/me/pickups" className="button">
-                    Ambil Barang Disetujui
-                  </Link>
-                  <Link href="/me/loans" className="secondary button">
-                    Ajukan Pengembalian
-                  </Link>
-                  <Link href="/me/consumable-returns/new">
-                    Pengembalian Sisa
-                  </Link>
+          <div className="dashboard-grid">
+            <section className="panel catalog-overview">
+              <div className="section-heading">
+                <h2>Isi gudang</h2>
+                <SectionLink href={`${base}/items`}>Lihat barang</SectionLink>
+              </div>
+              {categories.length ? (
+                <div className="category-chart">
+                  {categories.map((c) => (
+                    <Link key={c.id} href={`${base}/items?category=${c.id}`}>
+                      <ItemVisual name={c.name} />
+                      <span>
+                        <strong>{c.name}</strong>
+                        <span className="category-track">
+                          <span
+                            style={{
+                              width: `${Math.max(3, (c.count / Math.max(1, activeItems.length)) * 100)}%`,
+                            }}
+                          />
+                        </span>
+                      </span>
+                      <b>
+                        {c.count}
+                        <small> jenis</small>
+                      </b>
+                    </Link>
+                  ))}
                 </div>
               ) : (
-                <Table
-                  headers={["Barang", "Tersedia", "Satuan"]}
-                  rows={low
-                    .filter((b) =>
-                      b.onHand.sub(b.reserved).lte(b.item.minStock),
-                    )
-                    .slice(0, 8)
-                    .map((b) => [
-                      b.item.name,
-                      b.onHand.sub(b.reserved).toString(),
-                      lookup(b.item.unitId),
-                    ])}
+                <EmptyState
+                  title="Gudang siap ditata"
+                  description={
+                    canWrite
+                      ? "Mulai dengan lokasi rak dan kategori, lalu tambahkan barang tim."
+                      : "Petugas sedang menyiapkan katalog barang. Barang akan tampil di sini setelah ditambahkan."
+                  }
+                  href={canWrite ? "/admin/masters" : undefined}
+                  action="Siapkan gudang"
+                />
+              )}
+            </section>
+            <section className="panel">
+              <div className="section-heading">
+                <h2>{tech ? "Siap melanjutkan?" : "Perlu perhatian"}</h2>
+                <span className="section-icon">
+                  <ClipboardCheck size={20} aria-hidden />
+                </span>
+              </div>
+              <div className="attention-list">
+                <Link href={tech ? "/me/pickups" : "/admin/requests"}>
+                  <span className="attention-icon">
+                    <ClipboardCheck size={22} aria-hidden />
+                  </span>
+                  <span>
+                    <strong>
+                      {tech ? "Ambil barang disetujui" : "Tinjau permintaan"}
+                    </strong>
+                    <small>
+                      {tech
+                        ? "Konfirmasi penerimaan dari petugas"
+                        : `${pending} permintaan menunggu`}
+                    </small>
+                  </span>
+                  <ArrowRight size={18} aria-hidden />
+                </Link>
+                <Link href={tech ? "/me/loans" : "/admin/items?stock=low"}>
+                  <span className="attention-icon warm">
+                    <CircuitBoard size={22} aria-hidden />
+                  </span>
+                  <span>
+                    <strong>
+                      {tech ? "Kembalikan alat" : "Cek stok menipis"}
+                    </strong>
+                    <small>
+                      {tech
+                        ? "Lihat alat yang sedang digunakan"
+                        : `${low.length} jenis mencapai batas minimum`}
+                    </small>
+                  </span>
+                  <ArrowRight size={18} aria-hidden />
+                </Link>
+                {!tech && (
+                  <Link href="/admin/receipts/new">
+                    <span className="attention-icon green">
+                      <ArrowDownToLine size={22} aria-hidden />
+                    </span>
+                    <span>
+                      <strong>Catat barang masuk</strong>
+                      <small>Tambahkan penerimaan baru</small>
+                    </span>
+                    <Plus size={18} aria-hidden />
+                  </Link>
+                )}
+              </div>
+            </section>
+            <section className="panel">
+              <div className="section-heading">
+                <h2>{tech ? "Alat yang dipinjam" : "Peminjaman aktif"}</h2>
+                <SectionLink href={`${base}/loans`}>Semua</SectionLink>
+              </div>
+              {loans.length ? (
+                <div className="activity-list">
+                  {loans.map((l) => (
+                    <Link key={l.id} href={`${base}/loans/${l.id}`}>
+                      <span className="activity-icon">
+                        <Wrench size={21} aria-hidden />
+                      </span>
+                      <span>
+                        <strong>{l.number}</strong>
+                        <small>
+                          Kembali <DateLabel value={l.dueAt} />
+                        </small>
+                      </span>
+                      <span className="count-label">
+                        {l.lines.filter((x) => !x.receivedAt).length} alat
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title="Belum ada alat dipinjam"
+                  description="Peminjaman aktif dan tanggal pengembaliannya akan tampil di sini."
+                />
+              )}
+            </section>
+            <section className="panel">
+              <div className="section-heading">
+                <h2>Aktivitas terbaru</h2>
+                <SectionLink href={tech ? "/me/history" : "/admin/receipts"}>
+                  Lihat
+                </SectionLink>
+              </div>
+              {recent.length ? (
+                <div className="activity-list">
+                  {recent.map((d) => (
+                    <Link
+                      key={d.id}
+                      href={`${base}/${tech ? "requests" : d.kind === "receipt" ? "receipts" : "requests"}/${d.id}`}
+                    >
+                      <span className="activity-icon">
+                        <PackageCheck size={21} aria-hidden />
+                      </span>
+                      <span>
+                        <strong>
+                          {d.kind === "receipt"
+                            ? "Barang masuk"
+                            : "Permintaan barang"}
+                        </strong>
+                        <small>
+                          {d.number} · <DateLabel value={d.createdAt} />
+                        </small>
+                      </span>
+                      <Badge value={d.status} />
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title="Belum ada aktivitas"
+                  description="Penerimaan dan permintaan barang akan tercatat di sini."
                 />
               )}
             </section>
           </div>
-          {!tech && (
-            <section className="panel">
-              <h2>Mulai dari setup yang lengkap</h2>
-              <p>
-                Siapkan lokasi, jenis, kategori, satuan dan katalog foto sebelum
-                mencatat penerimaan.
-              </p>
-              <Link href="/admin/masters">Buka Master Data</Link>
+          {!!locations.length && (
+            <section className="panel location-overview">
+              <div className="section-heading">
+                <h2>
+                  <MapPin size={20} aria-hidden />
+                  Jelajahi rak & penyimpanan
+                </h2>
+                <SectionLink
+                  href={tech ? "/me/items" : "/admin/masters?tab=location"}
+                >
+                  Semua lokasi
+                </SectionLink>
+              </div>
+              <div className="rack-links">
+                {locations.slice(0, 12).map((m) => (
+                  <Link key={m.id} href={`${base}/items?location=${m.id}`}>
+                    <MapPin size={17} aria-hidden />
+                    <strong>{m.code}</strong>
+                    <span>{m.name}</span>
+                    <ArrowRight size={16} aria-hidden />
+                  </Link>
+                ))}
+              </div>
             </section>
           )}
         </>
@@ -577,7 +863,7 @@ export default async function Page({
         <>
           <Heading
             title="Master Data"
-            description="Siapkan referensi dan default agar penambahan inventory lebih sederhana."
+            description="Siapkan rak, kategori, dan katalog barang tim di sini."
           />
           <div className="alert">
             Urutan setup: Lokasi · Jenis · Satuan · Kategori · Katalog & Foto ·
@@ -796,78 +1082,220 @@ export default async function Page({
       );
     }
     if (path === "/admin/items" || path === "/me/items") {
-      const page = Math.max(1, Number(query.page) || 1);
-      const filtered = items.slice((page - 1) * 25, page * 25);
+      const matching = items.filter(
+        (i) =>
+          (!query.category || i.categoryId === query.category) &&
+          (!query.location ||
+            i.locationId === query.location ||
+            i.balances.some((b) => b.locationId === query.location) ||
+            i.assets.some((a) => a.locationId === query.location)) &&
+          (!query.tracking || i.tracking === query.tracking) &&
+          (!query.stock ||
+            (query.stock === "low"
+              ? available(i, query.location).lte(i.minStock)
+              : available(i, query.location).gt(0))),
+      );
+      const page = Math.max(
+        1,
+        Math.min(Math.ceil(matching.length / 24) || 1, Number(query.page) || 1),
+      );
+      const filtered = matching.slice((page - 1) * 24, page * 24);
+      const url = (overrides: Record<string, string>) =>
+        path +
+        "?" +
+        new URLSearchParams({
+          ...Object.fromEntries(
+            Object.entries(query).filter(
+              (entry): entry is [string, string] =>
+                typeof entry[1] === "string",
+            ),
+          ),
+          ...overrides,
+        }).toString();
+      const categories = masters.filter(
+        (m) => m.kind === "category" && m.active,
+      );
       return (
         <>
           <Heading
-            title={tech ? "Cari Barang" : "Inventory & Katalog"}
-            description="Katalog, foto, saldo quantity dan identitas unit aset."
+            title="Barang"
+            description="Komponen, sensor, dan alat kerja tim. Cari barang, lalu cek raknya."
             href={canWrite ? "/admin/items/new" : undefined}
-            action="Tambah Barang"
+            action="Tambah barang"
           />
-          <form className="toolbar">
-            <label>
-              Cari nama/kode
-              <input
-                name="q"
-                defaultValue={query.q}
-                placeholder="Contoh: multimeter"
-              />
+          <form className="catalog-toolbar">
+            <SearchBox value={query.q} />
+            <input type="hidden" name="tracking" value={query.tracking || ""} />
+            <input type="hidden" name="view" value={query.view || ""} />
+            <label className="filter-select">
+              <span>Kategori</span>
+              <select name="category" defaultValue={query.category || ""}>
+                <option value="">Semua kategori</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </label>
-            <button>Cari</button>
-            <Link href={path}>Hapus Filter</Link>
+            <label className="filter-select">
+              <span>Rak / lokasi</span>
+              <select name="location" defaultValue={query.location || ""}>
+                <option value="">Semua lokasi</option>
+                {options("location").map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button>
+              <SlidersHorizontal size={18} aria-hidden />
+              Terapkan
+            </button>
           </form>
-          <Table
-            headers={[
-              "Foto",
-              "Kode / Nama",
-              "Jenis",
-              "Lokasi",
-              "Tersedia",
-              "Aksi",
-            ]}
-            rows={filtered.map((i) => [
-              i.photoId ? (
-                <Image
-                  unoptimized
-                  width={64}
-                  height={64}
-                  key="photo"
-                  className="thumbnail"
-                  alt={i.name}
-                  src={`/api/files/${i.photoId}`}
-                />
-              ) : (
-                "Belum ada foto"
-              ),
-              <span key="name">
-                <strong>{i.sku}</strong>
-                <br />
-                {i.name}
-              </span>,
-              lookup(i.typeId),
-              lookup(i.locationId),
-              i.tracking === "quantity"
-                ? `${i.balances.reduce((n, b) => n.add(b.onHand.sub(b.reserved)), new Prisma.Decimal(0)).toString()} ${lookup(i.unitId)}`
-                : `${i.assets.filter((a) => a.availability === "available").length} unit`,
-              <Link key={i.id} href={`${base}/items/${i.id}`}>
-                Lihat
-              </Link>,
-            ])}
-          />
+          <div className="catalog-controls">
+            <div className="filter-chips" aria-label="Jenis tampilan barang">
+              {[
+                ["", "Semua barang"],
+                ["quantity", "Komponen & bahan"],
+                ["serialized", "Alat & aset"],
+              ].map(([v, label]) => (
+                <Link
+                  key={v}
+                  href={url({ tracking: v, page: "1" })}
+                  aria-current={
+                    (query.tracking || "") === v ? "page" : undefined
+                  }
+                >
+                  {label}
+                </Link>
+              ))}
+              <Link
+                href={url({
+                  stock: query.stock === "low" ? "" : "low",
+                  page: "1",
+                })}
+                aria-current={query.stock === "low" ? "page" : undefined}
+              >
+                Stok menipis
+              </Link>
+            </div>
+            <div className="view-switch" aria-label="Tampilan katalog">
+              <Link
+                aria-label="Tampilan kartu"
+                aria-current={query.view !== "list" ? "page" : undefined}
+                href={url({ view: "grid" })}
+              >
+                <LayoutGrid size={19} aria-hidden />
+              </Link>
+              <Link
+                aria-label="Tampilan daftar"
+                aria-current={query.view === "list" ? "page" : undefined}
+                href={url({ view: "list" })}
+              >
+                <List size={20} aria-hidden />
+              </Link>
+            </div>
+          </div>
+          <div className="catalog-summary">
+            <span>{matching.length} barang ditemukan</span>
+            {Object.values(query).some(Boolean) && (
+              <Link href={path}>Atur ulang filter</Link>
+            )}
+          </div>
+          {!filtered.length ? (
+            <section className="panel">
+              <EmptyState
+                title={
+                  items.length || query.q
+                    ? "Barang tidak ditemukan"
+                    : "Mulai isi katalog tim"
+                }
+                description={
+                  query.q || query.category || query.location
+                    ? "Coba nama lain atau atur ulang filter pencarian."
+                    : canWrite
+                      ? "Siapkan rak dan kategori di Master Data, lalu tambahkan barang. Foto dapat dilengkapi nanti."
+                      : "Katalog sedang disiapkan petugas. Silakan cek kembali nanti."
+                }
+                href={canWrite && !query.q ? "/admin/items/new" : path}
+                action={
+                  canWrite && !query.q ? "Tambah barang" : "Lihat semua barang"
+                }
+              />
+            </section>
+          ) : (
+            <div
+              className={`inventory-grid ${query.view === "list" ? "inventory-list" : ""}`}
+            >
+              {filtered.map((i) => {
+                const qty = available(i, query.location),
+                  empty = qty.lte(0),
+                  low = qty.lte(i.minStock);
+                return (
+                  <Link
+                    className="inventory-card"
+                    href={`${base}/items/${i.id}`}
+                    key={i.id}
+                  >
+                    <div className="item-media">
+                      <ItemVisual
+                        name={`${i.name} ${lookup(i.categoryId)}`}
+                        photoId={i.photoId}
+                      />
+                      <span
+                        className={`stock-status ${empty ? "out" : low ? "low" : ""}`}
+                      >
+                        <span />
+                        {empty ? "Habis" : low ? "Menipis" : "Tersedia"}
+                      </span>
+                    </div>
+                    <div className="item-info">
+                      <small className="item-code">{i.sku}</small>
+                      <h2>{i.name}</h2>
+                      <span className="item-category">
+                        {lookup(i.categoryId)}
+                      </span>
+                      <div className="item-stock">
+                        <strong>
+                          {number(qty)}
+                          <small>
+                            {i.tracking === "quantity"
+                              ? lookup(i.unitId)
+                              : "unit"}
+                          </small>
+                        </strong>
+                        <LocationTag>
+                          {lookup(query.location || i.locationId)}
+                        </LocationTag>
+                      </div>
+                    </div>
+                    <span className="item-open">
+                      <span>Lihat barang</span>
+                      <ArrowUpRight size={17} aria-hidden />
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
           <div className="pagination">
             {page > 1 && (
               <Link
-                href={`${path}?q=${encodeURIComponent(query.q || "")}&page=${page - 1}`}
+                className="button secondary"
+                href={url({ page: String(page - 1) })}
               >
                 Sebelumnya
               </Link>
             )}
-            Halaman {page}
-            {items.length > page * 25 && (
+            <span>
+              Halaman {page} dari {Math.max(1, Math.ceil(matching.length / 24))}
+            </span>
+            {matching.length > page * 24 && (
               <Link
-                href={`${path}?q=${encodeURIComponent(query.q || "")}&page=${page + 1}`}
+                className="button secondary"
+                href={url({ page: String(page + 1) })}
               >
                 Berikutnya
               </Link>
@@ -888,30 +1316,89 @@ export default async function Page({
             title={item.name}
             description={`${item.sku} · ${lookup(item.typeId)} · ${lookup(item.categoryId)}`}
             href={
-              canWrite ? `/admin/items/${item.id}/edit` : "/me/requests/new"
+              canWrite
+                ? `/admin/items/${item.id}/edit`
+                : tech
+                  ? `/me/requests/new?item=${item.id}&mode=${item.tracking}`
+                  : undefined
             }
-            action={canWrite ? "Edit Katalog" : "Buat Request"}
+            action={
+              canWrite
+                ? "Edit barang"
+                : item.tracking === "quantity"
+                  ? "Ambil komponen"
+                  : "Pinjam alat"
+            }
           />
-          <section className="panel">
-            {item.photoId && (
-              <Image
-                unoptimized
-                src={`/api/files/${item.photoId}`}
-                alt={item.name}
-                width={160}
-                height={160}
-                style={{ objectFit: "contain" }}
-              />
-            )}
-            <p>{item.description || "Belum ada spesifikasi tambahan."}</p>
-            <dl className="data-list">
-              <dt>Satuan</dt>
-              <dd>{lookup(item.unitId)}</dd>
-              <dt>Lokasi default</dt>
-              <dd>{lookup(item.locationId)}</dd>
-              <dt>Tracking</dt>
-              <dd>{item.tracking}</dd>
-            </dl>
+          <section className="panel item-detail">
+            <ItemVisual
+              name={`${item.name} ${lookup(item.categoryId)}`}
+              photoId={item.photoId}
+              large
+            />
+            <div>
+              <div className="detail-status">
+                <span
+                  className={`badge ${available(item).gt(0) ? "success" : "warning"}`}
+                >
+                  {available(item).gt(0)
+                    ? "Tersedia di gudang"
+                    : "Belum tersedia"}
+                </span>
+                <LocationTag>{lookup(item.locationId)}</LocationTag>
+              </div>
+              <div className="detail-stock">
+                {number(available(item))}
+                <small>
+                  {item.tracking === "quantity"
+                    ? lookup(item.unitId)
+                    : "unit tersedia"}
+                </small>
+              </div>
+              <p className="detail-description">
+                {item.description ||
+                  "Spesifikasi dan foto barang dapat dilengkapi oleh petugas."}
+              </p>
+              <dl className="data-list">
+                <dt>Kategori</dt>
+                <dd>{lookup(item.categoryId)}</dd>
+                <dt>Penyimpanan</dt>
+                <dd>{lookup(item.locationId)}</dd>
+                <dt>Pencatatan</dt>
+                <dd>
+                  {item.tracking === "quantity"
+                    ? "Jumlah per satuan · untuk pemakaian komponen/bahan"
+                    : "Per unit · untuk alat yang dipinjam dan dikembalikan"}
+                </dd>
+                <dt>Stok minimum</dt>
+                <dd>
+                  {number(item.minStock)} {lookup(item.unitId)}
+                </dd>
+              </dl>
+              <div className="detail-actions">
+                {canWrite && (
+                  <Link
+                    className="button"
+                    href={`/admin/requests/new?item=${item.id}&mode=${item.tracking}`}
+                  >
+                    <Plus size={18} aria-hidden />
+                    {item.tracking === "quantity"
+                      ? "Ambil komponen"
+                      : "Pinjam alat"}
+                  </Link>
+                )}
+                <Link className="button secondary" href={`${base}/items`}>
+                  <Boxes size={18} aria-hidden />
+                  Kembali ke barang
+                </Link>
+                {canWrite && (
+                  <Link className="button" href="/admin/receipts/new">
+                    <ArrowDownToLine size={18} aria-hidden />
+                    Catat barang masuk
+                  </Link>
+                )}
+              </div>
+            </div>
           </section>
           {item.tracking === "quantity" ? (
             <Table
@@ -952,9 +1439,17 @@ export default async function Page({
         </>
       );
     }
-    if (path === "/admin/receipts/new" || path === "/me/requests/new") {
+    if (
+      [
+        "/admin/receipts/new",
+        "/me/requests/new",
+        "/admin/requests/new",
+      ].includes(path)
+    ) {
+      const requesting = path !== "/admin/receipts/new";
+      if (requesting && user.role === "AUDITOR") notFound();
       const revision =
-        tech && query.revise
+        requesting && query.revise
           ? await db.document.findUnique({
               where: { id: query.revise },
               include: { lines: true },
@@ -969,23 +1464,48 @@ export default async function Page({
       )
         notFound();
 
-      if (path.startsWith("/admin")) permit(user, "stock");
+      if (!requesting) permit(user, "stock");
       return (
         <>
           <Heading
             title={
               revision
                 ? "Revisi " + revision.number
-                : tech
-                  ? "Request Barang"
+                : requesting
+                  ? query.mode === "quantity"
+                    ? "Ambil komponen"
+                    : query.mode === "serialized"
+                      ? "Pinjam alat"
+                      : "Ambil komponen / pinjam alat"
                   : "Barang Masuk"
             }
             description={
-              tech
-                ? "Consumable dan alat harus dipisah dalam request. Approval belum mengeluarkan stok."
+              requesting
+                ? "Pilih barang dan jumlahnya. Petugas akan menyiapkan barang setelah disetujui."
                 : "Pilih SKU yang telah disiapkan. Simpan draft, lalu tinjau dan posting penerimaan."
             }
           />
+          {requesting && !revision && (
+            <nav
+              className="filter-chips request-mode"
+              aria-label="Kebutuhan barang"
+            >
+              <Link
+                href={`${base}/requests/new?mode=quantity`}
+                aria-current={query.mode === "quantity" ? "page" : undefined}
+              >
+                <CircuitBoard size={18} aria-hidden />
+                Ambil komponen
+              </Link>
+              <Link
+                href={`${base}/requests/new?mode=serialized`}
+                aria-current={query.mode === "serialized" ? "page" : undefined}
+              >
+                <Wrench size={18} aria-hidden />
+                Pinjam alat
+              </Link>
+            </nav>
+          )}
           <section className="panel">
             {!selectableItems.length ? (
               <>
@@ -997,42 +1517,71 @@ export default async function Page({
               </>
             ) : (
               <ActionForm
+                key={`${query.mode || "all"}/${query.item || "new"}/${revision?.id || "new"}`}
                 action={
-                  revision ? "revise-request" : tech ? "request" : "receipt"
+                  revision
+                    ? "revise-request"
+                    : requesting
+                      ? "request"
+                      : "receipt"
                 }
                 base={revision ? { id: revision.id } : {}}
-                initialLines={revision?.lines.map((l) => ({
-                  itemId: l.itemId,
-                  locationId: l.locationId,
-                  quantity: l.quantity.toString(),
-                }))}
-                label={tech ? "Kirim Request" : "Simpan Draft"}
+                initialLines={
+                  revision
+                    ? revision.lines.map((l) => ({
+                        itemId: l.itemId,
+                        locationId: l.locationId,
+                        quantity: l.quantity.toString(),
+                      }))
+                    : query.item &&
+                        selectableItems.some((i) => i.id === query.item)
+                      ? [
+                          {
+                            itemId: query.item,
+                            locationId: selectableItems.find(
+                              (i) => i.id === query.item,
+                            )!.locationId,
+                            quantity: "1",
+                          },
+                        ]
+                      : undefined
+                }
+                label={requesting ? "Kirim permintaan" : "Simpan Draft"}
                 items={
                   serialize(
-                    selectableItems.map((i) => ({
-                      id: i.id,
-                      name: i.name,
-                      sku: i.sku,
-                      tracking: i.tracking,
-                      unitId: i.unitId,
-                      locationId: i.locationId,
-                      photoId: i.photoId,
-                      unitName: lookup(i.unitId),
-                      categoryName: lookup(i.categoryId),
-                      specifications: i.description,
-                    })),
+                    selectableItems
+                      .filter(
+                        (i) =>
+                          !requesting ||
+                          !["quantity", "serialized"].includes(
+                            query.mode || "",
+                          ) ||
+                          i.tracking === query.mode,
+                      )
+                      .map((i) => ({
+                        id: i.id,
+                        name: i.name,
+                        sku: i.sku,
+                        tracking: i.tracking,
+                        unitId: i.unitId,
+                        locationId: i.locationId,
+                        photoId: i.photoId,
+                        unitName: lookup(i.unitId),
+                        categoryName: lookup(i.categoryId),
+                        specifications: i.description,
+                      })),
                   ) as CatalogItem[]
                 }
                 locations={options("location")}
                 fields={[
                   select(
                     "projectId",
-                    tech ? "Proyek/Cost Center" : "Proyek (opsional)",
+                    requesting ? "Proyek / pekerjaan" : "Proyek (opsional)",
                     "project",
-                    tech,
+                    requesting,
                     revision?.projectId || "",
                   ),
-                  ...(tech
+                  ...(requesting
                     ? [
                         select(
                           "targetLocationId",
@@ -1044,7 +1593,7 @@ export default async function Page({
                     : []),
                   {
                     name: "purpose",
-                    label: tech
+                    label: requesting
                       ? "Tujuan penggunaan"
                       : "Sumber/supplier dan keterangan penerimaan",
                     type: "textarea",
@@ -1052,12 +1601,13 @@ export default async function Page({
                     value: revision?.purpose || "",
                   },
                   { name: "reference", label: "Referensi" },
-                  ...(tech
+                  ...(requesting && query.mode !== "quantity"
                     ? [
                         {
                           name: "dueAt",
-                          label: "Rencana kembali (wajib untuk alat)",
+                          label: "Kapan alat akan dikembalikan?",
                           type: "datetime-local",
+                          required: query.mode === "serialized",
                         } as Field,
                       ]
                     : []),
@@ -1415,7 +1965,7 @@ export default async function Page({
                 ? "Penerimaan & Pemeriksaan"
                 : "Pinjaman"
             }
-            description="Satu LOAN, pengembalian bertahap, dan pemeriksaan per unit."
+            description="Lihat alat yang dipinjam dan proses pengembaliannya."
           />
           <Table
             headers={[

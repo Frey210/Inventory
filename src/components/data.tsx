@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { Plus, PackageOpen } from "lucide-react";
 import { getSettings } from "@/server/settings";
 export const labels: Record<string, string> = {
   draft: "Draft",
+  superseded: "Digantikan revisi",
   submitted: "Diajukan",
   approved: "Disetujui",
   rejected: "Ditolak",
@@ -60,10 +62,7 @@ export function Table({
 }) {
   return (
     <>
-      <p className="table-hint">
-        Geser tabel ke kanan untuk kolom lainnya. Keyboard: fokus tabel, lalu
-        gunakan tombol panah.
-      </p>
+      <p className="table-hint">Detail ditampilkan per kartu di ponsel.</p>
       <div
         className="table-wrap"
         role="region"
@@ -85,14 +84,19 @@ export function Table({
               rows.map((row, i) => (
                 <tr key={i}>
                   {row.map((cell, j) => (
-                    <td key={j}>{cell}</td>
+                    <td key={j} data-label={headers[j]}>
+                      {cell}
+                    </td>
                   ))}
                 </tr>
               ))
             ) : (
               <tr>
                 <td colSpan={headers.length}>
-                  <div className="empty">{empty}</div>
+                  <div className="empty">
+                    <PackageOpen size={36} strokeWidth={1.4} aria-hidden />
+                    <p>{empty}</p>
+                  </div>
                 </td>
               </tr>
             )}
@@ -121,6 +125,7 @@ export function Heading({
       </div>
       {href && (
         <Link className="button" href={href}>
+          <Plus size={18} aria-hidden />
           {action || "Tambah"}
         </Link>
       )}

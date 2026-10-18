@@ -1,6 +1,10 @@
 # Spesifikasi halaman dan interaksi MTC Inventory
 
-Status: baseline implementasi dari DOCX; belum ada halaman yang dibangun. Rute merupakan keputusan engineering, bukan teks rute dari DOCX. Ubah rute hanya dengan memperbarui tabel, brief dan tautan terkait. Acuan visual DESIGN.md, produk PRODUCT.md, aturan transaksi rencana utama.
+Status: kontrak proses/field berasal dari DOCX; aplikasi kini telah dibangun. **Supersesi visual 18 Oktober 2026:** instruksi pengguna pada REDESIGN_2026_10.md dan DESIGN.md menggantikan komposisi administratif lama, rail navy/hijau, Arial dan ukuran visual lama di bagian berikut. Kontrak policy, transaksi, bukti dan acceptance tetap berlaku. Status verifikasi/cutover hanya mengikuti STATUS_IMPLEMENTASI.md. Rute adalah keputusan engineering; tabel ini bukan bukti semua rute/acceptance sudah selesai.
+
+Pemetaan visual aktif: shell putih dengan biru dan logo MTC, sidebar desktop dan kelompok Kelola gudang; <=1023 px memakai Semua menu serta navigasi bawah lima tujuan untuk semua peran. Ponsel memakai form satu kolom dan kartu transaksi berlabel. Beranda mendahulukan pencarian serta Ambil komponen / Pinjam alat, kemudian jumlah SKU/pekerjaan/unit, perhatian, aktivitas dan lokasi rak; diagram kategori menghitung SKU, bukan menjumlahkan satuan berbeda. Katalog menggunakan foto asli atau ikon kategori konsisten, grid/daftar, stok+satuan dan lokasi, filter URL kategori/rak/komponen/alat/stok menipis. Detail menjaga eligibility dan membawa item ke permintaan. Login mengikuti shell/font/token baru. Ketentuan operasional dan matriks akses di bawah tetap mengikat.
+
+Nama/aksi utama minimum 14 px ponsel; input teks/select/textarea minimum 16 px dan kontrol utama minimal 44 px. Metadata pendukung 11?13 px diperbolehkan; ini menggantikan minimum 14 px menyeluruh dari baseline lama. Detail skala serta pengecualian badge ringkas ada di DESIGN.md.
 
 ## Struktur navigasi dan rute
 
@@ -23,6 +27,7 @@ Semua halaman memerlukan session kecuali login/pemulihan. `/` mengarahkan ke lan
 | `/admin/receipts/new` | Form barang masuk | Baris quantity/serialized, bukti, Simpan Draft, Tinjau Posting |
 | `/admin/receipts/[id]` | Detail penerimaan | Snapshot/baris dan status, Posting hanya draft, audit |
 | `/admin/requests` | Persetujuan | Tab Menunggu/Disetujui/Ditolak + filter lainnya, detail request |
+| `/admin/requests/new` | Ambil komponen / Pinjam alat | Form permintaan untuk role berizin; memakai service request yang sama, bukan posting stok langsung; query opsional `mode=quantity` / `mode=serialized` dan `item=<id>` |
 | `/admin/requests/[id]` | Review request | Jumlah diminta/disetujui, stok/unit, alasan, approver, keputusan |
 | `/admin/issues/new` | Pengeluaran consumable | Request approved, jumlah sisa, penerima, bukti; Posting Penyerahan |
 | `/admin/issues/[id]` | Detail issue | Qty keluar/kembali/waste/pemakaian bersih, riwayat |
@@ -96,6 +101,8 @@ Form SKU: kode, nama, tipe bisnis, tracking mode, kategori, satuan dasar, lokasi
 Header tanggal, referensi, sumber/supplier, lokasi, penerima. Baris quantity: item, qty desimal valid, satuan, batch jika diperlukan. Serialized: satu entri per unit/tag/serial dan kondisi. Dua langkah: Draft → Tinjau Posting → Posted. Review menampilkan perubahan fisik per item/lokasi; posting menghasilkan nomor/bukti sekali. Pembatalan draft tidak mengubah stok. Impor memiliki pilih file → dry run error per baris → ringkasan → posting batch; tidak menebak konversi satuan.
 
 ### Request dan approval
+
+Pintasan `/admin/requests/new` dan `/me/requests/new` memakai service request yang sama. Query opsional `mode=quantity` atau `mode=serialized` menyaring pilihan komponen/alat; `item=<id>` hanya mengisi barang yang masih ada dalam pilihan berizin. Pergantian mode mereset form yang relevan; query tidak memberi izin, melewati validasi atau membuat mutasi. Admin tidak menyetujui request sendiri.
 
 Form dimulai dengan tipe request Consumable atau Alat; item beda tracking tidak bercampur. Wajib: item/unit atau jenis, qty+satuan, proyek/cost center, tujuan, tanggal perlu, due date alat. Identitas pemohon/waktu dari server. Item pilihan menampilkan ketersediaan dan eligibility; tidak membolehkan unit kalibrasi tidak berlaku. Mengirim request belum mengurangi stok.
 

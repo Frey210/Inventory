@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import Image from "next/image";
 import {
   LayoutDashboard,
@@ -16,9 +16,22 @@ import {
   Search,
   UserRound,
   Wrench,
+  Bell,
+  Menu,
+  ChevronDown,
+  FlaskConical,
+  MapPin,
+  Cpu,
 } from "lucide-react";
 import { Logout } from "./auth-client";
 import type { Actor } from "@/server/policy";
+
+const roleNames: Record<string, string> = {
+  ADMIN: "Admin",
+  WAREHOUSE: "Petugas gudang",
+  TECHNICIAN: "Tim MTC",
+  AUDITOR: "Manajemen",
+};
 export function Shell({
   actor,
   path,
@@ -29,108 +42,198 @@ export function Shell({
   children: React.ReactNode;
 }) {
   const tech = actor.role === "TECHNICIAN";
-  const nav = tech
+  const home = tech ? "/me" : "/admin/dashboard";
+  const primary = tech
     ? ([
         ["/me", "Beranda", LayoutDashboard],
-        ["/me/items", "Cari Barang", Search],
-        ["/me/requests/new", "Request Barang", ClipboardCheck],
-        ["/me/pickups", "Ambil Barang", ScanLine],
-        ["/me/loans", "Pinjaman & Kembali", RotateCcw],
-        ["/me/incidents/new", "Laporkan Masalah", Wrench],
-        ["/me/history", "Riwayat", History],
-        ["/profile", "Profil", UserRound],
+        ["/me/items", "Barang", Boxes],
+        ["/me/requests/new", "Ambil / pinjam", PackagePlus],
+        ["/me/pickups", "Siap diambil", ClipboardCheck],
+        ["/me/loans", "Pinjaman saya", RotateCcw],
       ] as const)
     : ([
-        ["/admin/dashboard", "Dashboard", LayoutDashboard],
+        [home, "Beranda", LayoutDashboard],
+        ["/admin/items", "Barang", Boxes],
+        ["/admin/receipts", "Barang masuk", PackagePlus],
+        ["/admin/requests", "Permintaan", ClipboardCheck],
+        ["/admin/loans", "Peminjaman", ArrowLeftRight],
+        ["/admin/returns", "Pengembalian", RotateCcw],
+      ] as const);
+  const manage = tech
+    ? ([
+        ["/me/incidents/new", "Laporkan masalah", Wrench],
+        ["/me/consumable-returns/new", "Kembalikan sisa komponen", PackagePlus],
+        ["/me/history", "Riwayat", History],
+      ] as const)
+    : ([
         ["/admin/masters", "Master Data", Settings],
-        ["/admin/items", "Inventory", Boxes],
-        ["/admin/receipts", "Barang Masuk", PackagePlus],
-        ["/admin/requests", "Persetujuan", ClipboardCheck],
-        ["/admin/overrides", "Review Darurat", ShieldCheck],
-        ["/admin/loans", "Pinjaman", ScanLine],
-        ["/admin/returns", "Pemeriksaan Kembali", RotateCcw],
-        ["/admin/transfers", "Transfer", ArrowLeftRight],
-        ["/admin/stocktakes", "Stock Opname", ClipboardCheck],
-        ["/admin/maintenance", "Maintenance & Kalibrasi", Wrench],
+        ["/admin/transfers", "Pindah rak", ArrowLeftRight],
+        ["/admin/stocktakes", "Hitung stok", ClipboardCheck],
+        ["/admin/maintenance", "Perawatan & kalibrasi", Wrench],
         ["/admin/reports", "Laporan", FileText],
-        ["/admin/audit", "Audit Log", History],
+        ["/admin/audit", "Riwayat aktivitas", History],
+        ["/admin/overrides", "Tinjau pengambilan darurat", ShieldCheck],
         ...(actor.role === "ADMIN"
           ? ([
-              ["/admin/users", "Pengguna", Users],
-              ["/admin/settings", "Pengaturan", ShieldCheck],
+              ["/admin/users", "Anggota tim", Users],
+              ["/admin/settings", "Pengaturan", Settings],
             ] as const)
           : []),
-        ["/profile", "Profil", UserRound],
       ] as const);
-  const links = nav.map(([href, label, Icon]) => (
-    <Link
-      key={href}
-      href={href}
-      aria-current={
-        path === href || (href !== "/me" && path.startsWith(href + "/"))
-          ? "page"
-          : undefined
-      }
-    >
-      <Icon size={18} aria-hidden />
-      {label}
-    </Link>
-  ));
+  const active = (href: string) =>
+    path === href || (href !== "/me" && path.startsWith(href + "/"));
+  const links = (
+    entries: ReadonlyArray<readonly [string, string, typeof Boxes]>,
+  ) =>
+    entries.map(([href, label, Icon]) => (
+      <Link
+        key={href}
+        href={href}
+        aria-current={active(href) ? "page" : undefined}
+      >
+        <Icon size={20} aria-hidden />
+        <span>{label}</span>
+      </Link>
+    ));
+  const quick = tech
+    ? [
+        primary[0],
+        primary[1],
+        ["/me/pickups", "Pindai", ScanLine] as const,
+        primary[4],
+        ["/profile", "Profil", UserRound] as const,
+      ]
+    : [
+        primary[0],
+        primary[1],
+        ["/admin/labels", "Label QR", ScanLine] as const,
+        primary[3],
+        ["/profile", "Profil", UserRound] as const,
+      ];
   return (
     <div className={`shell ${tech ? "technician" : ""}`}>
       <aside className="sidebar">
-        <Link href="/" className="brand">
-          <Image src="/logo.jpg" alt="" width={40} height={40} />
-          MTC Inventory
+        <Link href={home} className="brand">
+          <Image src="/logo.jpg" alt="Logo MTC" width={44} height={44} />
+          <span>
+            MTC<span className="brand-subtitle">Inventory</span>
+          </span>
         </Link>
-        <nav aria-label="Menu utama">{links}</nav>
+        <div className="warehouse-label">
+          <MapPin size={16} aria-hidden />
+          Ruang kerja MTC
+        </div>
+        <nav aria-label="Menu utama">{links(primary)}</nav>
+        <details
+          className="management-menu"
+          open={manage.some(([href]) => active(href))}
+        >
+          <summary>
+            Kelola gudang
+            <ChevronDown size={16} aria-hidden />
+          </summary>
+          <nav aria-label="Pengelolaan">{links(manage)}</nav>
+        </details>
         <div className="sidebar-footer">
-          PT MEDIA TEKNOLOGI CELEBES
-          <br />
-          <small style={{ color: "#d3e4fa" }}>
-            Inventory & Asset Management
-          </small>
+          <Cpu size={22} aria-hidden />
+          <div>
+            <strong>Built for our team.</strong>
+            <span>PT Media Teknologi Celebes</span>
+          </div>
         </div>
       </aside>
       <div className="workspace">
         <header className="topbar">
-          <details className="mobile-menu">
-            <summary>Menu</summary>
-            <nav aria-label="Menu mobile">{links}</nav>
-          </details>
-          <span className="muted">MTC Inventory</span>
+          <div className="mobile-brand">
+            <Image src="/logo.jpg" alt="MTC" width={34} height={34} />
+            <strong>MTC Inventory</strong>
+          </div>
+          <form
+            className="global-search"
+            action={tech ? "/me/items" : "/admin/items"}
+          >
+            <Search size={19} aria-hidden />
+            <input
+              aria-label="Cari barang di gudang"
+              name="q"
+              placeholder="Cari barang, kode, atau sensor…"
+            />
+            <button type="submit" className="search-submit" aria-label="Cari">
+              <Search size={18} aria-hidden />
+            </button>
+          </form>
           <div className="account">
-            <Link href="/notifications">Notifikasi</Link>
-            <span>
-              {actor.name}
-              <small style={{ display: "block" }}>{actor.role}</small>
-            </span>
-            <Logout />
+            <Link
+              className="icon-button"
+              href="/notifications"
+              aria-label="Notifikasi"
+            >
+              <Bell size={21} aria-hidden />
+            </Link>
+            <Link href="/profile" className="account-profile">
+              <span className="avatar">
+                {actor.name
+                  .split(" ")
+                  .slice(0, 2)
+                  .map((n) => n[0])
+                  .join("")}
+              </span>
+              <span className="account-name">
+                <strong>{actor.name}</strong>
+                <small>{roleNames[actor.role] || actor.role}</small>
+              </span>
+            </Link>
+            <div className="desktop-logout">
+              <Logout />
+            </div>
           </div>
         </header>
+        <details className="mobile-menu">
+          <summary>
+            <Menu size={19} aria-hidden />
+            Semua menu
+            <ChevronDown size={16} aria-hidden />
+          </summary>
+          <nav aria-label="Menu mobile">
+            {links(primary)}
+            {links(manage)}
+            <Link href="/profile">
+              <UserRound size={20} aria-hidden />
+              Profil & keamanan
+            </Link>
+            <Logout />
+          </nav>
+        </details>
         <main id="main" className="content">
-          <div className="alert warning">
-            Mode persiapan/pilot — verifikasi saldo pembukaan, QMS dan UAT
-            sebelum operasional penuh.
-          </div>
+          {process.env.APP_MODE !== "live" && (
+            <details className="pilot-notice no-print">
+              <summary>
+                <FlaskConical size={16} aria-hidden />
+                <span>Mode uji coba</span>
+                <ChevronDown size={14} aria-hidden />
+              </summary>
+              <p>
+                Gunakan untuk mencoba alur kerja. Sebelum dipakai penuh,
+                cocokkan stok awal dengan barang fisik dan selesaikan uji
+                bersama tim.
+              </p>
+            </details>
+          )}
           {children}
         </main>
       </div>
-      {tech && (
-        <nav className="bottom-nav" aria-label="Navigasi cepat">
-          {[
-            ["/me", "Beranda"],
-            ["/me/items", "Cari"],
-            ["/me/requests/new", "Request"],
-            ["/me/loans", "Pinjaman"],
-            ["/profile", "Profil"],
-          ].map(([url, title]) => (
-            <Link key={url} href={url}>
-              {title}
-            </Link>
-          ))}
-        </nav>
-      )}
+      <nav className="bottom-nav" aria-label="Navigasi cepat">
+        {quick.map(([href, label, Icon]) => (
+          <Link
+            key={href}
+            href={href}
+            aria-current={active(href) ? "page" : undefined}
+          >
+            <Icon size={22} aria-hidden />
+            <span>{label}</span>
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 }

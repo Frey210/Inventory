@@ -1,5 +1,7 @@
 # Paket desain untuk implementasi
 
+**Supersesi visual 18 Oktober 2026:** instruksi pengguna mengganti gaya administratif DOCX dengan UI clean, modern, fluid dan nyaman di ponsel; biru dan logo MTC tetap. Acuan visual aktif adalah DESIGN.md serta REDESIGN_2026_10.md. Kontrak proses/bukti dari DOCX, UI_SPEC dan PRINT_SPEC tetap mengikat. Status implementasi/UAT/cutover mengikuti STATUS_IMPLEMENTASI.md. Brief historis masih dapat memuat target rencana/gaya lama; untuk shell aktif gunakan .impeccable/surfaces/src-components-shell-tsx.md dan source src/components/shell.tsx. Jangan menganggap brief historis sebagai perintah mengembalikan gaya lama.
+
 Mulai dari AGENTS.md, PRODUCT.md dan DESIGN.md. Baca bagian UI_SPEC yang sesuai ID backlog, lalu brief target melalui Impeccable. PRINT_SPEC dan PRINT_FIELDS wajib saat mengerjakan snapshot/nota. Jangan memuat semua dokumen setiap kali mengubah satu komponen kecil; baca aturan bersama dan bagian yang terdampak, lalu sumber asli jika ada konflik/detail kritis.
 
 | Berkas | Fungsi |
@@ -13,9 +15,10 @@ Mulai dari AGENTS.md, PRODUCT.md dan DESIGN.md. Baca bagian UI_SPEC yang sesuai 
 | SOURCE_MAP.md | Hierarki acuan, konflik, pelengkapan engineering dan batas verifikasi |
 | SOURCE_MANIFEST.json | Hash sumber/gambar dan provenance ekstraksi |
 | references/ | Gambar asli mockup/diagram khusus development |
-| ../../.impeccable/surfaces/ | Brief target terdaftar; UI belum dibangun |
-| ../../.impeccable/design.json | Ekstensi token dan preview primitive baseline; bukan komponen produksi teruji |
-| ../../STATUS_IMPLEMENTASI.md | Status awal dan handoff antarsesi, tanpa klaim gate lulus |
+| ../../.impeccable/surfaces/ | Brief target; brief shell aktif mengikat redesign, brief historis disimpan sebagai konteks |
+| ../../.impeccable/design.json | Ekstensi sistem visual aktif dan preview primitive dari CSS/komponen |
+| ../../STATUS_IMPLEMENTASI.md | Status implementasi, bukti verifikasi, gate dan handoff antarsesi |
+| REDESIGN_2026_10.md | Instruksi pengguna, arah visual aktif dan konteks satu gudang; workbook bukan impor stok |
 
 ## Urutan satu batch frontend
 
@@ -26,4 +29,4 @@ Mulai dari AGENTS.md, PRODUCT.md dan DESIGN.md. Baca bagian UI_SPEC yang sesuai 
 5. Verifikasi tes domain/server dan screenshot target desktop/HP, keyboard/focus/kontras; detektor Impeccable sesuai skill. Catat hal yang memerlukan uji perangkat nyata.
 6. Perbarui status dan dokumentasi bila ada keputusan yang berubah. Klaim selesai hanya untuk acceptance yang benar-benar diuji. Perubahan token disinkronkan ke sidecar; jangan membuat nilai kedua yang bertentangan di komponen.
 
-Dokumen ini disiapkan atas instruksi mengikuti desain DOCX. Tidak ada workflow comp-first/code-first permanen yang dipilih pada `.impeccable/config.json`, tidak ada comp baru yang disetujui, dan tidak ada review render yang dinyatakan lulus. Referensi DOCX yang tersedia tetap menjadi acuan.
+Redesign 18 Oktober 2026 memakai jalur code-led dari referensi pengguna, tanpa comp baru. Review render lokal dan bukti pemeriksaan berada di `.impeccable/review/redesign/` serta STATUS_IMPLEMENTASI.md; ini tidak menyatakan seluruh V1/UAT atau cutover lulus. DOCX tetap menjadi acuan proses dan nota. Navigasi/form transaksi memakai service yang ada; `/admin/requests/new` berbagi request service dengan alur teknisi dan menerima query opsional mode/item, bukan jalan pintas posting stok.
