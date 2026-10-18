@@ -5,6 +5,7 @@ const pool = new Pool({ connectionString: process.env.INVENTORY_DATABASE_URL });
 for (const [code, name, tracking] of [
   ["CONSUMABLE", "Consumable", "quantity"],
   ["EQUIPMENT", "Equipment", "serialized"],
+  ["PRODUCT", "Produk Jadi", "serialized"],
 ])
   await pool.query(
     'INSERT INTO "Master" (id,kind,code,name,details,"updatedAt") VALUES ($1,\'type\',$2,$3,$4,now()) ON CONFLICT (kind,code) DO NOTHING',
