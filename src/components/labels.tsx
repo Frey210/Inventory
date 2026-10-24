@@ -7,6 +7,8 @@ import { inventoryQr } from "@/lib/qr";
 import { Heading } from "./data";
 import { PrintButton } from "./forms";
 import { LabelPicker } from "./label-picker";
+import { SearchSubmit } from "./navigation";
+import { Search, Boxes, Wrench, ChevronLeft, ChevronRight } from "lucide-react";
 export async function Labels({
   query,
   actorId,
@@ -25,6 +27,7 @@ export async function Labels({
   )
     return <p role="alert">Pilih 1–100 label dari daftar sebelum mencetak.</p>;
   const search = query.q?.trim().slice(0, 200) || "";
+  const pageSize = 25;
   const itemWhere = {
     ...(printing ? { id: { in: ids } } : {}),
     ...(search
@@ -60,7 +63,7 @@ export async function Labels({
       : await db.asset.count({ where: assetWhere });
   const page = Math.min(
     Math.max(1, Number.parseInt(query.page || "1") || 1),
-    Math.max(1, Math.ceil(total / 50)),
+    Math.max(1, Math.ceil(total / pageSize)),
   );
   const rows =
     type === "ITEM"
@@ -68,19 +71,37 @@ export async function Labels({
           await db.item.findMany({
             where: itemWhere,
             orderBy: { sku: "asc" },
-            skip: printing ? 0 : (page - 1) * 50,
-            take: printing ? 100 : 50,
+            skip: printing ? 0 : (page - 1) * pageSize,
+            take: printing ? 100 : pageSize,
           })
-        ).map((i) => ({ id: i.id, code: i.sku, name: i.name }))
+        ).map((i) => ({
+          id: i.id,
+          code: i.sku,
+          name: i.name,
+          photoId: i.photoId,
+          locationId: i.locationId,
+        }))
       : (
           await db.asset.findMany({
             where: assetWhere,
-            include: { item: { select: { name: true } } },
+            include: { item: { select: { name: true, photoId: true } } },
             orderBy: { tag: "asc" },
-            skip: printing ? 0 : (page - 1) * 50,
-            take: printing ? 100 : 50,
+            skip: printing ? 0 : (page - 1) * pageSize,
+            take: printing ? 100 : pageSize,
           })
-        ).map((a) => ({ id: a.id, code: a.tag, name: a.item.name }));
+        ).map((a) => ({
+          id: a.id,
+          code: a.tag,
+          name: a.item.name,
+          photoId: a.item.photoId,
+          locationId: a.locationId,
+        }));
+  const locations = printing
+    ? []
+    : await db.master.findMany({
+        where: { id: { in: [...new Set(rows.map((r) => r.locationId))] } },
+        select: { id: true, code: true, name: true },
+      });
   if (printing) {
     if (new Set(ids).size !== rows.length)
       return (
@@ -101,7 +122,11 @@ export async function Labels({
     <>
       <Heading
         title="Label QR"
-        description="QR resmi dibuat oleh aplikasi. Label barang mengenali SKU; label alat mengenali satu unit. Cetak 100% dan uji pindai sebelum ditempel."
+        description={
+          printing
+            ? "Periksa identitas, lalu cetak dengan skala 100%. Uji pindai sebelum label ditempel."
+            : "Pilih barang atau unit alat, lalu siapkan label yang ingin dicetak."
+        }
       />
       {printing ? (
         <>
@@ -140,43 +165,73 @@ export async function Labels({
         </>
       ) : (
         <>
-          <Form action="/admin/labels" className="filters">
+          <nav className="label-types" aria-label="Jenis label">
+            <Link
+              href="?type=ASSET"
+              aria-current={type === "ASSET" ? "page" : undefined}
+            >
+              <Wrench size={18} aria-hidden />
+              <span>
+                Unit alat<small>Satu label untuk setiap alat</small>
+              </span>
+            </Link>
+            <Link
+              href="?type=ITEM"
+              aria-current={type === "ITEM" ? "page" : undefined}
+            >
+              <Boxes size={18} aria-hidden />
+              <span>
+                Barang / SKU<small>Untuk komponen dan wadah barang</small>
+              </span>
+            </Link>
+          </nav>
+          <Form action="/admin/labels" className="label-filters">
+            <input type="hidden" name="type" value={type} />
             <label>
-              Jenis label
-              <select name="type" defaultValue={type}>
-                <option value="ASSET">Unit alat</option>
-                <option value="ITEM">Barang / SKU</option>
-              </select>
+              <span className="sr-only">Cari kode atau nama</span>
+              <Search size={20} aria-hidden />
+              <input
+                name="q"
+                defaultValue={search}
+                placeholder="Cari nama barang, kode SKU, atau tag alat…"
+              />
             </label>
-            <label>
-              Cari kode atau nama
-              <input name="q" defaultValue={search} />
-            </label>
-            <button type="submit">Cari label</button>
+            <SearchSubmit>Cari label</SearchSubmit>
           </Form>
-          <p>
-            {total} hasil · Halaman {page} dari{" "}
-            {Math.max(1, Math.ceil(total / 50))}. Pilihan berlaku untuk halaman
-            ini.
+          <p className="label-results">
+            <strong>{total} hasil</strong> ·{" "}
+            {total ? (page - 1) * pageSize + 1 : 0}–
+            {Math.min(page * pageSize, total)} ditampilkan · Halaman {page} dari{" "}
+            {Math.max(1, Math.ceil(total / pageSize))}
           </p>
           <LabelPicker
             key={`${type}/${page}/${search}`}
-            rows={rows}
+            rows={rows.map((row) => {
+              const location = locations.find((l) => l.id === row.locationId);
+              return {
+                ...row,
+                location: location
+                  ? `${location.code} · ${location.name}`
+                  : undefined,
+              };
+            })}
             type={type}
           />
-          <nav className="actions" aria-label="Halaman label">
+          <nav className="label-pagination" aria-label="Halaman label">
             {page > 1 && (
               <Link
+                className="button secondary"
                 href={`?${new URLSearchParams({ type, q: search, page: String(page - 1) })}`}
               >
-                Sebelumnya
+                <ChevronLeft size={18} aria-hidden /> Sebelumnya
               </Link>
             )}
-            {page * 50 < total && (
+            {page * pageSize < total && (
               <Link
+                className="button secondary"
                 href={`?${new URLSearchParams({ type, q: search, page: String(page + 1) })}`}
               >
-                Berikutnya
+                Berikutnya <ChevronRight size={18} aria-hidden />
               </Link>
             )}
           </nav>

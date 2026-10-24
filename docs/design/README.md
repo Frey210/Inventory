@@ -9,6 +9,7 @@ Mulai dari AGENTS.md, PRODUCT.md dan DESIGN.md. Baca bagian UI_SPEC yang sesuai 
 | ../../PRODUCT.md | Tujuan, pengguna, workflow, cakupan, invarian dan keputusan terbuka |
 | ../../DESIGN.md | Token dan aturan visual bersama, shell role, komponen/states/responsif |
 | UI_SPEC.md | Peta rute/menu, hak akses, field dan interaksi per modul |
+| ANALYTICS_SPEC.md | Pemilihan label kompak dan definisi metrik/tren procurement, periode, policy serta batas interpretasi |
 | MASTER_DATA_SPEC.md | Setup lokasi/jenis/kategori/default/satuan/katalog/foto dan pengisian otomatis saat tambah inventory |
 | PRINT_SPEC.md | Struktur A–G, Letter, snapshot, arsip dan acceptance cetak |
 | PRINT_FIELDS.json | Daftar seluruh placeholder asli template dengan bagian asal |

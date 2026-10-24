@@ -8,6 +8,7 @@ import { InstallApp } from "@/components/pwa";
 import { SearchSubmit } from "@/components/navigation";
 import Image from "next/image";
 import { Labels } from "@/components/labels";
+import { Analytics } from "@/components/analytics";
 import {
   Boxes,
   Radio,
@@ -241,6 +242,10 @@ export default async function Page({
       permit(user, "read");
       return <Labels query={query} actorId={user.id} />;
     }
+    if (path === "/admin/analytics") {
+      permit(user, "read");
+      return <Analytics actor={user} days={query.days} />;
+    }
     const scanMissing = query.scan === "missing";
     const needs = pageDataNeeds(path);
     const [masters, rawItems] = await Promise.all([
@@ -440,6 +445,8 @@ export default async function Page({
         <>
           <Heading
             title={`Halo, ${user.name.split(" ")[0]}!`}
+            href={tech ? undefined : "/admin/analytics"}
+            action="Analitik gudang"
             description={
               tech
                 ? "Komponen untuk ide berikutnya. Alat untuk menyelesaikannya."

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./operations.css";
 import { Pwa } from "@/components/pwa";
 export const viewport: Viewport = {
   width: "device-width",

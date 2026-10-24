@@ -181,10 +181,12 @@ test("feedback: searchable receipt, unit expansion, focus, QR selection and priv
   expect(await db.asset.count({ where: { itemId: toolId } })).toBe(1);
   await page.goto(`/admin/labels?type=ITEM&q=${prefix}`);
   await expect(page.getByText(/102 hasil/)).toBeVisible();
-  await page.getByRole("link", { name: "Berikutnya", exact: true }).click();
-  await expect(page.getByText(/Halaman 2 dari/)).toBeVisible();
-  await page.getByRole("link", { name: "Berikutnya", exact: true }).click();
-  await expect(page.getByText(/Halaman 3 dari/)).toBeVisible();
+  for (let number = 2; number <= 5; number++) {
+    await page.getByRole("link", { name: "Berikutnya", exact: true }).click();
+    await expect(
+      page.getByText(new RegExp(`Halaman ${number} dari`)),
+    ).toBeVisible();
+  }
   await page
     .locator(".label-option")
     .filter({ hasText: prefix + "-100" })

@@ -455,8 +455,6 @@ svg {
 }
 .warehouse-manage { display: block; margin: -8px 20px 18px; font-size: 13px; color: var(--primary); }
 #master-editor { scroll-margin-top: 24px; }
-.label-option { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
-.label-option input { width: 22px; min-height: 22px; flex: 0 0 22px; }
 @media (min-width: 769px) and (max-height: 800px) {
   .start-work { padding: 20px; gap: 20px; }
   .start-copy p { margin-bottom: 12px; }

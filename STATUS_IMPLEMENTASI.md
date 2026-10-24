@@ -1,5 +1,17 @@
 # Status implementasi MTC Inventory
 
+## Perbaikan pemilihan label dan analitik procurement — 25 Oktober 2026
+
+Permintaan pemilik: halaman pemilihan Label QR tidak nyaman dan tim gudang memerlukan grafik kebutuhan/pemakaian/anggota. Scope INV-15/25/29: daftar label kompak, pencarian, pemilihan/cetak responsif dan halaman analitik untuk ADMIN/WAREHOUSE/AUDITOR. Tidak ada migration atau mutasi data operasional yang direncanakan.
+
+Akar masalah visual: `.label-option` mewarisi `flex-direction: column` dari label form umum; `.filters` tidak memiliki layout khusus. Identitas kode/nama bercampur, dan peninjauan rilis sebelumnya hanya mencakup preview cetak, bukan daftar pilihan. Perbaikan harus dibuktikan dengan capture daftar 25 hasil dan nama panjang pada desktop/HP.
+
+Analitik: periode 30/90/180 hari menurut kalender perusahaan. Permintaan valid dipisahkan dari penyerahan yang diposting. Angka lintas SKU berupa frekuensi transaksi, bukan penjumlahan satuan campur. Komponen procurement memakai ISSUE/CONSUMABLE_RETURN serta saldo tersedia sekarang; penerimaan/transfer tidak menjadi pemakaian. Aktivitas anggota berarti frekuensi pengajuan, bukan produktivitas/login. Grafik nol tetap jujur ketika data belum ada.
+
+Verifikasi lokal: 16 tes domain dan 8 tes browser lulus, lint/typecheck/build web/worker serta tiga fixture PDF lulus. Cakupan tambahan: kalender/timezone, permintaan vs postedAt, status yang dikecualikan, baris SKU ganda, retur fisik/transfer, saldo dikurangi reservasi, denial teknisi, geometri checkbox/nama panjang 25 hasil dan toolbar saat scroll pada 320–1440 px. Query analitik hanya SELECT dalam snapshot Repeatable Read; tanpa dependensi chart baru.
+
+Review UI baru: disposition ship untuk daftar pilihan QR desktop/mobile dan analitik desktop/mobile. Reviewer pertama gagal karena batas penggunaan; reviewer pengganti dengan konteks baru menyelesaikan review tanpa perbaikan material. Documenter memverifikasi sistem incumbent tetap utuh pada `docs/design/LABEL_ANALYTICS_DESIGN_CHECK.md`. Detector sekali: sembilan advisory skala font/radius, nol nonadvisory. Perangkat fisik dan UAT tidak diklaim. Deployment batch ini masih berjalan.
+
 ## Eksekusi feedback dan PWA — 25 Oktober 2026
 
 Pemilik mengotorisasi eksekusi `RENCANA_PERBAIKAN_FEEDBACK_2026_10_24.md` batch A–E. INV-05/06/09/10/14/15/18/23/24/25/29/30 terkait. Perbaikan telah di-deploy dan diverifikasi pada mode preparation; belum merupakan bukti full release operasional.

@@ -14,6 +14,8 @@ test("light pages do not fetch the catalog or stock; stock stays scoped to pages
     "/admin/receipts",
     "/admin/audit",
     "/admin/overrides",
+    "/admin/analytics",
+    "/admin/labels",
   ]) {
     const needs = pageDataNeeds(path);
     assert.equal(needs.items, false, path);

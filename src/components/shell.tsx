@@ -23,6 +23,7 @@ import {
   FlaskConical,
   MapPin,
   Cpu,
+  BarChart3,
 } from "lucide-react";
 import { Logout } from "./auth-client";
 import type { Actor } from "@/server/policy";
@@ -88,6 +89,7 @@ export function Shell({
         ["/admin/stocktakes", "Hitung stok", ClipboardCheck],
         ["/admin/maintenance", "Perawatan & kalibrasi", Wrench],
         ["/admin/reports", "Laporan", FileText],
+        ["/admin/analytics", "Analitik gudang", BarChart3],
         ["/admin/audit", "Riwayat aktivitas", History],
         ["/admin/overrides", "Tinjau pengambilan darurat", ShieldCheck],
         ...(actor.role === "ADMIN"
