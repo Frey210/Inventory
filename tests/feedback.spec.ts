@@ -2,7 +2,7 @@ import "dotenv/config";
 import { test, expect } from "@playwright/test";
 import { randomUUID, randomBytes } from "node:crypto";
 import { hashPassword } from "better-auth/crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import { db } from "../src/server/db";
 if (!process.env.INVENTORY_DATABASE_URL?.includes("inventory_test"))
   throw Error("Isolated database required");
@@ -86,10 +86,6 @@ test.beforeAll(async () => {
     },
   });
   await mkdir(".impeccable/review/feedback", { recursive: true });
-  await writeFile(
-    ".local/feedback-test-fixture.json",
-    JSON.stringify({ username: prefix, password, toolId, itemId, locationId }),
-  );
 });
 test.afterAll(async () => {
   await db.$disconnect();
