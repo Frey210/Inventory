@@ -12,6 +12,12 @@ Verifikasi lokal: 16 tes domain dan 8 tes browser lulus, lint/typecheck/build we
 
 Review UI baru: disposition ship untuk daftar pilihan QR desktop/mobile dan analitik desktop/mobile. Reviewer pertama gagal karena batas penggunaan; reviewer pengganti dengan konteks baru menyelesaikan review tanpa perbaikan material. Documenter memverifikasi sistem incumbent tetap utuh pada `docs/design/LABEL_ANALYTICS_DESIGN_CHECK.md`. Detector sekali: sembilan advisory skala font/radius, nol nonadvisory. Perangkat fisik dan UAT tidak diklaim. Deployment batch ini masih berjalan.
 
+Rilis aktif `37155f5fb55d3c9ce83f85470719911d6a9dd015`, web/worker `37155f5fb55d` healthy, mode preparation tetap. CI [40132504295](https://github.com/Frey210/Inventory/actions/runs/40132504295) success: 16 domain, 8 browser, lint/typecheck/build dan PDF. Tidak ada migration. Query 30/90/180 juga lulus smoke read-only pada PostgreSQL produksi dengan role DB aplikasi, total 69 ms pada satu pengukuran container; bukan benchmark beban atau SLA. HTTPS publik memuat stylesheet label/analitik baru; akses analitik anonim diarahkan ke Login. Pengujian role dan UI terautentikasi memakai database latihan, tanpa transaksi contoh pada produksi.
+
+Rekonsiliasi sebelum/sesudah: 354 Item, 162 Asset, 264 Balance, 269 Ledger, 1 LoanLine; hash seluruh baris pada kelima tabel identik. Akun dan credential operasional tidak diubah. Backup sebelum `20261024T210349Z` dan sesudah `20261024T210801Z` UTC terenkripsi, disalin off-host, checksum/CMS/manifest lulus. Image `fa229325352b` dipertahankan untuk rollback. Bukti privat `.local/label-analytics-release.json`, `label-analytics-runtime.json`, `label-analytics-http-evidence.json` dan baseline/hash, tidak dikomit.
+
+Buku lokal edisi 1.2: `output/pdf/Panduan_Penggunaan_MTC_Inventory.pdf`, 50 halaman, 43 screenshot latihan dengan highlight; pilihan label diperbarui, dua halaman analitik/procurement ditambahkan. Metadata bahasa/bookmark, pemeriksaan teks credential dan render halaman diperiksa. PDF tetap di luar Git publik. Mode live, UAT perangkat fisik/printer, QMS/kalibrasi serta backup off-host otomatis/alarm eksternal tetap mengikuti gate sebelumnya.
+
 ## Eksekusi feedback dan PWA — 25 Oktober 2026
 
 Pemilik mengotorisasi eksekusi `RENCANA_PERBAIKAN_FEEDBACK_2026_10_24.md` batch A–E. INV-05/06/09/10/14/15/18/23/24/25/29/30 terkait. Perbaikan telah di-deploy dan diverifikasi pada mode preparation; belum merupakan bukti full release operasional.
@@ -33,7 +39,7 @@ Pemilik mengotorisasi eksekusi `RENCANA_PERBAIKAN_FEEDBACK_2026_10_24.md` batch 
 - Backup sesudah rilis `20261024T171736Z` UTC (25 Oktober lokal), terenkripsi dan salinan off-host terverifikasi. Backup sebelum rilis `20261024T170740Z` menjadi sumber uji restore. Metadata privat di `.local/feedback-release.json`, `.local/feedback-restore-evidence.json` dan `.local/feedback-http-evidence.json`, tanpa dikomit.
 - Gate operasional tetap: penerimaan UAT pemilik, perangkat fisik/cetak/kamera/PWA, kebijakan QMS/kalibrasi, backup off-host terjadwal dan alarm eksternal sesuai daftar risiko existing. Mode preparation tidak diubah otomatis.
 
-Pembaruan: 25 Oktober 2026. Tahap: aplikasi persiapan/pilot sehat pada LXC Docker dengan PostgreSQL CT102. Rilis feedback/PWA `fa229325352b` aktif dan telah lulus CI. Ini bukan pernyataan seluruh V1/UAT/gate operasional lulus. Bagian bertanggal sebelumnya di bawah adalah riwayat dan tidak menggantikan checkpoint terbaru ini.
+Pembaruan: 25 Oktober 2026. Tahap: aplikasi persiapan/pilot sehat pada LXC Docker dengan PostgreSQL CT102. Rilis label/analitik `37155f5fb55d` aktif dan telah lulus CI. Ini bukan pernyataan seluruh V1/UAT/gate operasional lulus. Bagian bertanggal sebelumnya di bawah adalah riwayat dan tidak menggantikan checkpoint terbaru ini.
 
 ## Implementasi tersedia
 
