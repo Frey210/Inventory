@@ -177,3 +177,16 @@ Gunakan data simulasi berlabel: ESP32 ELC-ESP32-001 (pcs), kabel (m), tiga unit 
 Fixture wajib: request 5 approve 3; kabel kembali layak 2 m; tiga unit dengan dua diterima fisik dan satu menunggu inspeksi; satu unit kalibrasi kedaluwarsa; PDF gagal; daftar kosong; teks nama/kronologi panjang; 30+ item cetak; dua actor berebut unit. Bukti acceptance mengikuti INV dan UAT pada backlog, bukan sekadar screenshot.
 
 Sebelum menyatakan frontend selesai: uji rute/action/file tanpa izin, keyboard/focus/dialog, error summary, scanner fallback, lebar 390/768/1024/1440, zoom 200%, empty/error/loading/conflict, dan label parsial+inspection+overdue bersamaan. Kamera/printer/scanner nyata tetap perlu uji perangkat. Tidak ada hasil uji yang diklaim dalam dokumen perencanaan ini.
+
+## Revisi feedback 25 Oktober 2026
+
+- Menu Label QR tersedia pada Kelola gudang desktop dan Semua menu mobile. Bottom nav tetap lima tujuan. Label konteks gudang tidak menjadi pemilih scope; Kelola lokasi membuka Master Data.
+- Pemilih barang memakai pencarian kode/nama dengan saran katalog aktif. Lokasi penggunaan menerima saran berkode atau teks bebas maksimal 200 karakter; tidak membuat master.
+- Angka memakai step satuan, minimum stok boleh nol dan serialized selalu bulat. Satuan pecahan tetap sampai empat desimal. Opname tetap menerima nol.
+- Permintaan alat baru meminta tanggal kembali sampai akhir hari perusahaan. Deadline lama tetap memakai jam. Notifikasi aplikasi H-2/H-1/H0/overdue memakai tanggal perusahaan dan berhenti setelah seluruh unit diterima fisik.
+- Penerimaan alat memakai satu unit per rincian; Tambahkan unit serupa menambah rincian tanpa menyalin serial. Total maksimal 100 rincian. Tag dialokasikan server saat draft tersimpan; tautan Tinjau draft dan tag unit menuju identitas yang dialokasikan. Serial pabrikan opsional/manual.
+- Label QR memiliki pilihan Barang/SKU dan Unit alat, pencarian, total, pagination 50 hasil serta pilihan cetak. Pilihan berlaku per halaman; endpoint cetak menerima maksimal 100 ID. Scanner/resolver hanya membuka detail sesuai role, tidak memposting.
+- Profil menyediakan pemasangan PWA dan petunjuk Safari. Service worker hanya menyimpan halaman offline statis serta ikon publik; transaksi, stok, sesi, API dan HTML privat selalu memerlukan koneksi. Tidak ada transaksi offline atau Web Push.
+- Login/MFA memakai POST sebagai fallback, tombol login menunggu JavaScript siap sehingga kredensial tidak masuk query URL saat hydration belum selesai.
+
+Bukti implementasi/rilis mengikuti STATUS_IMPLEMENTASI.md, bukan klaim acceptance menyeluruh dalam spesifikasi ini.

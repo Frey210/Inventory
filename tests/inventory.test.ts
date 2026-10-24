@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { db } from "../src/server/db";
 import { execute } from "../src/server/inventory";
-import { stockReminder } from "../src/server/reminders";
+import { stockReminder, loanReminders } from "../src/server/reminders";
 if (!process.env.INVENTORY_DATABASE_URL?.includes("inventory_test"))
   throw new Error(
     "Integration tests require isolated inventory_test database.",
@@ -79,6 +79,18 @@ test("PostgreSQL: atomic ledger, competing approvals, idempotency, loan partial 
       minStock: "0",
     });
     const line = { itemId: item.id, locationId: location.id, quantity: "5" };
+    await assert.rejects(
+      run(admin, "item", {
+        sku: "FRACTION-" + suffix,
+        name: "Invalid PCS threshold",
+        typeId: type.id,
+        categoryId: category.id,
+        unitId: unit.id,
+        locationId: location.id,
+        minStock: "0.5",
+      }),
+      /Minimum stok/,
+    );
     const receipt = await run(warehouse, "receipt", {
       purpose: "Test penerimaan",
       lines: [line],
@@ -178,14 +190,121 @@ test("PostgreSQL: atomic ledger, competing approvals, idempotency, loan partial 
         itemId: assetItem.id,
         locationId: location.id,
         quantity: "1",
-        tag: `AS-${suffix}-${n}`,
+        ...(n === 1 ? { tag: `MTC-EQ-${suffix.toUpperCase()}-009` } : {}),
       })),
     });
+    const bulkLocation = await run(admin, "master", {
+      kind: "location",
+      code: "BULK-" + suffix,
+      name: "Rak batch uji",
+      details: {},
+    });
+    const bulkItem = await run(admin, "item", {
+      sku: "BULK-" + suffix,
+      name: "Bulk tool",
+      typeId: equipment.id,
+      categoryId: category.id,
+      unitId: unit.id,
+      locationId: bulkLocation.id,
+      minStock: "0",
+    });
+    const hundred = Array.from({ length: 100 }, () => ({
+      itemId: bulkItem.id,
+      locationId: bulkLocation.id,
+      quantity: "1",
+    }));
+    await assert.rejects(
+      run(warehouse, "receipt", {
+        purpose: "Too many units",
+        lines: [...hundred, hundred[0]],
+      }),
+    );
+    const bulk = await run(warehouse, "receipt", {
+      purpose: "One hundred units",
+      lines: hundred,
+    });
+    assert.equal(await db.line.count({ where: { documentId: bulk.id } }), 100);
+    await run(warehouse, "post-receipt", { id: bulk.id });
+    assert.equal(await db.asset.count({ where: { itemId: bulkItem.id } }), 100);
+    assert.equal(await db.balance.count({ where: { itemId: bulkItem.id } }), 0);
+    const collision = await run(warehouse, "receipt", {
+      purpose: "Atomic collision",
+      lines: [{ ...hundred[0], serial: "SERIAL-" + suffix }, { ...hundred[0] }],
+    });
+    await db.asset.create({
+      data: {
+        itemId: bulkItem.id,
+        locationId: bulkLocation.id,
+        tag: "COLLISION-" + suffix,
+        serial: "SERIAL-" + suffix,
+      },
+    });
+    await assert.rejects(run(warehouse, "post-receipt", { id: collision.id }));
+    assert.equal(await db.asset.count({ where: { itemId: bulkItem.id } }), 101);
+    assert.equal(
+      (await db.document.findUniqueOrThrow({ where: { id: collision.id } }))
+        .status,
+      "draft",
+    );
+    assert.equal(
+      await db.ledger.count({ where: { referenceId: collision.id } }),
+      0,
+    );
+    const receiptDraft = await db.line.findMany({
+      where: { documentId: assetReceipt.id },
+      orderBy: { id: "asc" },
+    });
+    assert.deepEqual(
+      receiptDraft.map((l) => (l.details as { tag: string }).tag).sort(),
+      [9, 10, 11]
+        .map(
+          (n) => `MTC-EQ-${suffix.toUpperCase()}-${String(n).padStart(3, "0")}`,
+        )
+        .sort(),
+    );
+    const parallel = await Promise.all(
+      [1, 2].map(() =>
+        run(warehouse, "receipt", {
+          purpose: "Concurrent allocation",
+          lines: [
+            { itemId: assetItem.id, locationId: location.id, quantity: "1" },
+          ],
+        }),
+      ),
+    );
+    const parallelLines = await db.line.findMany({
+      where: { documentId: { in: parallel.map((r) => r.id) } },
+    });
+    assert.equal(
+      new Set(parallelLines.map((l) => (l.details as { tag: string }).tag))
+        .size,
+      2,
+    );
+    const retryKey = randomUUID();
+    const retryPayload = {
+      purpose: "Retry allocation",
+      lines: [{ itemId: assetItem.id, locationId: location.id, quantity: "1" }],
+    };
+    const retryDraft = await run(warehouse, "receipt", retryPayload, retryKey);
+    assert.equal(
+      (await run(warehouse, "receipt", retryPayload, retryKey)).id,
+      retryDraft.id,
+    );
+    await assert.rejects(
+      run(warehouse, "receipt", {
+        purpose: "Invalid unit count",
+        lines: [
+          { itemId: assetItem.id, locationId: location.id, quantity: "2" },
+        ],
+      }),
+      /satu tag/,
+    );
     await run(warehouse, "post-receipt", { id: assetReceipt.id });
     const req = await run(tech, "request", {
       projectId: project.id,
       purpose: "Test equipment loan",
-      dueAt: new Date(Date.now() + 86400000).toISOString(),
+      dueAt: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+      targetLocationText: "Lokasi proyek <MTC>",
       lines: [{ itemId: assetItem.id, locationId: location.id, quantity: "3" }],
     });
     await run(warehouse, "approve", { id: req.id });
@@ -207,6 +326,20 @@ test("PostgreSQL: atomic ledger, competing approvals, idempotency, loan partial 
       include: { lines: true },
     });
     assert.equal(loan.lines.length, 3);
+    assert.equal(loan.dueDateOnly, true);
+    assert.match(loan.dueAt.toISOString(), /T(?:15|16):59:59\.999Z$/);
+    await loanReminders(new Date(), "Asia/Makassar", [warehouse]);
+    const reminderCount = await db.notification.count({
+      where: { eventKey: { startsWith: `loan:${loan.id}:` } },
+    });
+    assert.ok(reminderCount > 0);
+    await loanReminders(new Date(), "Asia/Makassar", [warehouse]);
+    assert.equal(
+      await db.notification.count({
+        where: { eventKey: { startsWith: `loan:${loan.id}:` } },
+      }),
+      reminderCount,
+    );
     const frozen = loan.snapshot as {
       project: { name: string };
       approver: { name: string };
@@ -215,6 +348,10 @@ test("PostgreSQL: atomic ledger, competing approvals, idempotency, loan partial 
     assert.equal(frozen.project.name, "Test Proyek");
     assert.equal(frozen.approver.name, warehouse.name);
     assert.equal(frozen.units[0].completeness, "Unit dan kabel lengkap");
+    assert.equal(
+      (loan.snapshot as { usageLocation: { name: string } }).usageLocation.name,
+      "Lokasi proyek <MTC>",
+    );
     const ids = loan.lines.slice(0, 2).map((l) => l.assetId);
     await run(tech, "request-return", { id: loan.id, assetIds: ids });
     assert.equal(
@@ -262,6 +399,16 @@ test("PostgreSQL: atomic ledger, competing approvals, idempotency, loan partial 
       "completed",
     );
     assert.ok((await db.snapshot.count({ where: { loanId: loan.id } })) >= 5);
+    const afterReturn = await db.notification.count({
+      where: { eventKey: { startsWith: `loan:${loan.id}:` } },
+    });
+    await loanReminders(new Date(), "Asia/Makassar", [warehouse]);
+    assert.equal(
+      await db.notification.count({
+        where: { eventKey: { startsWith: `loan:${loan.id}:` } },
+      }),
+      afterReturn,
+    );
     const record = await db.audit.findFirstOrThrow({
       where: { actorId: warehouse.id },
     });

@@ -3,18 +3,21 @@ import Link from "next/link";
 import Image from "next/image";
 import { createAuthClient } from "better-auth/react";
 import { usernameClient, twoFactorClient } from "better-auth/client/plugins";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 const client = createAuthClient({
   plugins: [usernameClient(), twoFactorClient()],
 });
+const subscribeHydration = () => () => {};
 export function Login() {
+  const ready = useSyncExternalStore(subscribeHydration, () => true, () => false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [mfa, setMfa] = useState(false);
   const [recovery, setRecovery] = useState(false);
   return (
     <form
+      method="post"
       className="data-form"
       onSubmit={async (e) => {
         e.preventDefault();
@@ -84,8 +87,15 @@ export function Login() {
           </label>
         </>
       )}
-      <button disabled={busy}>
-        {busy ? "Memeriksa…" : mfa ? "Verifikasi" : "Masuk"}
+      <noscript>Aktifkan JavaScript pada browser agar dapat masuk.</noscript>
+      <button disabled={busy || !ready}>
+        {!ready
+          ? "Menyiapkan form…"
+          : busy
+            ? "Memeriksa…"
+            : mfa
+              ? "Verifikasi"
+              : "Masuk"}
       </button>
       {mfa && (
         <button
@@ -120,6 +130,7 @@ export function MfaSetup() {
   const [message, setMessage] = useState("");
   return (
     <form
+      method="post"
       className="data-form"
       onSubmit={async (e) => {
         e.preventDefault();

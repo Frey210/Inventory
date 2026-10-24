@@ -82,7 +82,7 @@ export function Scanner() {
         Hentikan Kamera
       </button>
       <video ref={video} muted playsInline className="scanner-video" />
-      <Form action="/me/items">
+      <Form action="/scan">
         <label>
           Kode manual
           <input

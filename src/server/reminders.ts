@@ -1,51 +1,22 @@
 import { db } from "./db";
+import { loanReminder } from "./business-date";
 export async function reminders() {
   const now = new Date();
   const settings = await db.record.findFirst({
     where: { kind: "settings" },
     orderBy: { createdAt: "desc" },
   });
+  const timezone = String(
+    (settings?.payload as { timezone?: string })?.timezone || "Asia/Makassar",
+  );
   const day = new Intl.DateTimeFormat("en-CA", {
-    timeZone: String(
-      (settings?.payload as { timezone?: string })?.timezone || "Asia/Makassar",
-    ),
+    timeZone: timezone,
   }).format(now);
   const warehouse = await db.user.findMany({
     where: { role: "WAREHOUSE", isActive: true },
     select: { id: true },
   });
-  const loans = await db.loan.findMany({
-    where: { status: "active" },
-    include: { lines: true },
-  });
-  for (const loan of loans) {
-    if (!loan.lines.some((l) => !l.receivedAt)) continue;
-    const days = (loan.dueAt.getTime() - now.getTime()) / 86400000;
-    if (days > 2) continue;
-    const label =
-      days < 0
-        ? "melewati jatuh tempo"
-        : `jatuh tempo dalam ${Math.max(1, Math.ceil(days))} hari`;
-    for (const recipientId of [
-      loan.borrowerId,
-      ...warehouse.map((w) => w.id),
-    ]) {
-      const eventKey = `loan:${loan.id}:${days < 0 ? "overdue:" + day : "H" + Math.ceil(days)}:${recipientId}`;
-      await db.notification.upsert({
-        where: { eventKey },
-        create: {
-          recipientId,
-          eventKey,
-          message: `${loan.number} ${label}.`,
-          path:
-            recipientId === loan.borrowerId
-              ? `/me/loans/${loan.id}`
-              : `/admin/loans/${loan.id}`,
-        },
-        update: {},
-      });
-    }
-  }
+  await loanReminders(now, timezone, warehouse);
   const assets = await db.asset.findMany({
     where: {
       calibrationRequired: true,
@@ -122,4 +93,39 @@ export async function stockReminder(
       });
     }
   });
+}
+
+export async function loanReminders(
+  now: Date,
+  timezone: string,
+  warehouse: { id: string }[],
+) {
+  const loans = await db.loan.findMany({
+    where: { status: "active" },
+    include: { lines: true },
+  });
+  for (const loan of loans) {
+    if (!loan.lines.some((l) => !l.receivedAt)) continue;
+    const reminder = loanReminder(loan.dueAt, now, timezone, loan.dueDateOnly);
+    if (!reminder) continue;
+    for (const recipientId of [
+      loan.borrowerId,
+      ...warehouse.map((w) => w.id),
+    ]) {
+      const eventKey = `loan:${loan.id}:${reminder.phase}:${recipientId}`;
+      await db.notification.upsert({
+        where: { eventKey },
+        create: {
+          recipientId,
+          eventKey,
+          message: `${loan.number} ${reminder.label}.`,
+          path:
+            recipientId === loan.borrowerId
+              ? `/me/loans/${loan.id}`
+              : `/admin/loans/${loan.id}`,
+        },
+        update: {},
+      });
+    }
+  }
 }

@@ -146,7 +146,7 @@ test("catalog filters, eligible stock, mobile cards and request shortcuts", asyn
   await expect(page.getByLabel("Kapan alat akan dikembalikan?")).toHaveCount(0);
   await expect(
     page.getByRole("combobox", { name: "Barang", exact: true }),
-  ).toHaveValue(item);
+  ).toHaveValue(prefix + "-PCB — PCB " + prefix);
   await page
     .getByRole("combobox", { name: /Proyek \/ pekerjaan/ })
     .selectOption(prefix + "-project");
@@ -168,9 +168,9 @@ test("catalog filters, eligible stock, mobile cards and request shortcuts", asyn
     .locator(".request-mode")
     .getByRole("link", { name: "Pinjam alat", exact: true })
     .click();
-  await expect(page.getByLabel("Kapan alat akan dikembalikan?")).toBeVisible();
+  await expect(page.getByLabel("Rencana tanggal kembali")).toBeVisible();
   await expect(
-    page.getByLabel("Kapan alat akan dikembalikan?"),
+    page.getByLabel("Rencana tanggal kembali"),
   ).toHaveAttribute("required", "");
   for (const width of [375, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });

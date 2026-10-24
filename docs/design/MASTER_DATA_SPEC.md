@@ -63,3 +63,11 @@ Form mengikuti DESIGN.md: label permanen, error summary+inline, focus dan pendin
 - Upload valid tampil preview; file palsu/terlalu besar/berdimensi berlebihan ditolak; mengganti foto tidak mengubah bukti checkout lama.
 - Master kosong, foto kosong, no-results, forbidden, conflict/nonaktif saat submit dan gagal upload memiliki pesan serta pemulihan yang jelas.
 - Keyboard, HP/desktop, unit pecahan/bulat, validasi server dan hak akses diuji. Seluruhnya masih acceptance rencana, bukan hasil uji implementasi.
+
+## Revisi 25 Oktober 2026
+
+Edit mempertahankan tab/filter/halaman, menuju `#master-editor`, membawa editor ke viewport dan memindahkan fokus setelah mount. ID edit tidak valid menghasilkan not-found; Batal kembali ke daftar dengan filter yang sama. Konflik versi tetap diperiksa server.
+
+Satu master lokasi aktif bertipe Gudang pada root menjadi nama konteks shell. Jika tidak ada/ambigu, tampil Inventory MTC. ADMIN/WAREHOUSE memakai Kelola lokasi untuk mengganti nama lewat master; tidak ada dropdown multi-gudang atau pemindahan stok implisit. Pemuatan nama ini memakai Suspense terpisah agar tidak menahan menu utama.
+
+Minimum stok mengikuti satuan dan tracking di UI/server. Tidak ada pembulatan otomatis data lama. Saran lokasi transaksi menampilkan kode dan nama agar nama yang sama dapat dibedakan. Lokasi penggunaan teks bebas adalah metadata transaksi, bukan master penyimpanan baru.

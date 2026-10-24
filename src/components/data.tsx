@@ -132,7 +132,13 @@ export function Heading({
     </div>
   );
 }
-export async function DateLabel({ value }: { value: Date | null | undefined }) {
+export async function DateLabel({
+  value,
+  dateOnly = false,
+}: {
+  value: Date | null | undefined;
+  dateOnly?: boolean;
+}) {
   const settings = await getSettings();
   return (
     <>
@@ -140,7 +146,7 @@ export async function DateLabel({ value }: { value: Date | null | undefined }) {
         ? new Intl.DateTimeFormat("id-ID", {
             timeZone: String(settings.timezone),
             dateStyle: "medium",
-            timeStyle: "short",
+            timeStyle: dateOnly ? undefined : "short",
           }).format(value)
         : "—"}
     </>

@@ -1,5 +1,7 @@
 # MTC Inventory
 
+Tambahan 25 Oktober 2026: web dapat dipasang sebagai PWA di Android/desktop dan melalui Safari Add to Home Screen. PWA tetap memerlukan internet untuk data dan transaksi; cache hanya halaman offline statis dan ikon publik. Notifikasi tetap di dalam aplikasi, tanpa Web Push.
+
 <!-- impeccable:product-schema 1 -->
 
 ## Platform

@@ -1,5 +1,20 @@
 # Status implementasi MTC Inventory
 
+## Eksekusi feedback dan PWA — 25 Oktober 2026
+
+Pemilik mengotorisasi eksekusi `RENCANA_PERBAIKAN_FEEDBACK_2026_10_24.md` batch A–E. INV-05/06/09/10/14/15/18/23/24/25/29/30 terkait. Perubahan sedang diverifikasi; belum merupakan bukti full release operasional.
+
+- Batch A: numerik mengikuti izin pecahan satuan, validasi minimum stok, Label QR pada menu desktop, editor master fokus/scroll dan konteks gudang.
+- Batch B: pencarian katalog, lokasi penggunaan teks/referensi, tanggal kembali sampai akhir hari dan fase reminder kalender; snapshot/nota kompatibel deadline lama.
+- Batch C: tag server memakai Counter/lock/idempotency existing; tambah rincian unit tanpa menggandakan serial. Batas 100 baris tetap berlaku.
+- Batch D: payload `MTC:ITEM:<id>` / `MTC:ASSET:<id>`, resolver berotorisasi dan kompatibilitas tag/SKU lama, pencarian/pagination/pilihan label.
+- Batch E: PWA installable, ikon/favicon turunan simbol MTC melalui skill logo-design yang diminta. Tidak menyimpan data akun/stok/transaksi di cache offline; tidak ada transaksi offline.
+- Migration additive `20261025000000_feedback_dates_locations` sudah diterapkan pada PostgreSQL latihan. Produksi belum dimigrasi pada checkpoint ini. Tidak ada konversi saldo/tag/deadline lama.
+- Bukti lokal: build web/worker, typecheck/lint lulus; domain mencakup Counter/tag serentak, retry dan batch 100 unit, batas 101, saldo serialized terpisah, tanggal dan reminder. Browser baseline 6 lulus; 2 tes feedback/login juga lulus setelah pengamanan hydration login. Regresi tambahan collision/rollback diverifikasi kembali melalui CI sebelum rilis.
+- Review UI: disposition ship untuk penerimaan desktop/mobile dan label mobile; batas pemeriksaan di `docs/design/FEEDBACK_RELEASE_DESIGN_CHECK.md`. Detector sekali, 119 advisory token incumbent, nol nonadvisory. Drift sidecar lama tetap dicatat tanpa perbaikan di luar scope.
+- Buku panduan lokal diperbarui ke edisi 1.1: 47 halaman, 40 screenshot aplikasi latihan dan highlight; termasuk tanggal, lokasi, penerimaan/tag, QR dan pemasangan PWA. Tidak dimasukkan ke Git publik. Metadata bahasa/bookmark, pemeriksaan teks credential dan render seluruh halaman telah diperiksa.
+- Gate operasional tetap: penerimaan UAT pemilik, perangkat fisik/cetak/kamera/PWA, kebijakan QMS/kalibrasi, backup off-host terjadwal dan alarm eksternal sesuai daftar risiko existing. Mode preparation tidak diubah otomatis.
+
 Pembaruan: 18 Oktober 2026. Tahap: aplikasi persiapan/pilot telah di-deploy dan sehat pada LXC Docker dengan PostgreSQL CT102. Rilis performa `153e39d17a37` aktif dan telah lulus CI. Ini bukan pernyataan seluruh V1/UAT/gate operasional lulus.
 
 ## Implementasi tersedia
@@ -103,3 +118,15 @@ Pengguna meminta panduan lengkap non-IT untuk setiap role dengan screenshot dan 
 Screenshot dibuat pada database latihan terpisah `inventory_test_guide_20261020` menggunakan role/layanan aplikasi yang sama; tidak menjalankan transaksi perusahaan. Screenshot mentah dipertahankan, kotak/angka oranye ditambahkan sebagai vektor PDF. Tidak ada password, QR MFA atau recovery code di artefak. Buku/PDF/screenshot/fixture tetap lokal dan tidak diunggah ke repository publik. Source penyusunan dan QA privat berada di `.local/guide/`.
 
 Verifikasi:46 halaman diekstrak dan dirender memakai Poppler, seluruh contact sheet diperiksa; halaman kontrol penting diperiksa pada ukuran lebih besar. Tidak ada teks di luar batas layout; semua halaman memiliki teks, role/alur utama terdeteksi, bookmark/bahasa id-ID valid dan pemeriksaan credential-text lulus. Detail penanda role pada form akun dikoreksi ke dropdown yang sebenarnya dan diperiksa ulang. Tidak mengubah source aplikasi, schema/database produksi, akun atau deployment; bukan klaim UAT operasional/perangkat fisik lulus.
+
+## Analisis feedback tim inventory (24 Oktober 2026)
+
+Permintaan pengguna terbatas pada analisis `Perbaikan.docx` dan rencana perbaikan. Seluruh teks serta10 gambar diperiksa dan dicocokkan dengan kode lokal HEAD8cd13a3. Hasil: `RENCANA_PERBAIKAN_FEEDBACK_2026_10_24.md`,13 paket FB-01–13 dalam4 batch A–D, dengan bukti sumber, prioritas, target file, aturan data, acceptance, regresi dan jalur rilis. Belum ada implementasi atau reproduksi runtime baru.
+
+Temuan kode utama: step angka0.0001 dipakai generik, termasuk minimum stok; minimum stok belum memvalidasi pecahan menurut satuan. Validasi jumlah transaksi existing sudah memperiksa aturan pecahan. Label QR ada pada quick nav mobile tetapi belum di daftar desktop/menu lengkap; edit master belum menargetkan fokus editor di bawah daftar. Dashboard di bawah lipatan layar belum dapat dinyatakan terpotong hanya dari screenshot. Label QR saat ini hanya aset dan dibatasi100 hasil; QR dibuat dari tag database, bukan pembacaan Excel langsung. Reminder pinjaman existing digunakan kembali, bukan membangun worker baru.
+
+Klarifikasi pemilik: fitur yang dianggap tidak dapat diklik kemungkinan adalah label Ruang kerja MTC. Kode mengonfirmasi label tersebut statis/hardcode. Rencana memperjelas konteks gudang dan tautan Kelola lokasi bagi role berwenang, tanpa menambah pemilih multi-gudang. Kanal reminder dikonfirmasi notifikasi di aplikasi dahulu. Tanggal akhir hari dan pemisahan teks lokasi penggunaan adalah usulan kebijakan; serial pabrikan tidak boleh digenerate dan tag/QR lama tidak direname massal.
+
+BatchA: angka/menu/edit/dashboard/konteks; B: pemilih barang/lokasi penggunaan/tanggal/reminder; C: bulk penerimaan dan tag unit otomatis; D: QR SKU/unit/legacy dan cetak/pindai. Penguncian quantity1 hanya pada rincian penerimaan serialized, bukan jumlah permintaan alat. Penambahan bulk tetap satu unit per baris di server, atomik, diaudit dan aman terhadap retry/concurrency. Impeccable context dibaca; sidecar design.json tertinggal dari DESIGN.md dan tidak diubah sebagai efek samping. Tidak mengubah source aplikasi, schema/stok/akun produksi, deployment atau file DOCX pengguna; tidak menjalankan tes aplikasi karena perubahan hanya dokumen perencanaan.
+
+Keputusan QR, 25 Oktober 2026: pemilik menetapkan penerbitan QR baru hanya dari aplikasi agar format seragam dan satu pintu. Rencana batch D diperjelas: satu generator/resolver untuk tipe barang dan unit, spreadsheet hanya sumber impor data, cetak ulang tidak membuat identitas baru. Kompatibilitas baca label lama tetap dijaga selama transisi; contoh payload final belum diimplementasikan. Perubahan sesi ini hanya keputusan pada dokumen, tanpa perubahan aplikasi atau deployment.

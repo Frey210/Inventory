@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { Logout } from "./auth-client";
 import type { Actor } from "@/server/policy";
+import { db } from "@/server/db";
+import { Suspense } from "react";
 
 const roleNames: Record<string, string> = {
   ADMIN: "Admin",
@@ -33,6 +35,19 @@ const roleNames: Record<string, string> = {
   TECHNICIAN: "Tim MTC",
   AUDITOR: "Manajemen",
 };
+async function WarehouseName() {
+  const rows = await db.master.findMany({
+    where: {
+      kind: "location",
+      active: true,
+      parentId: null,
+      details: { path: ["locationType"], equals: "Gudang" },
+    },
+    select: { name: true },
+    take: 2,
+  });
+  return <span>{rows.length === 1 ? rows[0].name : "Inventory MTC"}</span>;
+}
 export function Shell({
   actor,
   path,
@@ -68,6 +83,7 @@ export function Shell({
       ] as const)
     : ([
         ["/admin/masters", "Master Data", Settings],
+        ["/admin/labels", "Label QR", ScanLine],
         ["/admin/transfers", "Pindah rak", ArrowLeftRight],
         ["/admin/stocktakes", "Hitung stok", ClipboardCheck],
         ["/admin/maintenance", "Perawatan & kalibrasi", Wrench],
@@ -108,7 +124,7 @@ export function Shell({
         primary[0],
         primary[1],
         ["/admin/labels", "Label QR", ScanLine] as const,
-        ["/admin/requests", "Pengajuan", ClipboardCheck] as const,
+        ["/admin/requests", "Permintaan", ClipboardCheck] as const,
         ["/profile", "Profil", UserRound] as const,
       ];
   return (
@@ -122,8 +138,15 @@ export function Shell({
         </Link>
         <div className="warehouse-label">
           <MapPin size={16} aria-hidden />
-          Ruang kerja MTC
+          <Suspense fallback={<span>Inventory MTC</span>}>
+            <WarehouseName />
+          </Suspense>
         </div>
+        {["ADMIN", "WAREHOUSE"].includes(actor.role) && (
+          <Link className="warehouse-manage" href="/admin/masters?tab=location">
+            Kelola lokasi
+          </Link>
+        )}
         <nav aria-label="Menu utama">{links(primary)}</nav>
         <details
           className="management-menu"

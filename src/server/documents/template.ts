@@ -31,12 +31,12 @@ export function loanHtml(
         .filter((v): v is string => typeof v === "string" && !!v),
     ),
   ];
-  const date = (value: unknown) =>
+  const date = (value: unknown, dateOnly = false) =>
     value
       ? new Intl.DateTimeFormat("id-ID", {
           timeZone: String(obj(initial.settings).timezone || "Asia/Makassar"),
           dateStyle: "medium",
-          timeStyle: "short",
+          timeStyle: dateOnly ? undefined : "short",
         }).format(new Date(String(value)))
       : "Belum diverifikasi";
   const statuses: Record<string, string> = {
@@ -102,7 +102,10 @@ export function loanHtml(
             " / " +
             (obj(initial.usageLocation).name || "Belum dicatat"),
           date(loan.createdAt),
-          date(loan.dueAt),
+          date(
+            loan.dueAt,
+            loan.dueDateOnly === true || request.dueDateOnly === true,
+          ),
         ],
       ],
     ) +

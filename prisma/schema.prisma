@@ -151,6 +151,8 @@ model Document {
   projectId String?
   locationId String?
   targetLocationId String?
+  targetLocationText String?
+  dueDateOnly Boolean @default(false)
   reference String @default("")
   purpose String @default("")
   dueAt DateTime?
@@ -187,6 +189,7 @@ model Loan {
   borrowerId String
   projectId String
   dueAt DateTime
+  dueDateOnly Boolean @default(false)
   status String @default("active")
   snapshot Json
   createdAt DateTime @default(now())

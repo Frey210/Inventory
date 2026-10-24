@@ -3,9 +3,11 @@ import Form from "next/form";
 import { Suspense } from "react";
 import { pageDataNeeds } from "@/server/page-data";
 import { PageSkeleton } from "@/components/page-skeleton";
+import { EditorFocus } from "@/components/editor-focus";
+import { InstallApp } from "@/components/pwa";
 import { SearchSubmit } from "@/components/navigation";
 import Image from "next/image";
-import QRCode from "qrcode";
+import { Labels } from "@/components/labels";
 import {
   Boxes,
   Radio,
@@ -40,7 +42,6 @@ import { currentUser, own, permit } from "@/server/policy";
 import { Shell } from "@/components/shell";
 import {
   ActionForm,
-  PrintButton,
   type Field,
   type Option,
   type CatalogItem,
@@ -238,60 +239,9 @@ export default async function Page({
     }
     if (path === "/admin/labels") {
       permit(user, "read");
-      const assets = await db.asset.findMany({
-        where: query.asset ? { id: query.asset } : {},
-        include: { item: true },
-        take: 100,
-        orderBy: { tag: "asc" },
-      });
-      await db.audit.create({
-        data: {
-          actorId: user.id,
-          action: "LABEL_EXPORTED",
-          entityId: "asset-labels",
-          payload: { ids: assets.map((a) => a.id) },
-        },
-      });
-      const labels = await Promise.all(
-        assets.map(async (a) => ({
-          ...a,
-          qr: await QRCode.toDataURL(a.tag, {
-            errorCorrectionLevel: "M",
-            margin: 4,
-            width: 240,
-          }),
-        })),
-      );
-      return (
-        <>
-          <Heading
-            title="Label Aset"
-            description="QR berisi kode aset. Cetak 100%; uji pemindaian pada perangkat dan kertas yang dipakai."
-          />
-          <PrintButton />
-          <div className="label-sheet">
-            {labels.map((a) => (
-              <article className="asset-label" key={a.id}>
-                <Image
-                  src={a.qr}
-                  alt={`QR ${a.tag}`}
-                  width={96}
-                  height={96}
-                  unoptimized
-                />
-                <div>
-                  <strong>{a.tag}</strong>
-                  <br />
-                  {a.item.name}
-                  <br />
-                  <small>{a.serial || a.item.sku}</small>
-                </div>
-              </article>
-            ))}
-          </div>
-        </>
-      );
+      return <Labels query={query} actorId={user.id} />;
     }
+    const scanMissing = query.scan === "missing";
     const needs = pageDataNeeds(path);
     const [masters, rawItems] = await Promise.all([
       needs.masters
@@ -346,7 +296,11 @@ export default async function Page({
       serialize(
         masters
           .filter((m) => m.kind === kind && m.active)
-          .map((m) => ({ id: m.id, name: m.name, details: m.details })),
+          .map((m) => ({
+            id: m.id,
+            name: kind === "location" ? `${m.code} · ${m.name}` : m.name,
+            details: m.details,
+          })),
       );
     const select = (
       name: string,
@@ -369,6 +323,14 @@ export default async function Page({
           activeMasterIds.has(id),
         ),
     );
+    const fractional = (itemId: string) => {
+      const item = items.find((i) => i.id === itemId);
+      return (
+        item?.tracking === "quantity" &&
+        !!(masterById.get(item.unitId)?.details as { fractional?: boolean })
+          ?.fractional
+      );
+    };
     const scope = tech ? { actorId: user.id } : {};
     const available = (item: (typeof items)[number], locationId?: string) =>
       item.tracking === "quantity"
@@ -391,6 +353,7 @@ export default async function Page({
     if (path === "/profile")
       return (
         <>
+          <InstallApp />
           <Heading
             title="Profil & Keamanan"
             description="Identitas internal, password dan autentikasi dua faktor."
@@ -689,7 +652,8 @@ export default async function Page({
                       <span>
                         <strong>{l.number}</strong>
                         <small>
-                          Kembali <DateLabel value={l.dueAt} />
+                          Kembali{" "}
+                          <DateLabel value={l.dueAt} dateOnly={l.dueDateOnly} />
                         </small>
                       </span>
                       <span className="count-label">
@@ -780,6 +744,7 @@ export default async function Page({
       const edit = query.edit
         ? masters.find((m) => m.id === query.edit && m.kind === kind)
         : null;
+      if (query.edit && !edit) notFound();
       const detail = (edit?.details || {}) as Record<string, unknown>;
       const locationPath = (row: (typeof masters)[number]): string => {
         const parts = [row.name];
@@ -969,7 +934,7 @@ export default async function Page({
                   canWrite ? (
                     <Link
                       key={m.id}
-                      href={`/admin/masters?tab=${kind}&edit=${m.id}`}
+                      href={`?${new URLSearchParams({ ...Object.fromEntries(Object.entries(query).filter(([, value]) => value !== undefined) as [string, string][]), tab: kind, edit: m.id })}#master-editor`}
                     >
                       Edit
                     </Link>
@@ -999,10 +964,18 @@ export default async function Page({
             </nav>
           </section>
           {canWrite && (kind !== "type" || edit) && (
-            <section className="panel">
+            <section className="panel" id="master-editor" tabIndex={-1}>
+              {edit && <EditorFocus identity={edit.id} />}
               <h2>
                 {edit ? "Edit" : "Tambah"} {names[kind]}
               </h2>
+              {edit && (
+                <Link
+                  href={`?${new URLSearchParams({ tab: kind, q: query.q || "", active: query.active || "", parent: query.parent || "", page: String(pageNumber) })}`}
+                >
+                  Batal / kembali ke daftar
+                </Link>
+              )}
               <ActionForm
                 key={edit?.id || kind}
                 action="master"
@@ -1077,7 +1050,7 @@ export default async function Page({
                 ),
                 {
                   name: "minStock",
-                  label: "Minimum stock",
+                  label: "Minimum stok",
                   type: "number",
                   value: item?.minStock.toString() || "0",
                   required: true,
@@ -1143,11 +1116,17 @@ export default async function Page({
       return (
         <>
           <Heading
-            title="Barang"
+            title={
+              scanMissing ? "Kode tidak ditemukan — cari barang" : "Barang"
+            }
             description="Komponen, sensor, dan alat kerja tim. Cari barang, lalu cek raknya."
             href={canWrite ? "/admin/items/new" : undefined}
             action="Tambah barang"
           />
+          <details className="panel">
+            <summary>Pindai QR barang / alat</summary>
+            <Scanner />
+          </details>
           <Form className="catalog-toolbar" action={path}>
             <SearchBox value={query.q} />
             <input type="hidden" name="tracking" value={query.tracking || ""} />
@@ -1425,6 +1404,14 @@ export default async function Page({
               </div>
             </div>
           </section>
+          {!tech && (
+            <Link
+              className="button secondary"
+              href={`/admin/labels?type=ITEM&print=1&ids=${item.id}`}
+            >
+              Cetak QR barang
+            </Link>
+          )}
           {item.tracking === "quantity" ? (
             <Table
               headers={["Lokasi", "Fisik layak", "Direservasi", "Tersedia"]}
@@ -1446,7 +1433,10 @@ export default async function Page({
                 "Label",
               ]}
               rows={item.assets.map((a) => [
-                a.tag + " / " + (a.serial || "—"),
+                <span key="tag" id={`unit-${a.id}`}>
+                  {query.unit === a.id && <strong>Hasil pindai · </strong>}
+                  {a.tag} / {a.serial || "—"}
+                </span>,
                 a.condition,
                 a.technical,
                 <Badge key="status" value={a.availability} />,
@@ -1550,7 +1540,14 @@ export default async function Page({
                       ? "request"
                       : "receipt"
                 }
-                base={revision ? { id: revision.id } : {}}
+                base={
+                  revision
+                    ? {
+                        id: revision.id,
+                        targetLocationText: revision.targetLocationText || "",
+                      }
+                    : {}
+                }
                 initialLines={
                   revision
                     ? revision.lines.map((l) => ({
@@ -1594,6 +1591,11 @@ export default async function Page({
                         unitName: lookup(i.unitId),
                         categoryName: lookup(i.categoryId),
                         specifications: i.description,
+                        fractional: !!(
+                          masterById.get(i.unitId)?.details as {
+                            fractional?: boolean;
+                          }
+                        )?.fractional,
                       })),
                   ) as CatalogItem[]
                 }
@@ -1613,6 +1615,7 @@ export default async function Page({
                           "Lokasi penggunaan",
                           "location",
                           false,
+                          revision?.targetLocationId || "",
                         ),
                       ]
                     : []),
@@ -1630,8 +1633,8 @@ export default async function Page({
                     ? [
                         {
                           name: "dueAt",
-                          label: "Kapan alat akan dikembalikan?",
-                          type: "datetime-local",
+                          label: "Rencana tanggal kembali",
+                          type: "date",
                           required: query.mode === "serialized",
                         } as Field,
                       ]
@@ -1728,8 +1731,10 @@ export default async function Page({
               </dd>
               <dt>Rencana kembali</dt>
               <dd>
-                <DateLabel value={doc.dueAt} />
+                <DateLabel value={doc.dueAt} dateOnly={doc.dueDateOnly} />
               </dd>
+              <dt>Lokasi penggunaan</dt>
+              <dd>{doc.targetLocationText || lookup(doc.targetLocationId)}</dd>
               <dt>Alasan keputusan</dt>
               <dd>{doc.reason || "—"}</dd>
             </dl>
@@ -1742,6 +1747,9 @@ export default async function Page({
                 "Diserahkan",
                 "Kembali",
                 "Waste",
+                ...(doc.kind === "receipt"
+                  ? ["Tag internal", "Nomor seri pabrikan"]
+                  : []),
               ]}
               rows={doc.lines.map((l) => [
                 itemName(l.itemId),
@@ -1751,6 +1759,12 @@ export default async function Page({
                 l.fulfilled.toString(),
                 l.returned.toString(),
                 l.waste.toString(),
+                ...(doc.kind === "receipt"
+                  ? [
+                      String((l.details as { tag?: string }).tag || "—"),
+                      String((l.details as { serial?: string }).serial || "—"),
+                    ]
+                  : []),
               ])}
             />
           </section>
@@ -1787,6 +1801,7 @@ export default async function Page({
                             name: `approved.${l.id}`,
                             label: `Jumlah disetujui: ${itemName(l.itemId)}`,
                             type: "number",
+                            fractional: fractional(l.itemId),
                             value: l.quantity.toString(),
                             required: true,
                           }) as Field,
@@ -1955,6 +1970,8 @@ export default async function Page({
                           name: "quantity",
                           label: `Sisa layak: ${itemName(l.itemId)}`,
                           type: "number",
+                          fractional: fractional(l.itemId),
+                          min: fractional(l.itemId) ? "0.0001" : "1",
                           required: true,
                         },
                         { name: "reason", label: "Keterangan", required: true },
@@ -2003,7 +2020,7 @@ export default async function Page({
             ]}
             rows={loans.map((l) => [
               l.number,
-              <DateLabel key="date" value={l.dueAt} />,
+              <DateLabel key="date" value={l.dueAt} dateOnly={l.dueDateOnly} />,
               l.lines.filter((x) => !x.receivedAt).length,
               l.lines.filter((x) => x.receivedAt && !x.inspectedAt).length,
               <Badge key="status" value={l.status} />,
@@ -2075,7 +2092,15 @@ export default async function Page({
               )}
             </div>
             <p>
-              Rencana kembali: <DateLabel value={loan.dueAt} />
+              Rencana kembali:{" "}
+              <DateLabel value={loan.dueAt} dateOnly={loan.dueDateOnly} />
+            </p>
+            <p>
+              Lokasi penggunaan:{" "}
+              {String(
+                (loan.snapshot as { usageLocation?: { name?: string } })
+                  .usageLocation?.name || "Belum dicatat",
+              )}
             </p>
             <Table
               headers={[
@@ -2242,6 +2267,7 @@ export default async function Page({
                   options: items.map((i) => ({
                     id: i.id,
                     name: i.sku + " — " + i.name,
+                    details: { fractional: fractional(i.id) },
                   })),
                   required: true,
                 },
@@ -2359,6 +2385,7 @@ export default async function Page({
                               " (hadir 1 / hilang 0)"
                             : ""),
                         type: "number",
+                        fractional: !l.assetId && fractional(l.itemId),
                         required: true,
                       }) as Field,
                   ),

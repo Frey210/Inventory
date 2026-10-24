@@ -2,6 +2,9 @@
 import { useActionState, useEffect, useRef, useState, useId } from "react";
 import { perform, type FormState } from "@/app/actions";
 import Image from "next/image";
+import Link from "next/link";
+import { quantityInput } from "@/lib/quantity-input";
+import { SearchChoice } from "./search-choice";
 export type Option = {
   id: string;
   name: string;
@@ -26,6 +29,8 @@ export type Field = {
   options?: Option[];
   value?: string | boolean | string[];
   help?: string;
+  fractional?: boolean;
+  min?: string;
 };
 export type CatalogItem = Option & {
   sku: string;
@@ -36,6 +41,7 @@ export type CatalogItem = Option & {
   unitName?: string;
   categoryName?: string;
   specifications?: unknown;
+  fractional?: boolean;
 };
 const initial: FormState = {};
 export function PrintButton() {
@@ -91,6 +97,7 @@ export function ActionForm({
       ? initialLines
       : [{ itemId: "", locationId: "", quantity: "1" }]
     ).map((line) => ({
+      clientKey: crypto.randomUUID(),
       tag: "",
       serial: "",
       condition: "Baik",
@@ -118,6 +125,26 @@ export function ActionForm({
       }
       return next;
     });
+  }
+  function numeric(field: Field) {
+    const selected = (name: string) =>
+      fields
+        .find((f) => f.name === name)
+        ?.options?.find((o) => o.id === values[name])?.details;
+    const fractional =
+      field.name === "minStock"
+        ? selected("typeId")?.tracking !== "serialized" &&
+          !!selected("unitId")?.fractional
+        : field.name === "quantity" && action === "transfer"
+          ? !!selected("itemId")?.fractional
+          : field.fractional;
+    return {
+      ...quantityInput(
+        fractional,
+        field.name === "minStock" || field.name.startsWith("counts."),
+      ),
+      ...(field.min ? { min: field.min } : {}),
+    };
   }
   const payload: Record<string, unknown> = structuredClone({
     ...values,
@@ -156,6 +183,13 @@ export function ActionForm({
       {state.success && (
         <div className="alert success" role="status">
           {state.success}
+          {action === "receipt" && state.id && (
+            <p>
+              <Link href={`/admin/receipts/${state.id}`}>
+                Tinjau draft dan tag unit
+              </Link>
+            </p>
+          )}
         </div>
       )}
       {items && (
@@ -164,39 +198,39 @@ export function ActionForm({
           {lines.map((line, index) => {
             const item = items.find((i) => i.id === line.itemId);
             return (
-              <div className="line-editor" key={index}>
-                <label>
+              <div className="line-editor" key={line.clientKey}>
+                <label htmlFor={`${prefix}-lines-${index}-itemId`}>
                   Barang
-                  <select
+                  <SearchChoice
+                    id={`${prefix}-lines-${index}-itemId`}
                     required
                     value={line.itemId}
-                    onChange={(e) =>
+                    options={items.map((i) => ({
+                      id: i.id,
+                      name: `${i.sku} — ${i.name}`,
+                    }))}
+                    onChange={(itemId) =>
                       setLines(
                         lines.map((l, i) =>
                           i === index
                             ? {
                                 ...l,
-                                itemId: e.target.value,
+                                itemId,
+                                quantity:
+                                  action === "receipt" &&
+                                  items.find((x) => x.id === itemId)
+                                    ?.tracking === "serialized"
+                                    ? "1"
+                                    : l.quantity,
                                 locationId:
-                                  items.find((x) => x.id === e.target.value)
+                                  items.find((x) => x.id === itemId)
                                     ?.locationId || "",
                               }
                             : l,
                         ),
                       )
                     }
-                  >
-                    <option value="">Pilih barang</option>
-                    {items.map((i) => (
-                      <option key={i.id} value={i.id}>
-                        {i.sku} — {i.name} (
-                        {i.tracking === "quantity"
-                          ? "komponen / bahan"
-                          : "alat / aset"}
-                        )
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </label>
                 <label>
                   Lokasi
@@ -226,8 +260,12 @@ export function ActionForm({
                   <input
                     required
                     type="number"
-                    min="0.0001"
-                    step="0.0001"
+                    {...quantityInput(
+                      item?.tracking === "quantity" && item.fractional,
+                    )}
+                    readOnly={
+                      action === "receipt" && item?.tracking === "serialized"
+                    }
                     value={line.quantity}
                     onChange={(e) =>
                       setLines(
@@ -263,9 +301,10 @@ export function ActionForm({
                 {item?.tracking === "serialized" && action === "receipt" && (
                   <>
                     <label>
-                      Asset tag
+                      Tag internal
                       <input
-                        required
+                        readOnly
+                        placeholder="Otomatis saat draft disimpan"
                         value={line.tag}
                         onChange={(e) =>
                           setLines(
@@ -277,7 +316,7 @@ export function ActionForm({
                       />
                     </label>
                     <label>
-                      Serial
+                      Nomor seri pabrikan (opsional)
                       <input
                         value={line.serial}
                         onChange={(e) =>
@@ -333,6 +372,49 @@ export function ActionForm({
                     </label>
                   </>
                 )}
+                {item?.tracking === "serialized" && action === "receipt" && (
+                  <label>
+                    Tambahkan unit serupa (maks. {100 - lines.length})
+                    <input
+                      type="number"
+                      min="0"
+                      max={100 - lines.length}
+                      step="1"
+                      defaultValue="0"
+                      id={`${prefix}-bulk-${index}`}
+                    />
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => {
+                        const input = document.getElementById(
+                          `${prefix}-bulk-${index}`,
+                        ) as HTMLInputElement;
+                        if (!input.reportValidity()) return;
+                        const count = Number(input.value);
+                        if (
+                          !Number.isInteger(count) ||
+                          count < 1 ||
+                          count + lines.length > 100
+                        )
+                          return;
+                        setLines([
+                          ...lines,
+                          ...Array.from({ length: count }, () => ({
+                            ...line,
+                            clientKey: crypto.randomUUID(),
+                            quantity: "1",
+                            tag: "",
+                            serial: "",
+                          })),
+                        ]);
+                        input.value = "0";
+                      }}
+                    >
+                      Tambahkan rincian unit
+                    </button>
+                  </label>
+                )}
                 {lines.length > 1 && (
                   <button
                     className="secondary"
@@ -350,11 +432,13 @@ export function ActionForm({
           <button
             className="secondary"
             type="button"
+            disabled={lines.length >= 100}
             onClick={() =>
               setLines([
                 ...lines,
                 {
                   itemId: "",
+                  clientKey: crypto.randomUUID(),
                   locationId: "",
                   quantity: "1",
                   tag: "",
@@ -366,7 +450,7 @@ export function ActionForm({
               ])
             }
           >
-            Tambah Baris
+            Tambah Baris ({lines.length}/100)
           </button>
         </fieldset>
       )}
@@ -380,7 +464,24 @@ export function ActionForm({
               {field.label}
               {field.required && <span className="required"> (Wajib)</span>}
             </span>
-            {field.type === "multiselect" ? (
+            {field.name === "targetLocationId" ? (
+              <SearchChoice
+                options={(field.options || []).map((o) => ({
+                  id: o.id,
+                  name: o.name,
+                }))}
+                value={String(values.targetLocationId || "")}
+                text={String(values.targetLocationText || "")}
+                freeText
+                onChange={(id, text) =>
+                  setValues((current) => ({
+                    ...current,
+                    targetLocationId: id,
+                    targetLocationText: text,
+                  }))
+                }
+              />
+            ) : field.type === "multiselect" ? (
               <select
                 multiple
                 id={`${prefix}-${field.name}`}
@@ -466,8 +567,7 @@ export function ActionForm({
                 }
                 name={field.name}
                 type={field.type || "text"}
-                step={field.type === "number" ? "0.0001" : undefined}
-                min={field.type === "number" ? "0" : undefined}
+                {...(field.type === "number" ? numeric(field) : {})}
                 required={field.required}
                 value={String(values[field.name] ?? "")}
                 onChange={(e) => change(field.name, e.target.value)}

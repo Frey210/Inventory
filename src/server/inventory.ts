@@ -77,6 +77,51 @@ async function activeMaster(tx: Tx, masterId: string, kind: string) {
     throw new Error(`Referensi ${kind} tidak aktif atau tidak valid.`);
   return row;
 }
+async function allocateTags(
+  tx: Tx,
+  itemId: string,
+  sku: string,
+  pending: string[],
+  count: number,
+) {
+  const prefix = `MTC-${sku}-`;
+  const key = `asset-tag:${itemId}`;
+  const [counter, assets, drafts] = await Promise.all([
+    tx.counter.findUnique({ where: { key } }),
+    tx.asset.findMany({
+      where: { tag: { startsWith: prefix } },
+      select: { tag: true },
+    }),
+    tx.line.findMany({
+      where: { itemId, document: { kind: "receipt", status: "draft" } },
+      select: { details: true },
+    }),
+  ]);
+  const tags = [
+    ...pending,
+    ...assets.map((a) => a.tag),
+    ...drafts.map((d) => String((d.details as { tag?: string }).tag || "")),
+  ];
+  const last = tags.reduce((n, tag) => {
+    const suffix = tag.startsWith(prefix) ? tag.slice(prefix.length) : "";
+    return /^\d+$/.test(suffix) ? Math.max(n, Number(suffix)) : n;
+  }, counter?.value || 0);
+  if (!Number.isSafeInteger(last) || last + count > 2147483647)
+    throw new Error("Urutan tag melewati batas. Hubungi admin.");
+  if (prefix.length + Math.max(3, String(last + count).length) > 100)
+    throw new Error(
+      "Kode SKU terlalu panjang untuk tag unit. Gunakan kode katalog lebih pendek.",
+    );
+  await tx.counter.upsert({
+    where: { key },
+    create: { key, value: last + count },
+    update: { value: last + count },
+  });
+  return Array.from(
+    { length: count },
+    (_, index) => `${prefix}${String(last + index + 1).padStart(3, "0")}`,
+  );
+}
 async function unfrozen(tx: Tx, location: string) {
   await activeMaster(tx, location, "location");
   if (await tx.freeze.findUnique({ where: { locationId: location } }))
@@ -143,6 +188,32 @@ async function validateQuantity(
   if (!details.fractional && !qty.isInteger())
     throw new Error("Satuan barang hanya menerima bilangan bulat.");
   return { item, qty };
+}
+async function validateLines<
+  T extends {
+    itemId: string;
+    locationId: string;
+    quantity: string | Prisma.Decimal;
+  },
+>(tx: Tx, lines: T[]) {
+  const checked = new Map<
+    string,
+    Awaited<ReturnType<typeof validateQuantity>>
+  >();
+  const locations = new Set<string>();
+  const result = [];
+  for (const line of lines) {
+    const amount = line.quantity.toString();
+    const key = `${line.itemId}:${amount}`;
+    if (!checked.has(key))
+      checked.set(key, await validateQuantity(tx, line.itemId, amount));
+    if (!locations.has(line.locationId)) {
+      await unfrozen(tx, line.locationId);
+      locations.add(line.locationId);
+    }
+    result.push({ line, ...checked.get(key)! });
+  }
+  return result;
 }
 async function snapshot(tx: Tx, loanId: string) {
   const loan = await tx.loan.findUniqueOrThrow({
@@ -538,9 +609,17 @@ export async function execute(
         .parse(input);
       const type = await activeMaster(tx, p.typeId, "type");
       await activeMaster(tx, p.categoryId, "category");
-      await activeMaster(tx, p.unitId, "unit");
+      const unit = await activeMaster(tx, p.unitId, "unit");
       await activeMaster(tx, p.locationId, "location");
       const tracking = (type.details as { tracking: string }).tracking;
+      if (
+        (tracking === "serialized" ||
+          !(unit.details as { fractional?: boolean }).fractional) &&
+        !new Prisma.Decimal(p.minStock).isInteger()
+      )
+        throw new Error(
+          "Minimum stok harus bilangan bulat sesuai satuan barang.",
+        );
       if (!["quantity", "serialized"].includes(tracking))
         throw new Error("Jenis belum memiliki tracking valid.");
       if (p.photoId) await attachment(tx, actor, p.photoId);
@@ -594,37 +673,91 @@ export async function execute(
           id: id.optional(),
           projectId: z.string().optional(),
           targetLocationId: z.string().optional(),
+          targetLocationText: z.string().trim().max(200).optional(),
           reference: z.string().max(500).default(""),
           purpose: text,
           dueAt: z.string().optional(),
           lines: z.array(lineSchema).min(1).max(100),
         })
         .parse(input);
+      if (p.targetLocationId && p.targetLocationText)
+        throw new Error(
+          "Pilih lokasi penggunaan atau isi lokasi lain, bukan keduanya.",
+        );
+      const dueDateOnly = !!p.dueAt && /^\d{4}-\d{2}-\d{2}$/.test(p.dueAt);
       const dueAt = p.dueAt
-        ? businessDate(p.dueAt, await businessTimezone(tx))
+        ? businessDate(p.dueAt, await businessTimezone(tx), dueDateOnly)
         : null;
       if (action !== "receipt")
         await activeMaster(tx, p.projectId || "", "project");
       if (p.targetLocationId)
         await activeMaster(tx, p.targetLocationId, "location");
       const types = new Set<string>();
-      for (const line of p.lines) {
-        const { item, qty } = await validateQuantity(
-          tx,
-          line.itemId,
-          line.quantity,
-        );
-        await unfrozen(tx, line.locationId);
+      const allocatedTags = new Map<string, string[]>();
+      for (const { line, item, qty } of await validateLines(tx, p.lines)) {
         types.add(item.tracking);
         if (item.tracking === "serialized" && !qty.isInteger())
           throw new Error("Unit harus bilangan bulat.");
         if (
           action === "receipt" &&
           item.tracking === "serialized" &&
-          (!line.tag || !qty.eq(1))
+          !qty.eq(1)
         )
           throw new Error(
             "Penerimaan serialized memerlukan satu tag unik per baris.",
+          );
+        if (
+          action === "receipt" &&
+          item.tracking === "serialized" &&
+          !line.tag
+        ) {
+          if (!allocatedTags.has(item.id))
+            allocatedTags.set(
+              item.id,
+              await allocateTags(
+                tx,
+                item.id,
+                item.sku,
+                p.lines.map((l) => l.tag || ""),
+                p.lines.filter((l) => l.itemId === item.id && !l.tag).length,
+              ),
+            );
+          line.tag = allocatedTags.get(item.id)!.shift()!;
+        }
+      }
+      if (action === "receipt") {
+        const tags = p.lines
+          .map((l) => l.tag)
+          .filter((tag): tag is string => !!tag);
+        const serials = p.lines
+          .map((l) => l.serial)
+          .filter((serial): serial is string => !!serial);
+        if (
+          new Set(tags).size !== tags.length ||
+          new Set(serials).size !== serials.length
+        )
+          throw new Error("Tag atau nomor seri duplikat dalam penerimaan.");
+        if (
+          await tx.asset.count({
+            where: { OR: [{ tag: { in: tags } }, { serial: { in: serials } }] },
+          })
+        )
+          throw new Error("Tag atau nomor seri sudah dipakai unit lain.");
+        const drafts = await tx.line.findMany({
+          where: { document: { kind: "receipt", status: "draft" } },
+          select: { details: true },
+        });
+        if (
+          drafts.some((d) => {
+            const v = d.details as { tag?: string; serial?: string };
+            return (
+              (v.tag && tags.includes(v.tag)) ||
+              (v.serial && serials.includes(v.serial))
+            );
+          })
+        )
+          throw new Error(
+            "Tag atau nomor seri sudah dialokasikan pada draft lain.",
           );
       }
       if (action !== "receipt" && types.size !== 1)
@@ -667,6 +800,8 @@ export async function execute(
           purpose: p.purpose,
           projectId: p.projectId || null,
           targetLocationId: p.targetLocationId || null,
+          targetLocationText: p.targetLocationText || null,
+          dueDateOnly,
           reference: original ? `REV:${original.number}` : p.reference,
           dueAt,
           lines: {
@@ -735,13 +870,11 @@ export async function execute(
         if (doc.kind !== "receipt" || doc.status !== "draft")
           throw new Error("Penerimaan bukan draft.");
         const timezone = await businessTimezone(tx);
-        for (const l of doc.lines) {
-          const { item, qty } = await validateQuantity(
-            tx,
-            l.itemId,
-            l.quantity.toString(),
-          );
-          await unfrozen(tx, l.locationId);
+        const newAssets: Prisma.AssetCreateManyInput[] = [];
+        for (const { line: l, item, qty } of await validateLines(
+          tx,
+          doc.lines,
+        )) {
           if (item.tracking === "quantity")
             await movement(
               tx,
@@ -755,25 +888,26 @@ export async function execute(
           else {
             const meta = lineSchema.parse(l.details);
             const good = ["Baru", "Baik"].includes(meta.condition);
-            await tx.asset.create({
-              data: {
-                itemId: item.id,
-                tag: meta.tag!,
-                serial: meta.serial || null,
-                locationId: l.locationId,
-                condition: meta.condition,
-                availability: good ? "available" : "blocked",
-                calibrationRequired: meta.calibrationRequired,
-                validUntil: meta.validUntil
-                  ? businessDate(meta.validUntil, timezone, true)
-                  : null,
-                technical: meta.calibrationRequired
-                  ? "Perlu Kalibrasi"
-                  : "Normal",
-              },
+            if (!meta.tag || !qty.eq(1))
+              throw new Error("Draft unit memerlukan satu tag dan jumlah 1.");
+            newAssets.push({
+              itemId: item.id,
+              tag: meta.tag!,
+              serial: meta.serial || null,
+              locationId: l.locationId,
+              condition: meta.condition,
+              availability: good ? "available" : "blocked",
+              calibrationRequired: meta.calibrationRequired,
+              validUntil: meta.validUntil
+                ? businessDate(meta.validUntil, timezone, true)
+                : null,
+              technical: meta.calibrationRequired
+                ? "Perlu Kalibrasi"
+                : "Normal",
             });
           }
         }
+        if (newAssets.length) await tx.asset.createMany({ data: newAssets });
         await tx.document.update({
           where: { id: doc.id },
           data: { status: "posted", postedAt: new Date() },
@@ -1007,7 +1141,9 @@ export async function execute(
                 where: { id: doc.targetLocationId },
                 select: { id: true, name: true, code: true },
               })
-            : null;
+            : doc.targetLocationText
+              ? { name: doc.targetLocationText }
+              : null;
           const loan = await tx.loan.create({
             data: {
               number: await number(tx, "LOAN"),
@@ -1015,6 +1151,7 @@ export async function execute(
               borrowerId: doc.actorId,
               projectId: doc.projectId!,
               dueAt: doc.dueAt!,
+              dueDateOnly: doc.dueDateOnly,
               snapshot: json({
                 request: doc,
                 borrower: { id: borrower.id, name: borrower.name },

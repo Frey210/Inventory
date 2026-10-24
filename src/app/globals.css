@@ -453,6 +453,17 @@ svg {
   font-size: 25px;
   margin-bottom: 10px;
 }
+.warehouse-manage { display: block; margin: -8px 20px 18px; font-size: 13px; color: var(--primary); }
+#master-editor { scroll-margin-top: 24px; }
+.label-option { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.label-option input { width: 22px; min-height: 22px; flex: 0 0 22px; }
+@media (min-width: 769px) and (max-height: 800px) {
+  .start-work { padding: 20px; gap: 20px; }
+  .start-copy p { margin-bottom: 12px; }
+  .quick-actions > a { padding: 12px; }
+  .stat { padding: 16px; }
+  .stat strong { margin: 8px 0 4px; }
+}
 .start-copy p {
   color: #ceddf5;
   font-size: 14px;
@@ -1523,7 +1534,7 @@ textarea {
     left: 0;
     right: 0;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.2fr) minmax(0, 0.8fr);
     gap: 4px;
     background: white;
     border-top: 1px solid var(--border);

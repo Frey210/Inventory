@@ -1,5 +1,7 @@
 # Rencana Implementasi MTC Inventory
 
+Tambahan rilis 25 Oktober 2026: eksekusi feedback dan pemasangan PWA mengikuti `RENCANA_PERBAIKAN_FEEDBACK_2026_10_24.md` batch A–E. PWA memakai manifest standalone, ikon MTC dan service worker publik terbatas; seluruh transaksi memerlukan koneksi. Gate fisik/UAT/QMS tetap mengikuti backlog dan STATUS_IMPLEMENTASI.md.
+
 Tanggal penyusunan: 18 Oktober 2026  
 Status: rekomendasi teknis dan rencana kerja untuk ditinjau pemilik proses  
 Konteks terkonfirmasi: karyawan kurang dari 20 orang; pemilik/pemelihara aplikasi satu orang; implementasi direncanakan penuh melalui Codex.

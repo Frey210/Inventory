@@ -1,0 +1,3 @@
+ALTER TABLE "Document" ADD COLUMN "targetLocationText" TEXT;
+ALTER TABLE "Document" ADD COLUMN "dueDateOnly" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Loan" ADD COLUMN "dueDateOnly" BOOLEAN NOT NULL DEFAULT false;
