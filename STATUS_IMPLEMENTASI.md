@@ -2,22 +2,26 @@
 
 ## Eksekusi feedback dan PWA — 25 Oktober 2026
 
-Pemilik mengotorisasi eksekusi `RENCANA_PERBAIKAN_FEEDBACK_2026_10_24.md` batch A–E. INV-05/06/09/10/14/15/18/23/24/25/29/30 terkait. Perubahan sedang diverifikasi; belum merupakan bukti full release operasional.
+Pemilik mengotorisasi eksekusi `RENCANA_PERBAIKAN_FEEDBACK_2026_10_24.md` batch A–E. INV-05/06/09/10/14/15/18/23/24/25/29/30 terkait. Perbaikan telah di-deploy dan diverifikasi pada mode preparation; belum merupakan bukti full release operasional.
 
 - Batch A: numerik mengikuti izin pecahan satuan, validasi minimum stok, Label QR pada menu desktop, editor master fokus/scroll dan konteks gudang.
 - Batch B: pencarian katalog, lokasi penggunaan teks/referensi, tanggal kembali sampai akhir hari dan fase reminder kalender; snapshot/nota kompatibel deadline lama.
 - Batch C: tag server memakai Counter/lock/idempotency existing; tambah rincian unit tanpa menggandakan serial. Batas 100 baris tetap berlaku.
 - Batch D: payload `MTC:ITEM:<id>` / `MTC:ASSET:<id>`, resolver berotorisasi dan kompatibilitas tag/SKU lama, pencarian/pagination/pilihan label.
 - Batch E: PWA installable, ikon/favicon turunan simbol MTC melalui skill logo-design yang diminta. Tidak menyimpan data akun/stok/transaksi di cache offline; tidak ada transaksi offline.
-- Migration additive `20261025000000_feedback_dates_locations` sudah diterapkan pada PostgreSQL latihan. Produksi belum dimigrasi pada checkpoint ini. Tidak ada konversi saldo/tag/deadline lama.
+- Migration additive `20261025000000_feedback_dates_locations` sudah diterapkan pada PostgreSQL latihan dan produksi CT102 melalui job migrasi tunggal. Tidak ada konversi saldo/tag/deadline lama.
 - Bukti lokal: build web/worker, typecheck/lint lulus; domain mencakup Counter/tag serentak, retry dan batch 100 unit, batas 101, saldo serialized terpisah, tanggal dan reminder. Browser baseline 6 lulus; 2 tes feedback/login juga lulus setelah pengamanan hydration login. Regresi tambahan collision/rollback diverifikasi kembali melalui CI sebelum rilis.
 - Review UI: disposition ship untuk penerimaan desktop/mobile dan label mobile; batas pemeriksaan di `docs/design/FEEDBACK_RELEASE_DESIGN_CHECK.md`. Detector sekali, 119 advisory token incumbent, nol nonadvisory. Drift sidecar lama tetap dicatat tanpa perbaikan di luar scope.
 - Buku panduan lokal diperbarui ke edisi 1.1: 48 halaman, 41 screenshot aplikasi latihan dan highlight; termasuk tanggal, lokasi, penerimaan/tag, pilihan/cetak QR dan pemasangan PWA. Tidak dimasukkan ke Git publik. Metadata bahasa/bookmark, pemeriksaan teks credential dan render seluruh halaman telah diperiksa.
 - Seluruh 15 tes domain lokal lulus, termasuk 100 unit/101 ditolak dan rollback serial bentrok. CI pertama lulus domain/lint/typecheck/build/PDF dan lima browser baseline; fixture debug lokal yang tidak diperlukan menyebabkan dua browser feedback tertahan pada workspace CI bersih. Penulisan fixture tersebut dihapus, lalu CI diulang; tidak memengaruhi kode runtime.
 - Backup sebelum migrasi sudah terenkripsi, disalin off-host, checksum/CMS/manifest valid. Restore ke database latihan terpisah dan migration additive pada hasil restore lulus; hash Item/Asset/Balance/Ledger/LoanLine cocok baseline dan default legacy tetap false/null. Database restore latihan dihapus sesudah verifikasi.
+- Rilis aktif `fa229325352bd6325f3f678ca61b2c48a65e644e`, web/worker image `fa229325352b`, keduanya healthy. CI [40114940171](https://github.com/Frey210/Inventory/actions/runs/40114940171) success: 15 domain, 7 browser, lint/typecheck/build web/worker dan tiga fixture PDF. Image `1cb723c7d072` tetap tersedia untuk rollback kode; migration additive tidak dihapus.
+- Rekonsiliasi read-only sebelum/sesudah: 354 SKU, 162 Asset, 264 Balance, 269 Ledger, 1 LoanLine; seluruh hash baris Item/Asset/Balance/Ledger/LoanLine identik. Minimum stok bulat yang pecahan: 0. Tidak mengubah akun/password operasional atau inventaris.
+- Browser Chromium pada HTTPS publik membuktikan login 200, manifest standalone, dimensi ikon, worker no-store, fallback POST login, pembatasan laporan anonim, health dan cache hanya aset publik. Pemeriksaan Python HTTP terkena Cloudflare 1010; browser normal berhasil. Pemeriksaan ulang langsung dari CT tunnel lewat helper Proxmox timeout, sehingga tidak diklaim kedua CT lulus; jalur domain publik telah berhasil.
+- Backup sesudah rilis `20261024T171736Z` UTC (25 Oktober lokal), terenkripsi dan salinan off-host terverifikasi. Backup sebelum rilis `20261024T170740Z` menjadi sumber uji restore. Metadata privat di `.local/feedback-release.json`, `.local/feedback-restore-evidence.json` dan `.local/feedback-http-evidence.json`, tanpa dikomit.
 - Gate operasional tetap: penerimaan UAT pemilik, perangkat fisik/cetak/kamera/PWA, kebijakan QMS/kalibrasi, backup off-host terjadwal dan alarm eksternal sesuai daftar risiko existing. Mode preparation tidak diubah otomatis.
 
-Pembaruan: 18 Oktober 2026. Tahap: aplikasi persiapan/pilot telah di-deploy dan sehat pada LXC Docker dengan PostgreSQL CT102. Rilis performa `153e39d17a37` aktif dan telah lulus CI. Ini bukan pernyataan seluruh V1/UAT/gate operasional lulus.
+Pembaruan: 25 Oktober 2026. Tahap: aplikasi persiapan/pilot sehat pada LXC Docker dengan PostgreSQL CT102. Rilis feedback/PWA `fa229325352b` aktif dan telah lulus CI. Ini bukan pernyataan seluruh V1/UAT/gate operasional lulus. Bagian bertanggal sebelumnya di bawah adalah riwayat dan tidak menggantikan checkpoint terbaru ini.
 
 ## Implementasi tersedia
 
