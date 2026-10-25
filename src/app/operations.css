@@ -221,32 +221,108 @@
 .analytics-grid > * {
   min-width: 0;
 }
+/* Charts are loaded only by the analytics route; sizes stay stable while hydrating. */
 .analytics-chart {
   width: 100%;
-  height: auto;
-  display: block;
-  overflow: visible;
-  margin: 20px 0 12px;
+  min-width: 0;
+  height: 280px;
+  margin: 16px 0 8px;
 }
-.analytics-chart text {
-  fill: var(--text-muted);
-  font-family: inherit;
+.analytics-chart-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--surface-muted);
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.analytics-chart-hint {
   font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0 0 8px;
 }
-.chart-grid {
-  stroke: var(--border);
-  stroke-width: 1;
+.analytics-chart svg:focus-visible,
+.analytics-donut svg:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
+  border-radius: 8px;
 }
-.chart-demand {
-  stroke: var(--primary);
-  fill: none;
-  stroke-width: 3;
+.analytics-members-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: center;
+  margin-top: 20px;
 }
-.chart-issued {
-  stroke: var(--success);
-  fill: none;
-  stroke-width: 3;
-  stroke-dasharray: 7 4;
+.analytics-members-layout h3 {
+  font-size: 14px;
+  margin: 0;
+}
+.analytics-share {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-width: 0;
+}
+.analytics-donut {
+  width: 240px;
+  height: 260px;
+  position: relative;
+  flex-shrink: 0;
+}
+.analytics-donut-total {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.analytics-donut-total strong {
+  font-size: 32px;
+  font-variant-numeric: tabular-nums;
+}
+.analytics-donut-total span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.analytics-share-legend {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+.analytics-share-legend li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+  font-size: 13px;
+}
+.analytics-share-legend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.analytics-share-legend li > span {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.analytics-share-legend strong {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.analytics-share-legend small {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
 }
 .chart-legend {
   display: flex;
@@ -266,7 +342,7 @@
 }
 .chart-legend .issued {
   border-color: var(--success);
-  border-top-style: dashed;
+  border-top-style: solid;
 }
 .analytics-note {
   color: var(--text-muted);
@@ -312,17 +388,6 @@
   font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
-.rank-track {
-  height: 6px;
-  background: var(--surface-muted);
-  border-radius: 4px;
-}
-.rank-track span {
-  display: block;
-  height: 100%;
-  background: var(--primary);
-  border-radius: 4px;
-}
 .analytics-unit {
   display: block;
   color: var(--text-muted);
@@ -351,7 +416,13 @@
 }
 .analytics-users .analytics-ranking {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
+  column-gap: 20px;
+  gap: 0 20px;
+  margin-top: 12px;
+}
+.analytics-users .analytics-ranking li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
 }
 @media (max-width: 767px) {
   .analytics-procurement .table-hint {
@@ -400,6 +471,10 @@
   }
   .label-option {
     grid-template-columns: 24px 44px minmax(0, 1fr) 150px;
+  }
+  .analytics-members-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
   }
   .analytics-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -502,11 +577,11 @@
     justify-content: center;
     padding: 8px 12px;
   }
-  .analytics-chart {
-    margin-left: -8px;
-    width: calc(100% + 8px);
+  .analytics-share {
+    flex-direction: column;
+    gap: 0;
   }
-  .analytics-chart text {
-    font-size: 26px;
+  .analytics-share-legend {
+    width: 100%;
   }
 }

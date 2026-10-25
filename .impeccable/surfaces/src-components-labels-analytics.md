@@ -2,7 +2,7 @@
 version: 1
 slug: labels-analytics
 primary_target: "src/components/labels.tsx"
-related_targets: ["src/components/label-picker.tsx", "src/components/analytics.tsx", "src/app/operations.css"]
+related_targets: ["src/components/label-picker.tsx", "src/components/analytics.tsx", "src/components/analytics-charts.tsx", "src/components/analytics-chart-plots.tsx", "src/app/operations.css"]
 ---
 
 # Label dan analitik MTC
@@ -15,3 +15,7 @@ FIRST VIEWPORT: Jenis label, pencarian, total, pilihan/cetak dan beberapa baris 
 STORY: Cari/pilih dahulu, preview/cetak kemudian. Analitik memisahkan kebutuhan dari penyerahan fisik; pembaca dapat membuka barang/laporan untuk tindak lanjut.
 FORM: Code-led extension incumbent, tanpa comp atau seed acak baru. Reuse ItemVisual, ikon lucide, Table, navigation/loading existing. SVG grafik adalah data nyata, bukan ilustrasi.
 FINISH: Capture desktop/mobile daftar pilihan dan halaman analitik, termasuk data panjang serta nol. Review baru menyertakan penolakan pengguna pada daftar lama; dokumentasi tidak mengklaim audit seluruh aplikasi atau UAT perangkat fisik.
+
+## Perluasan analitik interaktif 25 Oktober 2026
+
+Permintaan eksplisit pemilik menggantikan batas chart statis: gunakan library modern populer dan variasi yang sesuai. Recharts: area/kolom untuk seri waktu, horizontal bar untuk ranking, donut untuk komposisi permintaan anggota. Pertahankan biru MTC dan tabel procurement; bukan pergantian sistem visual. Grafik hanya memakai jumlah transaksi nyata. Denominator donut seluruh permintaan, empat anggota teratas dan sisanya; jangan membuat conversion rate permintaan vs penyerahan atau menjumlahkan satuan campur. Tooltip sentuh/keyboard, alternatif data teks, lebar 320-1440 dan grafik nol wajib diperiksa. Tidak ada data offline atau chart library pada halaman lain.

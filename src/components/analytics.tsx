@@ -1,4 +1,9 @@
 import "server-only";
+import {
+  DemandChart,
+  ItemDemandChart,
+  MemberShareChart,
+} from "./analytics-charts";
 import Link from "next/link";
 import {
   BarChart3,
@@ -18,91 +23,6 @@ const dateLabel = (date: string) =>
     month: "short",
     timeZone: "UTC",
   }).format(new Date(date + "T12:00:00Z"));
-function Trend({
-  rows,
-}: {
-  rows: { day: string; requests: number; handovers: number }[];
-}) {
-  const max =
-    Math.ceil(
-      Math.max(2, ...rows.flatMap((r) => [r.requests, r.handovers])) / 2,
-    ) * 2;
-  const x = (i: number) => 38 + (i * 604) / Math.max(1, rows.length - 1);
-  const y = (n: number) => 200 - (n * 160) / max;
-  const line = (field: "requests" | "handovers") =>
-    rows.map((r, i) => `${i ? "L" : "M"}${x(i)},${y(r[field])}`).join(" ");
-  return (
-    <>
-      <div className="chart-legend">
-        <span>
-          <i aria-hidden />
-          Permintaan
-        </span>
-        <span>
-          <i className="issued" aria-hidden />
-          Penyerahan
-        </span>
-      </div>
-      <svg
-        viewBox="0 0 660 240"
-        className="analytics-chart"
-        role="img"
-        aria-label="Grafik tren jumlah transaksi permintaan dan penyerahan per hari"
-      >
-        <desc>
-          Jumlah transaksi, bukan penjumlahan barang dengan satuan berbeda. Data
-          lengkap tersedia pada tabel harian di bawah grafik.
-        </desc>
-        {[0, 0.5, 1].map((fraction) => (
-          <g key={fraction}>
-            <line
-              x1="38"
-              x2="642"
-              y1={y(max * fraction)}
-              y2={y(max * fraction)}
-              className="chart-grid"
-            />
-            <text x="30" y={y(max * fraction) + 4} textAnchor="end">
-              {(max * fraction).toLocaleString("id-ID", {
-                maximumFractionDigits: 1,
-              })}
-            </text>
-          </g>
-        ))}
-        <path d={line("requests")} className="chart-demand" />
-        <path d={line("handovers")} className="chart-issued" />
-        {rows.map((r, i) =>
-          r.requests || r.handovers ? (
-            <g key={r.day}>
-              <circle cx={x(i)} cy={y(r.requests)} r="3" fill="var(--primary)">
-                <title>
-                  {dateLabel(r.day)}: {r.requests} permintaan
-                </title>
-              </circle>
-              <circle cx={x(i)} cy={y(r.handovers)} r="3" fill="var(--success)">
-                <title>
-                  {dateLabel(r.day)}: {r.handovers} penyerahan
-                </title>
-              </circle>
-            </g>
-          ) : null,
-        )}
-        {[0, Math.floor((rows.length - 1) / 2), rows.length - 1].map((i) => (
-          <text
-            key={i}
-            x={x(i)}
-            y="226"
-            textAnchor={
-              i === 0 ? "start" : i === rows.length - 1 ? "end" : "middle"
-            }
-          >
-            {dateLabel(rows[i].day)}
-          </text>
-        ))}
-      </svg>
-    </>
-  );
-}
 function Ranking({
   rows,
   items = false,
@@ -133,11 +53,6 @@ function Ranking({
             <span className="rank-count">
               {row.requests} <small>permintaan</small>
             </span>
-          </div>
-          <div className="rank-track" aria-hidden>
-            <span
-              style={{ width: `${(row.requests / rows[0].requests) * 100}%` }}
-            />
           </div>
         </li>
       ))}
@@ -225,7 +140,7 @@ export async function Analytics({
             Jumlah transaksi per hari; permintaan dan penyerahan dapat terjadi
             pada tanggal berbeda.
           </p>
-          <Trend rows={data.trend} />
+          <DemandChart rows={data.trend} />
           {data.counts.requests === 0 && data.counts.handovers === 0 && (
             <p className="analytics-note">
               Belum ada transaksi pada periode ini. Tidak ada perkiraan atau
@@ -254,9 +169,32 @@ export async function Analytics({
             Frekuensi pengajuan per SKU, bukan penjumlahan pcs dengan meter atau
             liter.
           </p>
-          <Ranking rows={data.items} items />
+          {!data.items.length && <Ranking rows={[]} items />}
+          <ItemDemandChart rows={data.items} />
+          <details className="analytics-table-summary">
+            <summary>Lihat nama dan rincian barang</summary>
+            <Ranking rows={data.items} items />
+          </details>
         </section>
       </div>
+      <section className="panel analytics-users">
+        <h2>Permintaan menurut anggota tim</h2>
+        <p className="analytics-note">
+          Membantu koordinasi kebutuhan dan pengadaan; bukan ukuran
+          produktivitas atau aktivitas login.
+        </p>
+        <div className="analytics-members-layout">
+          <MemberShareChart rows={data.users} total={data.counts.requests} />
+          <div>
+            <h3>Anggota paling sering mengajukan</h3>
+            <Ranking rows={data.users} />
+            <p className="analytics-note">
+              Delapan anggota teratas. Donut mencakup seluruh permintaan: empat
+              anggota teratas dan anggota lainnya.
+            </p>
+          </div>
+        </div>
+      </section>
       <section className="panel analytics-procurement">
         <div className="section-heading">
           <div>
@@ -312,14 +250,6 @@ export async function Analytics({
           kembali bisa berasal dari pengeluaran periode sebelumnya. Ini bahan
           tinjauan, bukan pesanan pembelian otomatis.
         </p>
-      </section>
-      <section className="panel analytics-users">
-        <h2>Permintaan menurut anggota tim</h2>
-        <p className="analytics-note">
-          Membantu koordinasi kebutuhan dan pengadaan; bukan ukuran
-          produktivitas atau aktivitas login.
-        </p>
-        <Ranking rows={data.users} />
       </section>
     </>
   );

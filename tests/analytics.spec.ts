@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { test, expect } from "@playwright/test";
+import { test, expect, type Response } from "@playwright/test";
 import { randomUUID, randomBytes } from "node:crypto";
 import { hashPassword } from "better-auth/crypto";
 import { mkdir } from "node:fs/promises";
@@ -87,7 +87,22 @@ test.afterAll(async () => {
 test("analytics separates demand from posting and label choices remain compact and usable", async ({
   page,
 }) => {
-  await page.goto("/login");
+  const scripts: Promise<string>[] = [];
+  const trackScript = (response: Response) => {
+    if (
+      response.url().includes("/_next/static/") &&
+      response.url().endsWith(".js")
+    )
+      scripts.push(response.text());
+  };
+  page.on("response", trackScript);
+  await page.goto("/login", { waitUntil: "networkidle" });
+  expect(
+    (await Promise.all(scripts)).some((script) =>
+      script.includes("recharts-surface"),
+    ),
+  ).toBe(false);
+  page.off("response", trackScript);
   await page.getByLabel("Username", { exact: true }).fill(prefix);
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Masuk", exact: true }).click();
@@ -101,6 +116,19 @@ test("analytics separates demand from posting and label choices remain compact a
       await page.locator(".analytics-kpis .stat > strong").allTextContents()
     ).map((v) => Number(v.replaceAll(".", "")));
   const before = await counts();
+  if (before[0] === 0 && before[1] === 0) {
+    await expect(page.locator(".analytics-users")).toContainText(
+      "Belum ada permintaan",
+    );
+    await expect(page.locator('[data-chart="members"]')).toHaveCount(0);
+    for (const width of [1366, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.screenshot({
+        path: `.impeccable/review/modern-charts/empty-${width}.png`,
+        fullPage: true,
+      });
+    }
+  }
   const now = new Date(),
     old = new Date(now.getTime() - 40 * 86400000);
   const line = { itemId, locationId, quantity: "2" };
@@ -224,17 +252,77 @@ test("analytics separates demand from posting and label choices remain compact a
     expect.arrayContaining(["4", "1", "8", "Stok menipis"]),
   );
   await page.setViewportSize({ width: 1366, height: 900 });
+  for (const chart of ["demand", "items", "members"]) {
+    await expect(
+      page.locator(`[data-chart="${chart}"] .recharts-surface`),
+    ).toBeVisible();
+  }
+  await expect(
+    page.locator('[data-chart="items"] text').filter({ hasText: "…" }).first(),
+  ).toContainText("…");
+  await page.locator('[data-chart="items"] .recharts-surface').focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(
+    page.locator('[data-chart="items"] .recharts-tooltip-wrapper'),
+  ).toContainText(/analytics-[a-f0-9]{8}/);
+  await expect(
+    page.locator('[data-chart="items"] .recharts-tooltip-wrapper'),
+  ).toContainText("Konektor JST");
+  const chart = page.locator('[data-chart="demand"] .recharts-surface');
+  await chart.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(
+    page.locator('[data-chart="demand"] .recharts-tooltip-wrapper'),
+  ).toBeVisible();
+  await expect(
+    page.locator('[data-chart="demand"] .recharts-tooltip-wrapper'),
+  ).toContainText("Permintaan");
+  await page
+    .getByRole("heading", { name: "Analitik gudang", exact: true })
+    .click();
   await page.evaluate(() => scrollTo(0, 0));
   await page.screenshot({
-    path: ".impeccable/review/label-analytics/analytics-desktop.png",
+    path: ".impeccable/review/modern-charts/analytics-desktop.png",
     fullPage: true,
+  });
+  await page.locator(".analytics-grid").screenshot({
+    path: ".impeccable/review/modern-charts/charts-desktop.png",
+  });
+  await page.locator(".analytics-users").screenshot({
+    path: ".impeccable/review/modern-charts/members-desktop.png",
   });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => scrollTo(0, 0));
   await page.screenshot({
-    path: ".impeccable/review/label-analytics/analytics-mobile.png",
+    path: ".impeccable/review/modern-charts/analytics-mobile.png",
     fullPage: true,
   });
+  await page.locator(".analytics-grid").screenshot({
+    path: ".impeccable/review/modern-charts/charts-mobile.png",
+    style: ".bottom-nav, .skip-link { visibility: hidden !important; }",
+  });
+  await page.locator(".analytics-users").screenshot({
+    path: ".impeccable/review/modern-charts/members-mobile.png",
+    style: ".bottom-nav, .skip-link { visibility: hidden !important; }",
+  });
+  const touch = await page
+    .context()
+    .browser()!
+    .newContext({
+      storageState: await page.context().storageState(),
+      viewport: { width: 390, height: 844 },
+      hasTouch: true,
+      reducedMotion: "reduce",
+    });
+  const phone = await touch.newPage();
+  await phone.goto("http://localhost:3030/admin/analytics");
+  await phone
+    .locator('[data-chart="demand"] .recharts-surface')
+    .tap({ position: { x: 150, y: 100 } });
+  await expect(
+    phone.locator('[data-chart="demand"] .recharts-tooltip-wrapper'),
+  ).toBeVisible();
+  await touch.close();
   for (const width of [320, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     expect(
