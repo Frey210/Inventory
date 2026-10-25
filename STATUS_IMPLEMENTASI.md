@@ -8,6 +8,8 @@ Verifikasi awal: 17 tes domain, build web/worker, lint/typecheck dan tiga fixtur
 
 Review visual: reviewer meminta satu koreksi label SKU panjang, yang sebelumnya terpotong oleh SVG. Label kini dipendekkan eksplisit; tooltip menyediakan nama serta SKU lengkap dan membungkus sesuai viewport. Tes helper dan keyboard tooltip lulus. Verdict pass: ship untuk koreksi label tersebut, tanpa regresi yang terlihat; bukan klaim audit seluruh aplikasi. Documenter memeriksa ulang dan mempertahankan DESIGN.md/sidecar. Suite penuh browser 8/8 lulus sebelum koreksi, tes analitik lulus kembali sesudah koreksi; tiga tes analitik pure lulus. Pipeline CI final akan memverifikasi seluruh 18 tes domain dan delapan browser.
 
+CI kandidat 0b9c27e meluluskan 18 tes domain, lint/typecheck/build dan PDF, tetapi satu assertion browser mengasumsikan fixture analitik selalu peringkat pertama. Dataset tes domain menempatkan SKU lain di urutan pertama. Assertion diperbaiki untuk mencocokkan nama dan SKU pada rincian ranking aktual dengan tooltip; perilaku aplikasi tidak diubah. Kandidat final menunggu CI ulang.
+
 ## Perbaikan pemilihan label dan analitik procurement — 25 Oktober 2026
 
 Permintaan pemilik: halaman pemilihan Label QR tidak nyaman dan tim gudang memerlukan grafik kebutuhan/pemakaian/anggota. Scope INV-15/25/29: daftar label kompak, pencarian, pemilihan/cetak responsif dan halaman analitik untuk ADMIN/WAREHOUSE/AUDITOR. Tidak ada migration atau mutasi data operasional yang direncanakan.

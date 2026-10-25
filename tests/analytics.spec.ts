@@ -260,14 +260,24 @@ test("analytics separates demand from posting and label choices remain compact a
   await expect(
     page.locator('[data-chart="items"] text').filter({ hasText: "…" }).first(),
   ).toContainText("…");
+  const itemDetails = page.getByText("Lihat nama dan rincian barang", {
+    exact: true,
+  });
+  await itemDetails.click();
+  const firstItem = page
+    .locator(".analytics-grid .analytics-ranking li")
+    .first();
+  const firstSku = await firstItem.locator(".rank-title small").innerText();
+  const firstName = await firstItem.locator(".rank-title a").innerText();
+  await itemDetails.click();
   await page.locator('[data-chart="items"] .recharts-surface').focus();
   await page.keyboard.press("ArrowRight");
   await expect(
     page.locator('[data-chart="items"] .recharts-tooltip-wrapper'),
-  ).toContainText(/analytics-[a-f0-9]{8}/);
+  ).toContainText(firstSku);
   await expect(
     page.locator('[data-chart="items"] .recharts-tooltip-wrapper'),
-  ).toContainText("Konektor JST");
+  ).toContainText(firstName);
   const chart = page.locator('[data-chart="demand"] .recharts-surface');
   await chart.focus();
   await page.keyboard.press("ArrowRight");
