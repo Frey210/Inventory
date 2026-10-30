@@ -3,6 +3,8 @@ import "./globals.css";
 import "./operations.css";
 import { Pwa } from "@/components/pwa";
 import { ActionFeedbackProvider } from "@/components/action-feedback";
+import { Suspense } from "react";
+import { NavigationHistory } from "@/components/back-navigation";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -36,6 +38,9 @@ export default function RootLayout({
     <html lang="id">
       <body>
         <Pwa />
+        <Suspense fallback={null}>
+          <NavigationHistory />
+        </Suspense>
         <a className="skip-link" href="#main">
           Lewati ke konten utama
         </a>

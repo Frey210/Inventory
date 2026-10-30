@@ -1,5 +1,11 @@
 # Status implementasi MTC Inventory
 
+## Kontrol dan navigasi - 31 Oktober 2026
+
+INV-14/18/25/29: tindak lanjut empat screenshot pengguna. Scope tombol/input shared, hierarki/ikon aksi, scan/lokasi, stok bersatuan dan pemilihan unit transfer, serta Back mobile/PWA yang mempertahankan riwayat internal dengan fallback aman untuk entry langsung. Backend/policy tetap; tidak ada migration/dependency. Implementasi kontrol selesai; spesifikasi docs/design/CONTROLS_NAVIGATION_SPEC.md. Back memakai marker entry internal dan fallback modul/role, bukan history.length. Unit transfer menjadi checklist kontekstual dengan search/reset/jumlah otomatis; payload dan service existing dipertahankan. Token control-border #8191a7 (putih 3.21:1) disinkronkan terbatas ke DESIGN.md/sidecar. Tidak ada raster baru.
+
+Verifikasi lokal: lint/typecheck/build web+worker dan 14 browser lulus, termasuk empat tes baru Back/forward/filter/reload/deep link, transfer multi-unit/posting tanpa Balance quantity kedua, serta sampel 10 halaman pada 320/390/768/1024/1440. Reviewer fresh meminta satu batch koreksi boundary/search/filter katalog serta select 16px; build koreksi dan empat tes kontrol ulang lulus. Reviewer menilai satu koreksi resolved, disposition ship pada scope koreksi katalog; enam recapture valid. Gate CI/deployment menyusul. Detector sekali: 20 advisory, nol nonadvisory; font metadata/radius incumbent tidak dirombak. Domain lokal sempat berhenti pada fixture inventory tanpa hasil akhir dan dihentikan; gate domain penuh memakai PostgreSQL bersih di CI, tidak diklaim lulus lokal. Bukti capture .impeccable/review/controls/ dan privat .local/controls/. Tidak mengklaim perangkat PWA/HP fisik atau screen reader nyata.
+
 ## Feedback kedua - 31 Oktober 2026
 
 Rilis aktif `afaa467293dd9094f68eac66427e5e6ad58b7d0d`, web/worker `afaa467293dd` healthy. CI [41138477960](https://github.com/Frey210/Inventory/actions/runs/41138477960) success: 18 tes domain, 10 tes browser, lint/typecheck/build web/worker dan tiga fixture PDF. HTTPS https://inventory.farlabs.my.id terverifikasi. Mode preparation tetap; tidak ada migration, seed produksi, perubahan akun/credential atau dependency baru. Npm audit 0 vulnerability.

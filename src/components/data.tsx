@@ -111,11 +111,15 @@ export function Heading({
   description,
   href,
   action,
+  actionIcon = <Plus size={18} aria-hidden />,
+  secondary = false,
 }: {
   title: string;
   description: string;
   href?: string;
   action?: string;
+  actionIcon?: React.ReactNode;
+  secondary?: boolean;
 }) {
   return (
     <div className="page-heading">
@@ -124,8 +128,8 @@ export function Heading({
         <p className="muted">{description}</p>
       </div>
       {href && (
-        <Link className="button" href={href}>
-          <Plus size={18} aria-hidden />
+        <Link className={`button${secondary ? " secondary" : ""}`} href={href}>
+          {actionIcon}
           {action || "Tambah"}
         </Link>
       )}

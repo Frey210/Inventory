@@ -21,6 +21,11 @@ import {
   ClipboardCheck,
   RotateCcw,
   ChevronDown,
+  Pencil,
+  Hand,
+  ScanLine,
+  QrCode,
+  BarChart3,
   MapPin,
   ArrowRight,
   LayoutGrid,
@@ -448,6 +453,7 @@ export default async function Page({
             title={`Halo, ${user.name.split(" ")[0]}!`}
             href={tech ? undefined : "/admin/analytics"}
             action="Analitik gudang"
+            actionIcon={<BarChart3 size={18} aria-hidden />}
             description={
               tech
                 ? "Komponen untuk ide berikutnya. Alat untuk menyelesaikannya."
@@ -1131,8 +1137,19 @@ export default async function Page({
             href={canWrite ? "/admin/items/new" : undefined}
             action="Tambah barang"
           />
-          <details className="panel">
-            <summary>Pindai QR barang / alat</summary>
+          <details className="panel scanner-disclosure">
+            <summary>
+              <ScanLine size={22} aria-hidden />
+              <span>
+                <strong>Pindai QR barang / alat</strong>
+                <small>Gunakan kamera atau masukkan kode</small>
+              </span>
+              <ChevronDown
+                size={19}
+                className="disclosure-chevron"
+                aria-hidden
+              />
+            </summary>
             <Scanner />
           </details>
           <Form className="catalog-toolbar" action={path}>
@@ -1326,6 +1343,14 @@ export default async function Page({
         <>
           <Heading
             title={item.name}
+            secondary={canWrite}
+            actionIcon={
+              canWrite ? (
+                <Pencil size={18} aria-hidden />
+              ) : (
+                <Hand size={18} aria-hidden />
+              )
+            }
             description={`${item.sku} · ${lookup(item.typeId)} · ${lookup(item.categoryId)}`}
             href={
               canWrite
@@ -1393,18 +1418,14 @@ export default async function Page({
                     className="button"
                     href={`/admin/requests/new?item=${item.id}&mode=${item.tracking}`}
                   >
-                    <Plus size={18} aria-hidden />
+                    <Hand size={18} aria-hidden />
                     {item.tracking === "quantity"
                       ? "Ambil komponen"
                       : "Pinjam alat"}
                   </Link>
                 )}
-                <Link className="button secondary" href={`${base}/items`}>
-                  <Boxes size={18} aria-hidden />
-                  Kembali ke barang
-                </Link>
                 {canWrite && (
-                  <Link className="button" href="/admin/receipts/new">
+                  <Link className="button secondary" href="/admin/receipts/new">
                     <ArrowDownToLine size={18} aria-hidden />
                     Catat barang masuk
                   </Link>
@@ -1417,6 +1438,7 @@ export default async function Page({
               className="button secondary"
               href={`/admin/labels?type=ITEM&print=1&ids=${item.id}`}
             >
+              <QrCode size={18} aria-hidden />
               Cetak QR barang
             </Link>
           )}
@@ -1693,6 +1715,7 @@ export default async function Page({
               path === "/admin/receipts" ? "/admin/receipts/new" : undefined
             }
             action="Tambah Penerimaan"
+            actionIcon={<ArrowDownToLine size={18} aria-hidden />}
           />
           {path === "/me/pickups" && <Scanner />}
           <Table
@@ -2296,7 +2319,10 @@ export default async function Page({
                   options: items.map((i) => ({
                     id: i.id,
                     name: i.sku + " — " + i.name,
-                    details: { fractional: fractional(i.id) },
+                    details: {
+                      fractional: fractional(i.id),
+                      tracking: i.tracking,
+                    },
                   })),
                   required: true,
                 },
@@ -2304,11 +2330,12 @@ export default async function Page({
                 select("targetId", "Lokasi tujuan", "location"),
                 {
                   name: "assetIds",
-                  label: "Unit serialized (kosong untuk consumable)",
+                  label: "Unit alat",
                   type: "multiselect",
                   options: transferAssets.map((a) => ({
                     id: a.id,
                     name: a.tag + " / " + lookup(a.locationId),
+                    details: { itemId: a.itemId, locationId: a.locationId },
                   })),
                   help: "Pilih unit yang sesuai barang dan lokasi asal. Jumlah harus sama dengan banyaknya unit.",
                 },

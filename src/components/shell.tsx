@@ -29,6 +29,8 @@ import { Logout } from "./auth-client";
 import type { Actor } from "@/server/policy";
 import { db } from "@/server/db";
 import { Suspense } from "react";
+import { PageBack } from "./back-navigation";
+import { backDestination } from "@/lib/back-destination";
 
 const roleNames: Record<string, string> = {
   ADMIN: "Admin",
@@ -60,6 +62,7 @@ export function Shell({
 }) {
   const tech = actor.role === "TECHNICIAN";
   const home = tech ? "/me" : "/admin/dashboard";
+  const back = actor.role === "TECHADMIN" ? null : backDestination(path, tech);
   const primary = tech
     ? ([
         ["/me", "Beranda", LayoutDashboard],
@@ -130,7 +133,9 @@ export function Shell({
         ["/profile", "Profil", UserRound] as const,
       ];
   return (
-    <div className={`shell ${tech ? "technician" : ""}`}>
+    <div
+      className={`shell ${tech ? "technician" : ""} ${back ? "has-page-back" : ""}`}
+    >
       <aside className="sidebar">
         <Link href={home} className="brand">
           <Image src="/logo.jpg" alt="Logo MTC" width={44} height={44} />
@@ -146,6 +151,7 @@ export function Shell({
         </div>
         {["ADMIN", "WAREHOUSE"].includes(actor.role) && (
           <Link className="warehouse-manage" href="/admin/masters?tab=location">
+            <Settings size={16} aria-hidden />
             Kelola lokasi
           </Link>
         )}
@@ -171,6 +177,7 @@ export function Shell({
       <div className="workspace">
         <header className="topbar">
           <div className="mobile-brand">
+            <PageBack fallback={back} compact />
             <Image src="/logo.jpg" alt="MTC" width={34} height={34} />
             <strong>MTC Inventory</strong>
           </div>
@@ -231,6 +238,9 @@ export function Shell({
           </nav>
         </details>
         <main id="main" className="content">
+          <div className="desktop-back">
+            <PageBack fallback={back} />
+          </div>
           {process.env.APP_MODE !== "live" && (
             <details className="pilot-notice no-print">
               <summary>

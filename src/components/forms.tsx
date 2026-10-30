@@ -6,6 +6,22 @@ import Link from "next/link";
 import { quantityInput } from "@/lib/quantity-input";
 import { SearchChoice } from "./search-choice";
 import { useActionFeedback } from "./action-feedback";
+import { UnitPicker } from "./unit-picker";
+import {
+  Save,
+  Send,
+  Check,
+  RotateCcw,
+  ArrowLeftRight,
+  PackageCheck,
+  LoaderCircle,
+  Plus,
+  KeyRound,
+  UserPlus,
+  RefreshCw,
+  X,
+  Wrench,
+} from "lucide-react";
 export type Option = {
   id: string;
   name: string;
@@ -82,6 +98,12 @@ export function ActionForm({
       const result = await perform(previous, form);
       if (result.success) {
         setKey(crypto.randomUUID());
+        if (action === "transfer")
+          setValues((current) => ({
+            ...current,
+            assetIds: [],
+            ...(isSerializedTransfer(current.itemId) ? { quantity: "0" } : {}),
+          }));
         notify(result.success);
       }
       return result;
@@ -116,9 +138,28 @@ export function ActionForm({
   useEffect(() => {
     if (state.error) errorRef.current?.focus();
   }, [state]);
+  function isSerializedTransfer(itemId: unknown) {
+    return (
+      action === "transfer" &&
+      fields
+        .find((f) => f.name === "itemId")
+        ?.options?.find((o) => o.id === itemId)?.details?.tracking ===
+        "serialized"
+    );
+  }
   function change(name: string, value: unknown) {
     setValues((current) => {
       const next = { ...current, [name]: value };
+      if (action === "transfer") {
+        const serialized = isSerializedTransfer(next.itemId);
+        if (name === "itemId" || name === "sourceId") {
+          next.assetIds = [];
+          if (serialized) next.quantity = "0";
+          else if (name === "itemId") next.quantity = "1";
+        }
+        if (name === "assetIds" && serialized)
+          next.quantity = String((value as string[]).length);
+      }
       if (name === "categoryId") {
         const data = defaults?.find((c) => c.id === value)?.details || {};
         for (const [field, from] of [
@@ -166,6 +207,32 @@ export function ActionForm({
       delete payload[name];
     }
   if (action === "settings") payload.pickupHours = Number(payload.pickupHours);
+  const serializedTransfer = isSerializedTransfer(values.itemId);
+  const SubmitIcon =
+    (
+      {
+        request: Send,
+        "revise-request": Send,
+        approve: Check,
+        inspect: Check,
+        "post-stocktake": Check,
+        issue: PackageCheck,
+        checkout: PackageCheck,
+        "request-return": RotateCcw,
+        "receive-return": RotateCcw,
+        transfer: ArrowLeftRight,
+        password: KeyRound,
+        "user-reset": KeyRound,
+        "user-create": UserPlus,
+        "retry-pdf": RefreshCw,
+        "post-receipt": Check,
+        acknowledge: Check,
+        reject: X,
+        cancel: X,
+        "cancel-stocktake": X,
+        maintenance: Wrench,
+      } as Record<string, typeof Save>
+    )[action] || Save;
   return (
     <form action={dispatch} className="data-form">
       <input type="hidden" name="action" value={action} />
@@ -456,153 +523,198 @@ export function ActionForm({
               ])
             }
           >
+            <Plus size={17} aria-hidden />
             Tambah Baris ({lines.length}/100)
           </button>
         </fieldset>
       )}
       <div className="form-grid">
-        {fields.map((field) => (
-          <label
-            key={field.name}
-            className={field.type === "textarea" ? "full" : ""}
-          >
-            <span>
-              {field.label}
-              {field.required && <span className="required"> (Wajib)</span>}
-            </span>
-            {field.name === "targetLocationId" ? (
-              <SearchChoice
-                options={(field.options || []).map((o) => ({
-                  id: o.id,
-                  name: o.name,
-                }))}
-                value={String(values.targetLocationId || "")}
-                text={String(values.targetLocationText || "")}
-                freeText
-                onChange={(id, text) =>
-                  setValues((current) => ({
-                    ...current,
-                    targetLocationId: id,
-                    targetLocationText: text,
-                  }))
-                }
-              />
-            ) : field.type === "multiselect" ? (
-              <select
-                multiple
-                id={`${prefix}-${field.name}`}
-                required={field.required}
-                aria-invalid={!!state.fieldErrors?.[field.name]}
-                aria-describedby={
-                  state.fieldErrors?.[field.name]
-                    ? `${prefix}-${field.name}-error`
-                    : undefined
-                }
-                size={5}
-                name={field.name}
-                value={values[field.name] as string[]}
-                onChange={(e) =>
-                  change(
-                    field.name,
-                    Array.from(e.target.selectedOptions, (o) => o.value),
-                  )
-                }
-              >
-                {field.options?.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.name}
-                  </option>
-                ))}
-              </select>
-            ) : field.type === "select" ? (
-              <select
-                id={`${prefix}-${field.name}`}
-                aria-invalid={!!state.fieldErrors?.[field.name]}
-                aria-describedby={
-                  state.fieldErrors?.[field.name]
-                    ? `${prefix}-${field.name}-error`
-                    : undefined
-                }
-                name={field.name}
-                required={field.required}
-                value={String(values[field.name] ?? "")}
-                onChange={(e) => change(field.name, e.target.value)}
-              >
-                <option value="">Pilih {field.label.toLowerCase()}</option>
-                {field.options?.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.name}
-                  </option>
-                ))}
-              </select>
-            ) : field.type === "checkbox" ? (
-              <input
-                type="checkbox"
-                name={field.name}
-                checked={!!values[field.name]}
-                onChange={(e) => change(field.name, e.target.checked)}
-              />
-            ) : field.type === "textarea" ? (
-              <textarea
-                id={`${prefix}-${field.name}`}
-                aria-invalid={!!state.fieldErrors?.[field.name]}
-                aria-describedby={
-                  state.fieldErrors?.[field.name]
-                    ? `${prefix}-${field.name}-error`
-                    : undefined
-                }
-                name={field.name}
-                required={field.required}
-                maxLength={5000}
-                value={String(values[field.name] ?? "")}
-                onChange={(e) => change(field.name, e.target.value)}
-              />
-            ) : field.type === "photo" ? (
-              <Photo
-                value={String(values[field.name] || "")}
-                onChange={(v) => change(field.name, v)}
-              />
+        {fields.map((field) =>
+          field.type === "multiselect" ? (
+            action === "transfer" && values.itemId && !serializedTransfer ? (
+              <p className="field-help full" key={field.name}>
+                Barang ini dicatat per jumlah; unit alat tidak perlu dipilih.
+              </p>
             ) : (
-              <input
+              <UnitPicker
+                key={`${field.name}-${values.itemId}-${values.sourceId}-${key}`}
                 id={`${prefix}-${field.name}`}
-                aria-invalid={!!state.fieldErrors?.[field.name]}
-                aria-describedby={
-                  state.fieldErrors?.[field.name]
-                    ? `${prefix}-${field.name}-error`
-                    : undefined
+                value={(values[field.name] as string[]) || []}
+                options={(field.options || []).filter(
+                  (o) =>
+                    action !== "transfer" ||
+                    (o.details?.itemId === values.itemId &&
+                      o.details?.locationId === values.sourceId),
+                )}
+                onChange={(ids) => change(field.name, ids)}
+                empty={
+                  !values.itemId || !values.sourceId
+                    ? "Pilih barang dan lokasi asal terlebih dahulu."
+                    : "Tidak ada unit yang dapat dipindahkan dari lokasi ini."
                 }
-                name={field.name}
-                type={field.type || "text"}
-                {...(field.type === "number" ? numeric(field) : {})}
-                required={field.required}
-                value={String(values[field.name] ?? "")}
-                onChange={(e) => change(field.name, e.target.value)}
-                autoComplete={
-                  field.type === "password" ? "new-password" : undefined
-                }
+                error={state.fieldErrors?.[field.name]}
               />
-            )}
-            {state.fieldErrors?.[field.name] && (
-              <small
-                className="field-error"
-                id={`${prefix}-${field.name}-error`}
-              >
-                {state.fieldErrors[field.name]}
-              </small>
-            )}
-            {field.help && <small>{field.help}</small>}
-          </label>
-        ))}
+            )
+          ) : (
+            <label
+              key={field.name}
+              className={
+                field.type === "textarea"
+                  ? "full"
+                  : field.type === "checkbox"
+                    ? "checkbox-field"
+                    : ""
+              }
+            >
+              <span>
+                {field.label}
+                {field.required && <span className="required"> (Wajib)</span>}
+              </span>
+              {field.name === "targetLocationId" ? (
+                <SearchChoice
+                  options={(field.options || []).map((o) => ({
+                    id: o.id,
+                    name: o.name,
+                  }))}
+                  value={String(values.targetLocationId || "")}
+                  text={String(values.targetLocationText || "")}
+                  freeText
+                  onChange={(id, text) =>
+                    setValues((current) => ({
+                      ...current,
+                      targetLocationId: id,
+                      targetLocationText: text,
+                    }))
+                  }
+                />
+              ) : action === "transfer" && field.name === "itemId" ? (
+                <SearchChoice
+                  id={`${prefix}-${field.name}`}
+                  options={field.options || []}
+                  value={String(values[field.name] || "")}
+                  required
+                  onChange={(id) => change(field.name, id)}
+                />
+              ) : field.type === "select" ? (
+                <select
+                  id={`${prefix}-${field.name}`}
+                  aria-invalid={!!state.fieldErrors?.[field.name]}
+                  aria-describedby={
+                    state.fieldErrors?.[field.name]
+                      ? `${prefix}-${field.name}-error`
+                      : undefined
+                  }
+                  name={field.name}
+                  required={field.required}
+                  value={String(values[field.name] ?? "")}
+                  onChange={(e) => change(field.name, e.target.value)}
+                >
+                  <option value="">Pilih {field.label.toLowerCase()}</option>
+                  {field.options?.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.name}
+                    </option>
+                  ))}
+                </select>
+              ) : field.type === "checkbox" ? (
+                <input
+                  type="checkbox"
+                  name={field.name}
+                  checked={!!values[field.name]}
+                  onChange={(e) => change(field.name, e.target.checked)}
+                />
+              ) : field.type === "textarea" ? (
+                <textarea
+                  id={`${prefix}-${field.name}`}
+                  aria-invalid={!!state.fieldErrors?.[field.name]}
+                  aria-describedby={
+                    state.fieldErrors?.[field.name]
+                      ? `${prefix}-${field.name}-error`
+                      : undefined
+                  }
+                  name={field.name}
+                  required={field.required}
+                  maxLength={5000}
+                  value={String(values[field.name] ?? "")}
+                  onChange={(e) => change(field.name, e.target.value)}
+                />
+              ) : field.type === "photo" ? (
+                <Photo
+                  value={String(values[field.name] || "")}
+                  onChange={(v) => change(field.name, v)}
+                />
+              ) : (
+                <input
+                  id={`${prefix}-${field.name}`}
+                  aria-invalid={!!state.fieldErrors?.[field.name]}
+                  aria-describedby={
+                    state.fieldErrors?.[field.name]
+                      ? `${prefix}-${field.name}-error`
+                      : undefined
+                  }
+                  name={field.name}
+                  type={field.type || "text"}
+                  readOnly={serializedTransfer && field.name === "quantity"}
+                  {...(field.type === "number" ? numeric(field) : {})}
+                  required={field.required}
+                  value={String(values[field.name] ?? "")}
+                  onChange={(e) => change(field.name, e.target.value)}
+                  autoComplete={
+                    field.type === "password" ? "new-password" : undefined
+                  }
+                />
+              )}
+              {state.fieldErrors?.[field.name] && (
+                <small
+                  className="field-error"
+                  id={`${prefix}-${field.name}-error`}
+                >
+                  {state.fieldErrors[field.name]}
+                </small>
+              )}
+              {field.help && <small>{field.help}</small>}
+              {serializedTransfer && field.name === "quantity" && (
+                <small>Jumlah mengikuti unit yang dicentang.</small>
+              )}
+            </label>
+          ),
+        )}
       </div>
       {children}
       <div className="form-footer">
-        <button disabled={pending} type="submit">
-          {pending ? "Menyimpan…" : label}
+        <button
+          className={
+            [
+              "reject",
+              "cancel",
+              "cancel-stocktake",
+              "close-exception",
+            ].includes(action)
+              ? "danger-button"
+              : undefined
+          }
+          disabled={
+            pending ||
+            (serializedTransfer &&
+              !(values.assetIds as string[] | undefined)?.length)
+          }
+          aria-busy={pending}
+          type="submit"
+        >
+          {pending ? (
+            <LoaderCircle size={18} className="loading-spinner" aria-hidden />
+          ) : (
+            <SubmitIcon size={18} aria-hidden />
+          )}
+          {pending ? "Memproses…" : label}
         </button>
         <span aria-live="polite">
           {pending
             ? "Permintaan sedang diproses. Jangan tutup halaman."
-            : "Periksa kembali sebelum menyimpan."}
+            : serializedTransfer &&
+                !(values.assetIds as string[] | undefined)?.length
+              ? "Pilih minimal satu unit alat."
+              : "Periksa kembali sebelum menyimpan."}
         </span>
       </div>
     </form>

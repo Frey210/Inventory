@@ -486,7 +486,7 @@ svg {
   align-items: center;
   gap: 12px;
   background: white;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   padding: 0 14px;
   border-radius: 11px;
   color: var(--text-muted);
@@ -759,8 +759,8 @@ svg {
   font-size: 12px;
 }
 .filter-select select {
-  border-color: var(--border);
-  font-size: 13px;
+  border-color: var(--control-border);
+  font-size: 16px;
   min-height: 48px;
 }
 .catalog-controls {
