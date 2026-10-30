@@ -20,6 +20,7 @@ import {
   Clock3,
   ClipboardCheck,
   RotateCcw,
+  ChevronDown,
   MapPin,
   ArrowRight,
   LayoutGrid,
@@ -2130,60 +2131,81 @@ export default async function Page({
             />
           </section>
           {loan.status === "active" && (tech || canWrite) && (
-            <section className="panel">
-              <h2>{tech ? "Ajukan Kembali" : "Terima Fisik / Inspeksi"}</h2>
+            <section className="panel loan-return-panel">
+              <h2>{tech ? "Pengembalian alat" : "Terima Fisik / Inspeksi"}</h2>
+              <p className="loan-return-help">
+                {tech
+                  ? "Pilih unit untuk mengajukan pengembalian. Alat akan diterima dan diperiksa oleh petugas gudang."
+                  : "Pilih unit untuk mencatat penerimaan fisik atau hasil pemeriksaan."}
+              </p>
               {loan.lines
                 .filter((l) => (tech ? !l.receivedAt : !l.inspectedAt))
                 .map((l) => (
-                  <details key={l.id}>
+                  <details key={l.id} className="loan-return-option">
                     <summary>
-                      {assets.find((a) => a.id === l.assetId)?.tag} —{" "}
-                      {l.receivedAt
-                        ? "Simpan hasil pemeriksaan"
-                        : "Pengembalian"}
+                      <RotateCcw size={22} aria-hidden />
+                      <span>
+                        <strong>
+                          {tech
+                            ? "Ajukan pengembalian"
+                            : l.receivedAt
+                              ? "Isi hasil pemeriksaan"
+                              : "Terima fisik alat"}
+                        </strong>
+                        <small>
+                          Unit {assets.find((a) => a.id === l.assetId)?.tag}
+                        </small>
+                      </span>
+                      <ChevronDown
+                        size={20}
+                        className="loan-return-chevron"
+                        aria-hidden
+                      />
                     </summary>
-                    <ActionForm
-                      action={
-                        tech
-                          ? "request-return"
-                          : l.receivedAt
-                            ? "inspect"
-                            : "receive-return"
-                      }
-                      label={
-                        tech
-                          ? "Ajukan Pengembalian"
-                          : l.receivedAt
-                            ? "Simpan Hasil Pemeriksaan"
-                            : "Terima Fisik"
-                      }
-                      base={{ id: loan.id, assetIds: [l.assetId] }}
-                      fields={[
-                        {
-                          name: "condition",
-                          label: "Kondisi aktual",
-                          type: "select",
-                          options: [
-                            "Baik",
-                            "Rusak Ringan",
-                            "Rusak Berat",
-                            "Perlu Kalibrasi",
-                          ].map((v) => ({ id: v, name: v })),
-                          value: "Baik",
-                          required: true,
-                        },
-                        {
-                          name: "reason",
-                          label: "Kondisi, kelengkapan dan catatan",
-                          type: "textarea",
-                        },
-                        {
-                          name: "photoId",
-                          label: "Foto masalah (wajib bila bermasalah)",
-                          type: "photo",
-                        },
-                      ]}
-                    />
+                    <div className="loan-return-form">
+                      <ActionForm
+                        action={
+                          tech
+                            ? "request-return"
+                            : l.receivedAt
+                              ? "inspect"
+                              : "receive-return"
+                        }
+                        label={
+                          tech
+                            ? "Ajukan Pengembalian"
+                            : l.receivedAt
+                              ? "Simpan Hasil Pemeriksaan"
+                              : "Terima Fisik"
+                        }
+                        base={{ id: loan.id, assetIds: [l.assetId] }}
+                        fields={[
+                          {
+                            name: "condition",
+                            label: "Kondisi aktual",
+                            type: "select",
+                            options: [
+                              "Baik",
+                              "Rusak Ringan",
+                              "Rusak Berat",
+                              "Perlu Kalibrasi",
+                            ].map((v) => ({ id: v, name: v })),
+                            value: "Baik",
+                            required: true,
+                          },
+                          {
+                            name: "reason",
+                            label: "Kondisi, kelengkapan dan catatan",
+                            type: "textarea",
+                          },
+                          {
+                            name: "photoId",
+                            label: "Foto masalah (wajib bila bermasalah)",
+                            type: "photo",
+                          },
+                        ]}
+                      />
+                    </div>
                   </details>
                 ))}
             </section>

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { quantityInput } from "@/lib/quantity-input";
 import { SearchChoice } from "./search-choice";
+import { useActionFeedback } from "./action-feedback";
 export type Option = {
   id: string;
   name: string;
@@ -73,11 +74,16 @@ export function ActionForm({
   initialLines?: { itemId: string; locationId: string; quantity: string }[];
 }) {
   const prefix = useId().replaceAll(":", "");
+  const notify = useActionFeedback();
   const [key, setKey] = useState(() => crypto.randomUUID());
   const [state, dispatch, pending] = useActionState(
     async (previous: FormState, form: FormData) => {
+      notify(null);
       const result = await perform(previous, form);
-      if (result.success) setKey(crypto.randomUUID());
+      if (result.success) {
+        setKey(crypto.randomUUID());
+        notify(result.success);
+      }
       return result;
     },
     initial,
@@ -181,7 +187,7 @@ export function ActionForm({
         </div>
       )}
       {state.success && (
-        <div className="alert success" role="status">
+        <div className="alert success">
           {state.success}
           {action === "receipt" && state.id && (
             <p>

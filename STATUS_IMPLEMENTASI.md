@@ -1,5 +1,13 @@
 # Status implementasi MTC Inventory
 
+## Feedback kedua - 31 Oktober 2026
+
+Sumber perbaikan_2.docx: konfirmasi berhasil terlalu mudah terlewat ketika pengguna berada di bawah form; tindakan pengembalian per unit tampak seperti status. Scope INV-14/18/29: satu notifikasi viewport untuk seluruh ActionForm, tetap ada catatan inline; disclosure pengembalian dengan kata kerja, ikon dan indikator buka/tutup. Timer delapan detik berhenti saat hover/fokus, dapat ditutup, polite live region tunggal untuk sukses, tanpa mengambil fokus. Error tetap pada form. Backend, policy, posting stok, identitas unit dan tahap return/inspeksi tidak diubah. Tidak ada migration. Implementasi selesai, deployment menunggu CI final. Perubahan tidak menambah dependency.
+
+Verifikasi lokal: build web/worker, lint/typecheck dan tiga fixture PDF lulus; suite 10 browser lulus, lalu dua tes feedback baru lulus kembali sesudah perbaikan kontras. Tes mencakup timer/fokus, dismiss, sukses identik, error berfokus, viewport saat scroll, keyboard disclosure dan konfirmasi bahwa pengajuan belum menerima fisik/inspeksi. Delapan belas logika domain existing terverifikasi; satu assertion workbook yang terkena penambahan fixture browser bersamaan diulang berurutan dan tiga tes workbook lulus. CI rilis wajib menjalankan suite secara berurutan sesuai workflow existing. Setup fixture baru telah diperbaiki untuk FK proyek dan normalisasi username; bukan perubahan autentikasi aplikasi.
+
+Review fresh terhadap lima capture serta dua screenshot DOCX: disposition ship untuk scope notifikasi dan pengembalian. Label tag memakai info blue 5.63:1 pada info-bg, outline tombol primary 4.95:1, toast semantic green 5.54:1. Detector sekali: 13 advisory, nol nonadvisory. Documenter mempertahankan DESIGN.md/sidecar; drift lama/buildPath belum diperbaiki di luar scope. Tidak mengklaim uji HP fisik atau screen reader nyata. Panduan keputusan ada di docs/design/FEEDBACK_2_SPEC.md; screenshot latihan di .impeccable/review/feedback2/.
+
 ## Chart interaktif analitik - 25 Oktober 2026
 
 Rilis aktif `261eb49d1638ae6951296a315a23428bc2fa75e8`, web/worker `261eb49d1638` healthy. CI [40150899191](https://github.com/Frey210/Inventory/actions/runs/40150899191) success: 18 tes domain, delapan browser, lint/typecheck/build web/worker dan tiga fixture PDF. Mode preparation tetap; tidak ada migration, seed produksi atau perubahan credential. Halaman publik https://inventory.farlabs.my.id/admin/analytics tetap memerlukan akun berizin.

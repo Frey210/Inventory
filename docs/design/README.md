@@ -23,6 +23,8 @@ Mulai dari AGENTS.md, PRODUCT.md dan DESIGN.md. Baca bagian UI_SPEC yang sesuai 
 
 ## Urutan satu batch frontend
 
+Perbaikan feedback pengguna 31 Oktober 2026: [konfirmasi tindakan dan pengembalian alat](FEEDBACK_2_SPEC.md).
+
 1. Pilih ID backlog dan target. Baca status terbaru serta acceptance; jangan mengubah modul aplikasi tetangga.
 2. Jalankan `impeccable context --target <target>` sekali per sesi dari root proyek memakai launcher pada AGENTS.md. Brief memakai target rencana yang dapat diremap bila struktur source berubah.
 3. Ikuti token DESIGN.md dan kontrak halaman terkait. Baca `reference/craft-floor.md` tepat sebelum edit UI sesuai skill.

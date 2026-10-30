@@ -1,3 +1,135 @@
+.action-feedback-host {
+  position: fixed;
+  z-index: 90;
+  top: calc(104px + env(safe-area-inset-top, 0px));
+  right: max(18px, env(safe-area-inset-right, 0px));
+  width: min(440px, calc(100vw - 36px));
+  pointer-events: none;
+}
+.action-feedback {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 44px;
+  gap: 12px;
+  align-items: start;
+  padding: 16px;
+  border: 1px solid var(--success);
+  border-radius: 14px;
+  background: var(--success-bg);
+  box-shadow: 0 12px 32px #10366d24;
+  color: var(--success);
+  pointer-events: auto;
+  animation: action-feedback-enter 180ms ease-out;
+}
+.action-feedback > svg {
+  margin-top: 2px;
+}
+.action-feedback strong {
+  font-size: 16px;
+}
+.action-feedback p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.action-feedback-close {
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: var(--success);
+}
+.action-feedback-close:hover {
+  background: var(--surface);
+}
+.loan-return-help {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 10px 0 18px;
+}
+.loan-return-option {
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  overflow: clip;
+}
+.loan-return-option > summary {
+  padding: 16px;
+  min-height: 76px;
+  background: var(--info-bg);
+  color: var(--primary);
+  list-style: none;
+  gap: 12px;
+}
+.loan-return-option > summary::-webkit-details-marker {
+  display: none;
+}
+.loan-return-option > summary:hover {
+  background: var(--selected-bg);
+}
+.loan-return-option > summary:focus-visible {
+  outline-offset: -4px;
+}
+.loan-return-option > summary > span {
+  flex: 1;
+  min-width: 0;
+}
+.loan-return-option > summary strong {
+  display: block;
+  font-size: 15px;
+}
+.loan-return-option > summary small {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+  color: var(--info);
+}
+.loan-return-option > summary > svg {
+  flex-shrink: 0;
+}
+.loan-return-option[open] .loan-return-chevron {
+  transform: rotate(180deg);
+}
+.loan-return-option[open] > summary {
+  border-bottom: 1px solid var(--border);
+}
+.loan-return-form {
+  padding: 18px;
+}
+@keyframes action-feedback-enter {
+  from {
+    opacity: 0.7;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 767px) {
+  .action-feedback-host {
+    top: calc(80px + env(safe-area-inset-top, 0px));
+  }
+  .action-feedback {
+    padding: 14px;
+    gap: 10px;
+  }
+  .loan-return-option > summary {
+    padding: 14px;
+  }
+  .loan-return-form {
+    padding: 14px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .action-feedback {
+    animation: none;
+  }
+}
+
 .label-types {
   display: flex;
   gap: 12px;

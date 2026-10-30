@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./operations.css";
 import { Pwa } from "@/components/pwa";
+import { ActionFeedbackProvider } from "@/components/action-feedback";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -38,7 +39,7 @@ export default function RootLayout({
         <a className="skip-link" href="#main">
           Lewati ke konten utama
         </a>
-        {children}
+        <ActionFeedbackProvider>{children}</ActionFeedbackProvider>
       </body>
     </html>
   );
