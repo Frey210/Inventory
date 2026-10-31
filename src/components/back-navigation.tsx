@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useSyncExternalStore, useTransition } from "react";
+import { useEffect, useRef, useSyncExternalStore, useTransition } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { ArrowLeft, LoaderCircle } from "lucide-react";
 import { NavigationLink } from "./navigation";
@@ -20,6 +20,37 @@ function subscribe(listener: () => void) {
 function canGoBack() {
   const entry = window.history.state?.mtcNavigation;
   return !!session && entry?.session === session && entry.index > 0;
+}
+
+export function MobileMenu({ children }: { children: React.ReactNode }) {
+  const details = useRef<HTMLDetailsElement>(null);
+  const pathname = usePathname();
+  useEffect(() => {
+    const node = details.current;
+    if (!node) return;
+    node.open = false;
+    const select = (event: MouseEvent) => {
+      if (event.target instanceof Element && event.target.closest("a[href]"))
+        node.open = false;
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        node.open = false;
+        node.querySelector("summary")?.focus();
+      }
+    };
+    node.addEventListener("click", select);
+    node.addEventListener("keydown", escape);
+    return () => {
+      node.removeEventListener("click", select);
+      node.removeEventListener("keydown", escape);
+    };
+  }, [pathname]);
+  return (
+    <details className="mobile-menu" ref={details}>
+      {children}
+    </details>
+  );
 }
 
 // Only entries observed in this app session qualify; history.length can include other sites.
@@ -60,13 +91,7 @@ export function NavigationHistory() {
   return null;
 }
 
-export function PageBack({
-  fallback,
-  compact = false,
-}: {
-  fallback: string | null;
-  compact?: boolean;
-}) {
+export function PageBack({ fallback }: { fallback: string | null }) {
   const knownEntry = useSyncExternalStore(subscribe, canGoBack, () => false);
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -75,7 +100,7 @@ export function PageBack({
     <NavigationLink
       href={fallback}
       replace={!knownEntry}
-      className="button secondary page-back no-print"
+      className="page-back no-print"
       aria-label="Kembali"
       aria-disabled={pending}
       aria-busy={pending}
@@ -109,9 +134,7 @@ export function PageBack({
       ) : (
         <ArrowLeft size={18} aria-hidden />
       )}
-      <span className={compact ? "sr-only" : undefined}>
-        {pending ? "Membuka…" : "Kembali"}
-      </span>
+      <span>{pending ? "Membuka…" : "Kembali"}</span>
     </NavigationLink>
   );
 }

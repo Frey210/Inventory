@@ -1,5 +1,9 @@
 # Status implementasi MTC Inventory
 
+## Menu akun dan penempatan Kembali - 31 Oktober 2026
+
+INV-14/29: feedback lanjutan screenshot pemilik menolak tombol Keluar terpisah serta Back di samping logo. Refinement shared shell: avatar membuka popover akun, tautan pengaturan sesuai role dan logout existing dengan pending/error; Back bertulisan pada bar navigasi terpisah di bawah header, sticky mobile. Histori internal/fallback aman tetap. Menu mobile menutup pada pemilihan/rute/Escape. Riset primary GitHub dan Visa, adaptasi posisi sekunder sesuai GOV.UK; spesifikasi docs/design/PROFILE_NAVIGATION_SPEC.md. Tidak ada token, dependency, schema atau policy baru. Lint/typecheck/build web+worker lulus. Delapan tes browser menu akun/regresi kontrol lulus; empat tes role diulang pada build final dengan tambahan 844x390, lulus. Capture open/closed desktop1440/mobile390 valid. Reviewer fresh disposition ship untuk refinement menu akun/Back, tanpa material fixes. Detector sekali 139 advisory incumbent (cakupan stylesheet penuh), nol nonadvisory. Documenter terhenti karena usage limit setelah menulis prose Navigation; pemeriksaan langsung pengganti memastikan prose sesuai kode dan frontmatter/sidecar tidak berubah. Drift komponen sidecar/buildPath lama tetap di luar scope. Tidak ada raster baru; bukti .impeccable/review/profile-nav/. CI/deployment menyusul. HP fisik dan screen reader nyata belum diuji.
+
 ## Kontrol dan navigasi - 31 Oktober 2026
 
 Rilis aktif `7af31e0fe8c47985684a0f46854ddff3cf708322`, web/worker `7af31e0fe8c4` healthy. CI [41144073255](https://github.com/Frey210/Inventory/actions/runs/41144073255) success: 19 tes domain, 14 tes browser, lint/typecheck/build web+worker dan verifikasi PDF. HTTPS https://inventory.farlabs.my.id lolos smoke. Mode preparation tetap; tanpa migration, seed produksi, perubahan akun/credential atau dependency.

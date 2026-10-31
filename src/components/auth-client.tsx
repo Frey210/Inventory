@@ -4,13 +4,18 @@ import Image from "next/image";
 import { createAuthClient } from "better-auth/react";
 import { usernameClient, twoFactorClient } from "better-auth/client/plugins";
 import { useState, useSyncExternalStore } from "react";
+import { LogOut, LoaderCircle } from "lucide-react";
 
 const client = createAuthClient({
   plugins: [usernameClient(), twoFactorClient()],
 });
 const subscribeHydration = () => () => {};
 export function Login() {
-  const ready = useSyncExternalStore(subscribeHydration, () => true, () => false);
+  const ready = useSyncExternalStore(
+    subscribeHydration,
+    () => true,
+    () => false,
+  );
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [mfa, setMfa] = useState(false);
@@ -111,16 +116,41 @@ export function Login() {
   );
 }
 export function Logout() {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   return (
-    <button
-      className="secondary"
-      onClick={async () => {
-        await client.signOut();
-        window.location.assign("/login");
-      }}
-    >
-      Keluar
-    </button>
+    <>
+      <button
+        type="button"
+        className="account-menu-logout"
+        disabled={busy}
+        aria-busy={busy}
+        onClick={async () => {
+          setBusy(true);
+          setError("");
+          try {
+            const result = await client.signOut();
+            if (result.error) throw new Error("Sign out failed");
+            window.location.assign("/login");
+          } catch {
+            setError("Belum bisa keluar. Coba lagi.");
+            setBusy(false);
+          }
+        }}
+      >
+        {busy ? (
+          <LoaderCircle size={19} className="loading-spinner" aria-hidden />
+        ) : (
+          <LogOut size={19} aria-hidden />
+        )}
+        {busy ? "Keluar…" : "Keluar"}
+      </button>
+      {error && (
+        <p className="account-menu-error" role="alert">
+          {error}
+        </p>
+      )}
+    </>
   );
 }
 export function MfaSetup() {

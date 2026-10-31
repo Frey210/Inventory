@@ -186,7 +186,9 @@ Panel putih padding 26 px desktop, 22 px 18 px ponsel, memakai radius/shadow ber
 
 ### Navigation
 
-Sidebar menampilkan logo MTC, ruang kerja, tujuan utama dan kelompok Kelola gudang yang dapat dibuka. Tujuan aktif memakai aria-current. Topbar menyediakan pencarian/notifikasi/profil; ponsel memakai brand ringkas, Semua menu dan bottom nav lima tujuan. Menu lain dan logout tetap terjangkau. Pemilihan menu bukan pengganti pemeriksaan policy server. Mode uji coba adalah penjelasan ringkas yang dapat dibuka, bukan klaim kesiapan operasional.
+Sidebar menampilkan logo MTC, ruang kerja, tujuan utama dan kelompok Kelola gudang yang dapat dibuka. Tujuan aktif memakai aria-current. Topbar menyediakan pencarian, notifikasi dan pemicu akun berupa avatar dengan chevron; ponsel mempertahankan brand ringkas dan bottom nav lima tujuan. Popover akun menampilkan nama/peran lengkap, Pengaturan akun, Pengaturan aplikasi khusus admin dan Keluar. Keluar hanya berada dalam popover, dengan status proses dan error yang dapat dicoba ulang. Popover menutup lewat klik luar, Escape atau pemilihan tautan; target tindakan minimum 44 px, teks aksi 14 px, dan isinya dapat bergulir pada viewport pendek.
+
+Kembali berlabel ditempatkan terpisah di bawah header sebagai tautan quiet pada desktop; pada mobile/tablet bar sekunder sticky memuat Kembali dan Semua menu. Header, bar dan posisi toolbar menghormati safe area. Brand tidak digabung dengan kontrol Kembali. Menu mobile menutup saat tautan dipilih, rute berubah atau Escape. Kontrak perilaku dan fallback histori ada pada docs/design/PROFILE_NAVIGATION_SPEC.md. Pemilihan menu bukan pengganti pemeriksaan policy server. Mode uji coba adalah penjelasan ringkas yang dapat dibuka, bukan klaim kesiapan operasional.
 
 ### Transaction lists / Feedback
 

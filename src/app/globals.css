@@ -344,13 +344,6 @@ svg {
 .account-name small {
   font-size: 11px;
 }
-.desktop-logout button {
-  font-size: 12px;
-  min-height: 38px;
-  padding: 8px 12px;
-  background: var(--canvas);
-  color: var(--text-muted);
-}
 .icon-button {
   display: inline-flex;
   align-items: center;
@@ -1519,9 +1512,6 @@ textarea {
   .mobile-menu nav button {
     background: var(--canvas);
     color: var(--text);
-  }
-  .desktop-logout {
-    display: none;
   }
   .content {
     padding-bottom: calc(106px + env(safe-area-inset-bottom, 0px));

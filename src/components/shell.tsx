@@ -25,11 +25,11 @@ import {
   Cpu,
   BarChart3,
 } from "lucide-react";
-import { Logout } from "./auth-client";
+import { AccountMenu } from "./account-menu";
 import type { Actor } from "@/server/policy";
 import { db } from "@/server/db";
 import { Suspense } from "react";
-import { PageBack } from "./back-navigation";
+import { PageBack, MobileMenu } from "./back-navigation";
 import { backDestination } from "@/lib/back-destination";
 
 const roleNames: Record<string, string> = {
@@ -133,9 +133,7 @@ export function Shell({
         ["/profile", "Profil", UserRound] as const,
       ];
   return (
-    <div
-      className={`shell ${tech ? "technician" : ""} ${back ? "has-page-back" : ""}`}
-    >
+    <div className={`shell ${tech ? "technician" : ""}`}>
       <aside className="sidebar">
         <Link href={home} className="brand">
           <Image src="/logo.jpg" alt="Logo MTC" width={44} height={44} />
@@ -177,7 +175,6 @@ export function Shell({
       <div className="workspace">
         <header className="topbar">
           <div className="mobile-brand">
-            <PageBack fallback={back} compact />
             <Image src="/logo.jpg" alt="MTC" width={34} height={34} />
             <strong>MTC Inventory</strong>
           </div>
@@ -203,44 +200,32 @@ export function Shell({
             >
               <Bell size={21} aria-hidden />
             </Link>
-            <Link href="/profile" className="account-profile">
-              <span className="avatar">
-                {actor.name
-                  .split(" ")
-                  .slice(0, 2)
-                  .map((n) => n[0])
-                  .join("")}
-              </span>
-              <span className="account-name">
-                <strong>{actor.name}</strong>
-                <small>{roleNames[actor.role] || actor.role}</small>
-              </span>
-            </Link>
-            <div className="desktop-logout">
-              <Logout />
-            </div>
+            <AccountMenu
+              name={actor.name}
+              role={roleNames[actor.role] || actor.role}
+              admin={actor.role === "ADMIN"}
+            />
           </div>
         </header>
-        <details className="mobile-menu">
-          <summary>
-            <Menu size={19} aria-hidden />
-            Semua menu
-            <ChevronDown size={16} aria-hidden />
-          </summary>
-          <nav aria-label="Menu mobile">
-            {links(primary)}
-            {links(manage)}
-            <Link href="/profile">
-              <UserRound size={20} aria-hidden />
-              Profil & keamanan
-            </Link>
-            <Logout />
-          </nav>
-        </details>
+        <div className={`page-navigation no-print ${back ? "has-back" : ""}`}>
+          <PageBack fallback={back} />
+          <MobileMenu>
+            <summary>
+              <Menu size={19} aria-hidden />
+              Semua menu
+              <ChevronDown size={16} aria-hidden />
+            </summary>
+            <nav aria-label="Menu mobile">
+              {links(primary)}
+              {links(manage)}
+              <Link href="/profile">
+                <UserRound size={20} aria-hidden />
+                Profil & keamanan
+              </Link>
+            </nav>
+          </MobileMenu>
+        </div>
         <main id="main" className="content">
-          <div className="desktop-back">
-            <PageBack fallback={back} />
-          </div>
           {process.env.APP_MODE !== "live" && (
             <details className="pilot-notice no-print">
               <summary>
