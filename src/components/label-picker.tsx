@@ -76,8 +76,8 @@ export function LabelPicker({
             />
             <ItemVisual name={row.name} photoId={row.photoId} />
             <span className="label-identity">
-              <strong>{row.name}</strong>
-              <small>{row.code}</small>
+              <strong>{row.code}</strong>
+              <small>{row.name}</small>
             </span>
             <span className="label-location">
               <MapPin size={14} aria-hidden />

@@ -4,6 +4,8 @@
     "/me",
     "/admin/items",
     "/me/items",
+    "/me/requests/new",
+    "/admin/requests/new",
   ].includes(path);
   const items =
     stock ||

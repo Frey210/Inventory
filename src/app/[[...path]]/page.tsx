@@ -1,3 +1,5 @@
+import { presentAudits } from "@/server/audit-presentation";
+import { labels } from "@/components/data";
 import Link from "next/link";
 import Form from "next/form";
 import { Suspense } from "react";
@@ -1617,6 +1619,36 @@ export default async function Page({
                         tracking: i.tracking,
                         unitId: i.unitId,
                         locationId: i.locationId,
+                        ...(requesting
+                          ? {
+                              stockLocations: masters
+                                .filter(
+                                  (m) => m.kind === "location" && m.active,
+                                )
+                                .map((m) => ({
+                                  id: m.id,
+                                  name: m.code + " - " + m.name,
+                                  available:
+                                    i.tracking === "quantity"
+                                      ? i.balances
+                                          .filter((b) => b.locationId === m.id)
+                                          .reduce(
+                                            (n, b) =>
+                                              n +
+                                              Number(b.onHand) -
+                                              Number(b.reserved),
+                                            0,
+                                          )
+                                      : i.assets.filter(
+                                          (a) =>
+                                            a.locationId === m.id &&
+                                            a.availability === "available" &&
+                                            eligible(a),
+                                        ).length,
+                                }))
+                                .filter((l) => l.available > 0),
+                            }
+                          : {}),
                         photoId: i.photoId,
                         unitName: lookup(i.unitId),
                         categoryName: lookup(i.categoryId),
@@ -2357,6 +2389,14 @@ export default async function Page({
         </>
       );
     if (path === "/admin/stocktakes") {
+      const [stockBalances, stockAssets] = await Promise.all([
+        db.balance.groupBy({ by: ["locationId"], _count: true }),
+        db.asset.groupBy({
+          by: ["locationId"],
+          where: { availability: { in: ["available", "blocked"] } },
+          _count: true,
+        }),
+      ]);
       const docs = await db.document.findMany({
         where: { kind: "stocktake" },
         orderBy: { createdAt: "desc" },
@@ -2364,15 +2404,32 @@ export default async function Page({
       return (
         <>
           <Heading
-            title="Stock Opname"
-            description="Lokasi dibekukan selama hitung dan review; adjustment bukan edit saldo."
+            title="Hitung stok"
+            description="Pilih rak tepat yang dihitung. Rak anak tidak otomatis ikut. Selama sesi, pergerakan pada lokasi ditahan hingga review atau pembatalan."
           />
           <section className="panel">
             <ActionForm
               action="stocktake"
               label="Mulai Sesi & Bekukan Lokasi"
               fields={[
-                select("locationId", "Lokasi", "location"),
+                {
+                  name: "locationId",
+                  label: "Rak yang dihitung",
+                  type: "select",
+                  required: true,
+                  options: options("location").map((l) => ({
+                    ...l,
+                    name:
+                      l.name +
+                      " - " +
+                      (stockBalances.find((b) => b.locationId === l.id)
+                        ?._count || 0) +
+                      " SKU jumlah / " +
+                      (stockAssets.find((a) => a.locationId === l.id)?._count ||
+                        0) +
+                      " unit",
+                  })),
+                },
                 {
                   name: "reason",
                   label: "Tujuan/periode hitung",
@@ -2401,6 +2458,20 @@ export default async function Page({
         include: { lines: true },
       });
       if (!d || d.kind !== "stocktake") notFound();
+      const foundUnits =
+        d.status === "draft" && canWrite
+          ? await db.asset.findMany({
+              where: {
+                locationId: d.locationId!,
+                availability: { in: ["available", "blocked"] },
+              },
+              select: { id: true, tag: true },
+            })
+          : [];
+      const findings = await db.record.findMany({
+        where: { kind: "stocktake_finding", referenceId: d.id },
+        orderBy: { createdAt: "asc" },
+      });
       return (
         <>
           <Heading
@@ -2410,19 +2481,91 @@ export default async function Page({
           <Badge value={d.status} />
           <section className="panel">
             <Table
-              headers={["Barang", "Saldo snapshot", "Hasil hitung"]}
+              headers={["Barang", "Satuan", "Saldo snapshot", "Hasil hitung"]}
               rows={d.lines.map((l) => [
                 (items.find((i) => i.id === l.itemId)?.name || l.itemId) +
                   ((l.details as { tag?: string }).tag
                     ? " · " + (l.details as { tag: string }).tag
                     : ""),
+                l.assetId
+                  ? "unit"
+                  : lookup(items.find((i) => i.id === l.itemId)?.unitId),
                 l.quantity.toString(),
                 String(
-                  (l.details as { count?: string }).count || "Belum dihitung",
+                  (l.details as { count?: string }).count ?? "Belum dihitung",
                 ),
               ])}
             />
             {d.status === "draft" && canWrite && (
+              <section>
+                <h2>Barang temuan</h2>
+                <p>
+                  Tambahkan SKU dari katalog. Saldo belum berubah sampai hasil
+                  ditinjau dan diposting. Unit dari rak lain atau belum dikenal
+                  dicatat untuk tindak lanjut, bukan otomatis tersedia.
+                </p>
+                <ActionForm
+                  action="stocktake-add-item"
+                  label="Tambahkan barang temuan"
+                  base={{ id: d.id }}
+                  fields={[
+                    {
+                      name: "itemId",
+                      label: "Barang / SKU",
+                      type: "search",
+                      required: true,
+                      options: items
+                        .filter((i) => i.active)
+                        .map((i) => ({
+                          id: i.id,
+                          name: i.sku + " - " + i.name,
+                        })),
+                    },
+                    {
+                      name: "assetId",
+                      label: "Identitas unit (untuk sensor/alat)",
+                      type: "search",
+                      options: foundUnits.map((a) => ({
+                        id: a.id,
+                        name: a.tag,
+                      })),
+                    },
+                    {
+                      name: "reason",
+                      label: "Alasan dan sumber temuan",
+                      type: "textarea",
+                      required: true,
+                    },
+                  ]}
+                />
+                <details>
+                  <summary>Catat unit tidak dikenal atau berbeda rak</summary>
+                  <ActionForm
+                    action="stocktake-finding"
+                    label="Simpan temuan untuk tindak lanjut"
+                    base={{ id: d.id }}
+                    fields={[
+                      {
+                        name: "reason",
+                        label:
+                          "Tag/ciri unit, rak asal dan tindak lanjut registrasi/penerimaan/transfer",
+                        type: "textarea",
+                        required: true,
+                      },
+                    ]}
+                  />
+                </details>
+              </section>
+            )}
+            {findings.map((f) => (
+              <p key={f.id}>
+                Temuan tertahan:{" "}
+                {String((f.payload as { reason: string }).reason)}. Selesaikan
+                melalui registrasi/penerimaan atau transfer setelah lokasi
+                dibuka kembali.
+              </p>
+            ))}
+            {d.status === "draft" && canWrite && d.lines.length > 0 && (
               <ActionForm
                 action="count-stocktake"
                 label="Ajukan Hasil Hitung"
@@ -2472,7 +2615,7 @@ export default async function Page({
             {["draft", "review"].includes(d.status) && canWrite && (
               <ActionForm
                 action="cancel-stocktake"
-                label="Batalkan Sesi & Buka Freeze"
+                label="Batalkan sesi & buka lokasi"
                 base={{ id: d.id }}
                 fields={[
                   {
@@ -2493,7 +2636,25 @@ export default async function Page({
       path === "/me/incidents/new"
     ) {
       const assets = await db.asset.findMany({
-        where: tech ? { custodianId: user.id } : {},
+        where: tech
+          ? { custodianId: user.id }
+          : path.includes("maintenance")
+            ? {
+                item: {
+                  typeId: {
+                    in: masters
+                      .filter(
+                        (m) =>
+                          m.kind === "type" &&
+                          ["SENSOR", "PRODUCT"].includes(m.code),
+                      )
+                      .map((m) => m.id),
+                  },
+                },
+                availability: { in: ["available", "blocked", "installed"] },
+              }
+            : {},
+        include: { item: { select: { name: true, sku: true } } },
         orderBy: { tag: "asc" },
       });
       const records = await db.record.findMany({
@@ -2509,7 +2670,7 @@ export default async function Page({
           <Heading
             title={
               path.includes("maintenance")
-                ? "Maintenance & Kalibrasi"
+                ? "Perawatan & Kalibrasi"
                 : "Laporkan Masalah"
             }
             description="Tindakan, hasil dan bukti per unit. Unit bermasalah tidak otomatis tersedia."
@@ -2520,11 +2681,21 @@ export default async function Page({
               fields={[
                 {
                   name: "assetId",
-                  label: "Unit",
-                  type: "select",
+                  label: path.includes("maintenance")
+                    ? "Sensor / produk jadi"
+                    : "Unit",
+                  type: "search",
                   options: assets.map((a) => ({
                     id: a.id,
-                    name: a.tag + " · " + a.availability,
+                    name:
+                      a.tag +
+                      " - " +
+                      a.item.name +
+                      " - " +
+                      lookup(a.locationId) +
+                      " - " +
+                      (labels[a.availability] || a.availability),
+                    details: { calibrationRequired: a.calibrationRequired },
                   })),
                   required: true,
                 },
@@ -2869,22 +3040,23 @@ export default async function Page({
         orderBy: { createdAt: "desc" },
         take: 100,
       });
+      const presented = await presentAudits(rows);
       return (
         <>
           <Heading
-            title="Audit Log"
-            description="Rekaman aktor, tindakan dan perubahan. Tidak tersedia edit/hapus."
+            title="Riwayat aktivitas"
+            description="Pelaku, tindakan dan perubahan. Nama/peran memakai data pengguna saat ini; rekaman asli tidak dapat diedit atau dihapus."
           />
           <Table
             headers={["Waktu", "Aktor", "Aksi", "Objek", "Detail"]}
-            rows={rows.map((r) => [
+            rows={rows.map((r, index) => [
               <DateLabel key="time" value={r.createdAt} />,
-              r.actorId,
-              r.action,
-              r.entityId,
+              presented[index].actor,
+              presented[index].action,
+              presented[index].object,
               <details key="payload">
-                <summary>Lihat rekaman</summary>
-                <pre>{JSON.stringify(r.payload, null, 2)}</pre>
+                <summary>Lihat rincian</summary>
+                <p>{presented[index].summary}</p>
               </details>,
             ])}
           />
@@ -2898,19 +3070,78 @@ export default async function Page({
         orderBy: { createdAt: "desc" },
         take: 100,
       });
+      const related = await db.document.findMany({
+        where: {
+          id: {
+            in: rows
+              .map((r) => r.referenceId)
+              .filter((id): id is string => !!id),
+          },
+        },
+        include: { lines: true },
+      });
       return (
         <>
           <Heading
-            title="Review Pengeluaran Darurat"
-            description="Pemeriksaan setelah override tidak membatalkan stok yang telah diserahkan. Koreksi melalui transaksi berjejak."
+            title="Tinjau persetujuan darurat"
+            description="Persetujuan khusus untuk kebutuhan komponen mendesak. Reservasi belum berarti barang sudah diserahkan."
           />
+          <section className="panel">
+            <h2>Kapan dan siapa yang menggunakan?</h2>
+            <p>
+              Untuk kebutuhan consumable mendesak ketika persetujuan normal
+              terhambat. Hanya admin dengan izin darurat khusus dapat
+              menyetujui, dengan alasan dan dasar kewenangan; tidak untuk
+              permintaannya sendiri atau peminjaman alat.
+            </p>
+            <ol>
+              <li>Teknisi mengajukan kebutuhan.</li>
+              <li>Admin berizin mencatat persetujuan darurat dan reservasi.</li>
+              <li>
+                Penerima mengakui; gudang memposting penyerahan. Baru saat itu
+                stok fisik berkurang.
+              </li>
+              <li>
+                Gudang atau auditor selain pelaku memeriksa alasan, bukti dan
+                tindak lanjut.
+              </li>
+            </ol>
+            <p>
+              Review tidak menghapus pengeluaran atau mengembalikan stok.
+              Koreksi melalui transaksi berjejak. Definisi mendesak dan tenggat
+              pemeriksaan mengikuti SOP perusahaan.
+            </p>
+          </section>
+          {!rows.length && (
+            <p className="panel">
+              Belum ada persetujuan darurat untuk ditinjau.
+            </p>
+          )}
           {rows.map((r) => (
             <section className="panel" key={r.id}>
               <p>
                 <Link href={`/admin/requests/${r.referenceId}`}>
-                  Lihat Transaksi
+                  {related.find((d) => d.id === r.referenceId)?.number ||
+                    "Lihat transaksi"}
                 </Link>{" "}
-                · {r.status}
+                -{" "}
+                {r.status === "reviewed" ? "Review selesai" : "Menunggu review"}
+                <span>
+                  {" "}
+                  -{" "}
+                  {(() => {
+                    const d = related.find((d) => d.id === r.referenceId);
+                    return !d
+                      ? "Transaksi tidak ditemukan"
+                      : d.lines.some((l) => l.fulfilled.gt(0))
+                        ? "Sudah diserahkan"
+                        : ["cancelled", "rejected", "expired"].includes(
+                              d.status,
+                            )
+                          ? "Tidak dilanjutkan"
+                          : "Belum diserahkan";
+                  })()}
+                </span>
               </p>
               <p>{String((r.payload as { reason: string }).reason)}</p>
               {r.status === "pending_review" &&

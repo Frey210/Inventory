@@ -96,12 +96,10 @@ export async function Labels({
           photoId: a.item.photoId,
           locationId: a.locationId,
         }));
-  const locations = printing
-    ? []
-    : await db.master.findMany({
-        where: { id: { in: [...new Set(rows.map((r) => r.locationId))] } },
-        select: { id: true, code: true, name: true },
-      });
+  const locations = await db.master.findMany({
+    where: { id: { in: [...new Set(rows.map((r) => r.locationId))] } },
+    select: { id: true, code: true, name: true },
+  });
   if (printing) {
     if (new Set(ids).size !== rows.length)
       return (
@@ -152,11 +150,11 @@ export async function Labels({
                   <div>
                     <strong>{row.code}</strong>
                     <br />
-                    {row.name}
-                    <br />
-                    <small>
-                      MTC · {type === "ITEM" ? "Barang / SKU" : "Unit alat"}
-                    </small>
+                    <span>
+                      {type === "ITEM" ? "Rak default: " : "Rak: "}
+                      {locations.find((l) => l.id === row.locationId)?.name ||
+                        "Belum ditentukan"}
+                    </span>
                   </div>
                 </article>
               )),

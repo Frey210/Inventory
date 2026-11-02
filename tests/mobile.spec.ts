@@ -81,6 +81,14 @@ for (const u of users)
           bottom: navRect.bottom,
           height: navRect.height,
           overflow: document.documentElement.scrollWidth > innerWidth,
+          offenders: [...document.querySelectorAll("main *")]
+            .filter((e) => e.getBoundingClientRect().right > innerWidth + 1)
+            .slice(0, 8)
+            .map((e) => ({
+              tag: e.tagName,
+              style: e.className,
+              text: e.textContent?.slice(0, 100),
+            })),
           clearance: parseFloat(
             getComputedStyle(document.querySelector("main")!).paddingBottom,
           ),
@@ -96,7 +104,10 @@ for (const u of users)
         expect(link.fits).toBe(true);
         expect(link.nowrap).toBe("nowrap");
       }
-      expect(geometry.overflow).toBe(false);
+      expect(
+        geometry.overflow,
+        JSON.stringify({ width, offenders: geometry.offenders }),
+      ).toBe(false);
       expect(geometry.bottom).toBe(width === 844 ? 390 : 844);
       expect(geometry.clearance).toBeGreaterThan(geometry.height);
       if (width === 390)

@@ -65,3 +65,12 @@ Jangan mengartikan placeholder {{...}} sebagai kewajiban menghasilkan DOCX edita
 Revisi feedback 25 Oktober 2026: nota versi baru menampilkan lokasi penggunaan yang dibekukan pada snapshot, baik referensi master maupun teks bebas. `dueDateOnly` menyembunyikan jam untuk kontrak tanggal baru; pinjaman/snapshot lama tetap memakai deadline jam dan PDF tersimpan tidak ditulis ulang. Label resmi memakai payload `MTC:ITEM:<id>` atau `MTC:ASSET:<id>` dari database aplikasi; kode SKU/tag tercetak sebagai teks. Cetak ulang mempertahankan identitas. Label lama raw tag/SKU masih dapat dibaca resolver. Ukuran kertas/camera fisik tetap membutuhkan UAT.
 
 Uji satu unit, 30+ baris, nama/serial panjang, beberapa return event, kondisi bermasalah, foto gagal, signature belum ada, partial return+inspection, final/exception, dan koreksi versi. Verifikasi Letter, header tabel berulang, page break E, nomor halaman/LOAN/versi, karakter Indonesia, tabel tidak terpotong dan QR terbaca pada kertas. Cetak grayscale dan bandingkan dengan template sumber. UAT-11–16 dan akses file/audit harus lulus. Belum ada PDF hasil render yang diverifikasi pada tahap penyiapan spesifikasi ini.
+
+
+## Label dan laporan feedback ketiga - 2 November 2026
+
+Label QR hanya kode/tag dan nama lokasi, tanpa nama/deskripsi barang atau footer generik. ASSET memakai tag unik dan lokasi unit aktual; ITEM memakai SKU dan label Rak default karena satu SKU dapat ada di beberapa rak. QR tetap MTC:ITEM:id / MTC:ASSET:id, tidak diganti lokasi. Nama barang tetap boleh membantu pada daftar pemilihan, dengan tag sebagai identitas utama. Quiet zone/ukuran cetak existing dipertahankan; pindah lokasi membutuhkan cetak ulang teks lokasi.
+
+Persetujuan pemilik: satu Meteran AK005 dipetakan ke MTC-AK005-001, tag lama disimpan sebagai alias terikat ke ID unit yang sama dengan audit. Tidak mengubah snapshot nota lama. Alias tidak boleh digunakan ulang untuk unit baru. Penerapan data produksi menunggu backup dan rilis service alias yang teruji.
+
+Laporan aktivitas memakai formatter web yang sama untuk CSV/XLSX/print, bukan JSON payload. Tabel landscape dengan header berulang, teks panjang membungkus per kata, lebar kolom ringkasan lebih besar. Escaping dan formula injection guard tetap. Nota loan dan seluruh snapshot historis tidak diubah.

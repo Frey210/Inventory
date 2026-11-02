@@ -32,6 +32,7 @@ export type Field = {
   name: string;
   label: string;
   type?:
+    | "search"
     | "text"
     | "textarea"
     | "select"
@@ -59,6 +60,7 @@ export type CatalogItem = Option & {
   categoryName?: string;
   specifications?: unknown;
   fractional?: boolean;
+  stockLocations?: { id: string; name: string; available: number }[];
 };
 const initial: FormState = {};
 export function PrintButton() {
@@ -90,6 +92,7 @@ export function ActionForm({
   initialLines?: { itemId: string; locationId: string; quantity: string }[];
 }) {
   const prefix = useId().replaceAll(":", "");
+  const [locationFilter, setLocationFilter] = useState("");
   const notify = useActionFeedback();
   const [key, setKey] = useState(() => crypto.randomUUID());
   const [state, dispatch, pending] = useActionState(
@@ -125,13 +128,26 @@ export function ActionForm({
       ? initialLines
       : [{ itemId: "", locationId: "", quantity: "1" }]
     ).map((line) => ({
+      ...line,
+      ...(action === "request"
+        ? {
+            locationId: (() => {
+              const stocks =
+                items?.find((i) => i.id === line.itemId)?.stockLocations || [];
+              return stocks.some((l) => l.id === line.locationId)
+                ? line.locationId
+                : stocks.length === 1
+                  ? stocks[0].id
+                  : "";
+            })(),
+          }
+        : {}),
       clientKey: crypto.randomUUID(),
       tag: "",
       serial: "",
       condition: "Baik",
       calibrationRequired: false,
       validUntil: "",
-      ...line,
     })),
   );
   const errorRef = useRef<HTMLDivElement>(null);
@@ -159,6 +175,10 @@ export function ActionForm({
         }
         if (name === "assetIds" && serialized)
           next.quantity = String((value as string[]).length);
+      }
+      if (action === "maintenance" && name === "assetId") {
+        next.method = "";
+        next.validUntil = "";
       }
       if (name === "categoryId") {
         const data = defaults?.find((c) => c.id === value)?.details || {};
@@ -268,6 +288,57 @@ export function ActionForm({
       {items && (
         <fieldset>
           <legend>Daftar barang</legend>
+          {action === "request" && (
+            <label>
+              Filter rak pengambilan (opsional)
+              <select
+                value={locationFilter}
+                onChange={(e) => {
+                  const rack = e.target.value;
+                  setLocationFilter(rack);
+                  setLines((current) =>
+                    current.map((l) => {
+                      const item = items.find((i) => i.id === l.itemId);
+                      const fits =
+                        !rack ||
+                        item?.stockLocations?.some((x) => x.id === rack);
+                      return {
+                        ...l,
+                        itemId: fits ? l.itemId : "",
+                        locationId:
+                          fits &&
+                          (item?.stockLocations || []).some(
+                            (x) => x.id === (rack || l.locationId),
+                          )
+                            ? rack || l.locationId
+                            : "",
+                      };
+                    }),
+                  );
+                }}
+              >
+                <option value="">Semua rak</option>
+                {locations?.map((l) => (
+                  <option value={l.id} key={l.id}>
+                    {l.name}
+                  </option>
+                ))}
+              </select>
+              <small>
+                Filter membantu pencarian. Rak asal tiap baris tetap dicatat;
+                lokasi penggunaan tidak berubah.
+              </small>
+            </label>
+          )}
+          {action === "request" &&
+            locationFilter &&
+            !items.some((i) =>
+              i.stockLocations?.some((l) => l.id === locationFilter),
+            ) && (
+              <p className="field-help">
+                Tidak ada barang tersedia di rak ini. Pilih rak lain.
+              </p>
+            )}
           {lines.map((line, index) => {
             const item = items.find((i) => i.id === line.itemId);
             return (
@@ -275,13 +346,25 @@ export function ActionForm({
                 <label htmlFor={`${prefix}-lines-${index}-itemId`}>
                   Barang
                   <SearchChoice
+                    key={
+                      line.clientKey + "-" + locationFilter + "-" + line.itemId
+                    }
                     id={`${prefix}-lines-${index}-itemId`}
                     required
                     value={line.itemId}
-                    options={items.map((i) => ({
-                      id: i.id,
-                      name: `${i.sku} — ${i.name}`,
-                    }))}
+                    options={items
+                      .filter(
+                        (i) =>
+                          action !== "request" ||
+                          !locationFilter ||
+                          i.stockLocations?.some(
+                            (l) => l.id === locationFilter,
+                          ),
+                      )
+                      .map((i) => ({
+                        id: i.id,
+                        name: `${i.sku} — ${i.name}`,
+                      }))}
                     onChange={(itemId) =>
                       setLines(
                         lines.map((l, i) =>
@@ -296,8 +379,22 @@ export function ActionForm({
                                     ? "1"
                                     : l.quantity,
                                 locationId:
-                                  items.find((x) => x.id === itemId)
-                                    ?.locationId || "",
+                                  action === "request"
+                                    ? (() => {
+                                        const stocks =
+                                          items.find((x) => x.id === itemId)
+                                            ?.stockLocations || [];
+                                        return (
+                                          stocks.find(
+                                            (l) => l.id === locationFilter,
+                                          )?.id ||
+                                          (stocks.length === 1
+                                            ? stocks[0].id
+                                            : "")
+                                        );
+                                      })()
+                                    : items.find((x) => x.id === itemId)
+                                        ?.locationId || "",
                               }
                             : l,
                         ),
@@ -306,7 +403,7 @@ export function ActionForm({
                   />
                 </label>
                 <label>
-                  Lokasi
+                  {action === "request" ? "Ambil dari rak" : "Lokasi"}
                   <select
                     required
                     value={line.locationId}
@@ -321,9 +418,15 @@ export function ActionForm({
                     }
                   >
                     <option value="">Pilih lokasi</option>
-                    {locations?.map((l) => (
+                    {(action === "request"
+                      ? item?.stockLocations || []
+                      : locations || []
+                    ).map((l) => (
                       <option key={l.id} value={l.id}>
                         {l.name}
+                        {"available" in l
+                          ? ` - ${l.available} ${item?.unitName || "unit"} tersedia`
+                          : ""}
                       </option>
                     ))}
                   </select>
@@ -529,156 +632,177 @@ export function ActionForm({
         </fieldset>
       )}
       <div className="form-grid">
-        {fields.map((field) =>
-          field.type === "multiselect" ? (
-            action === "transfer" && values.itemId && !serializedTransfer ? (
-              <p className="field-help full" key={field.name}>
-                Barang ini dicatat per jumlah; unit alat tidak perlu dipilih.
-              </p>
-            ) : (
-              <UnitPicker
-                key={`${field.name}-${values.itemId}-${values.sourceId}-${key}`}
-                id={`${prefix}-${field.name}`}
-                value={(values[field.name] as string[]) || []}
-                options={(field.options || []).filter(
-                  (o) =>
-                    action !== "transfer" ||
-                    (o.details?.itemId === values.itemId &&
-                      o.details?.locationId === values.sourceId),
-                )}
-                onChange={(ids) => change(field.name, ids)}
-                empty={
-                  !values.itemId || !values.sourceId
-                    ? "Pilih barang dan lokasi asal terlebih dahulu."
-                    : "Tidak ada unit yang dapat dipindahkan dari lokasi ini."
-                }
-                error={state.fieldErrors?.[field.name]}
-              />
-            )
-          ) : (
-            <label
-              key={field.name}
-              className={
-                field.type === "textarea"
-                  ? "full"
-                  : field.type === "checkbox"
-                    ? "checkbox-field"
-                    : ""
-              }
-            >
-              <span>
-                {field.label}
-                {field.required && <span className="required"> (Wajib)</span>}
-              </span>
-              {field.name === "targetLocationId" ? (
-                <SearchChoice
-                  options={(field.options || []).map((o) => ({
-                    id: o.id,
-                    name: o.name,
-                  }))}
-                  value={String(values.targetLocationId || "")}
-                  text={String(values.targetLocationText || "")}
-                  freeText
-                  onChange={(id, text) =>
-                    setValues((current) => ({
-                      ...current,
-                      targetLocationId: id,
-                      targetLocationText: text,
-                    }))
-                  }
-                />
-              ) : action === "transfer" && field.name === "itemId" ? (
-                <SearchChoice
-                  id={`${prefix}-${field.name}`}
-                  options={field.options || []}
-                  value={String(values[field.name] || "")}
-                  required
-                  onChange={(id) => change(field.name, id)}
-                />
-              ) : field.type === "select" ? (
-                <select
-                  id={`${prefix}-${field.name}`}
-                  aria-invalid={!!state.fieldErrors?.[field.name]}
-                  aria-describedby={
-                    state.fieldErrors?.[field.name]
-                      ? `${prefix}-${field.name}-error`
-                      : undefined
-                  }
-                  name={field.name}
-                  required={field.required}
-                  value={String(values[field.name] ?? "")}
-                  onChange={(e) => change(field.name, e.target.value)}
-                >
-                  <option value="">Pilih {field.label.toLowerCase()}</option>
-                  {field.options?.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.name}
-                    </option>
-                  ))}
-                </select>
-              ) : field.type === "checkbox" ? (
-                <input
-                  type="checkbox"
-                  name={field.name}
-                  checked={!!values[field.name]}
-                  onChange={(e) => change(field.name, e.target.checked)}
-                />
-              ) : field.type === "textarea" ? (
-                <textarea
-                  id={`${prefix}-${field.name}`}
-                  aria-invalid={!!state.fieldErrors?.[field.name]}
-                  aria-describedby={
-                    state.fieldErrors?.[field.name]
-                      ? `${prefix}-${field.name}-error`
-                      : undefined
-                  }
-                  name={field.name}
-                  required={field.required}
-                  maxLength={5000}
-                  value={String(values[field.name] ?? "")}
-                  onChange={(e) => change(field.name, e.target.value)}
-                />
-              ) : field.type === "photo" ? (
-                <Photo
-                  value={String(values[field.name] || "")}
-                  onChange={(v) => change(field.name, v)}
-                />
+        {fields
+          .filter(
+            (field) =>
+              !(
+                action === "maintenance" &&
+                ["validUntil", "method"].includes(field.name) &&
+                !fields
+                  .find((f) => f.name === "assetId")
+                  ?.options?.find((o) => o.id === values.assetId)?.details
+                  ?.calibrationRequired
+              ),
+          )
+          .map((field) =>
+            field.type === "multiselect" ? (
+              action === "transfer" && values.itemId && !serializedTransfer ? (
+                <p className="field-help full" key={field.name}>
+                  Barang ini dicatat per jumlah; unit alat tidak perlu dipilih.
+                </p>
               ) : (
-                <input
+                <UnitPicker
+                  key={`${field.name}-${values.itemId}-${values.sourceId}-${key}`}
                   id={`${prefix}-${field.name}`}
-                  aria-invalid={!!state.fieldErrors?.[field.name]}
-                  aria-describedby={
-                    state.fieldErrors?.[field.name]
-                      ? `${prefix}-${field.name}-error`
-                      : undefined
+                  value={(values[field.name] as string[]) || []}
+                  options={(field.options || []).filter(
+                    (o) =>
+                      action !== "transfer" ||
+                      (o.details?.itemId === values.itemId &&
+                        o.details?.locationId === values.sourceId),
+                  )}
+                  onChange={(ids) => change(field.name, ids)}
+                  empty={
+                    !values.itemId || !values.sourceId
+                      ? "Pilih barang dan lokasi asal terlebih dahulu."
+                      : "Tidak ada unit yang dapat dipindahkan dari lokasi ini."
                   }
-                  name={field.name}
-                  type={field.type || "text"}
-                  readOnly={serializedTransfer && field.name === "quantity"}
-                  {...(field.type === "number" ? numeric(field) : {})}
-                  required={field.required}
-                  value={String(values[field.name] ?? "")}
-                  onChange={(e) => change(field.name, e.target.value)}
-                  autoComplete={
-                    field.type === "password" ? "new-password" : undefined
-                  }
+                  error={state.fieldErrors?.[field.name]}
                 />
-              )}
-              {state.fieldErrors?.[field.name] && (
-                <small
-                  className="field-error"
-                  id={`${prefix}-${field.name}-error`}
-                >
-                  {state.fieldErrors[field.name]}
-                </small>
-              )}
-              {field.help && <small>{field.help}</small>}
-              {serializedTransfer && field.name === "quantity" && (
-                <small>Jumlah mengikuti unit yang dicentang.</small>
-              )}
-            </label>
-          ),
-        )}
+              )
+            ) : (
+              <label
+                key={field.name}
+                className={
+                  field.type === "textarea"
+                    ? "full"
+                    : field.type === "checkbox"
+                      ? "checkbox-field"
+                      : ""
+                }
+              >
+                <span>
+                  {field.label}
+                  {field.required && <span className="required"> (Wajib)</span>}
+                </span>
+                {field.name === "targetLocationId" ? (
+                  <SearchChoice
+                    options={(field.options || []).map((o) => ({
+                      id: o.id,
+                      name: o.name,
+                    }))}
+                    value={String(values.targetLocationId || "")}
+                    text={String(values.targetLocationText || "")}
+                    freeText
+                    onChange={(id, text) =>
+                      setValues((current) => ({
+                        ...current,
+                        targetLocationId: id,
+                        targetLocationText: text,
+                      }))
+                    }
+                  />
+                ) : field.type === "search" ||
+                  (action === "transfer" && field.name === "itemId") ? (
+                  <SearchChoice
+                    id={`${prefix}-${field.name}`}
+                    options={field.options || []}
+                    value={String(values[field.name] || "")}
+                    required={field.required}
+                    onChange={(id) => change(field.name, id)}
+                  />
+                ) : field.type === "select" ? (
+                  <select
+                    id={`${prefix}-${field.name}`}
+                    aria-invalid={!!state.fieldErrors?.[field.name]}
+                    aria-describedby={
+                      state.fieldErrors?.[field.name]
+                        ? `${prefix}-${field.name}-error`
+                        : undefined
+                    }
+                    name={field.name}
+                    required={field.required}
+                    value={String(values[field.name] ?? "")}
+                    onChange={(e) => change(field.name, e.target.value)}
+                  >
+                    <option value="">Pilih {field.label.toLowerCase()}</option>
+                    {field.options?.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : field.type === "checkbox" ? (
+                  <input
+                    type="checkbox"
+                    name={field.name}
+                    checked={!!values[field.name]}
+                    onChange={(e) => change(field.name, e.target.checked)}
+                  />
+                ) : field.type === "textarea" ? (
+                  <textarea
+                    id={`${prefix}-${field.name}`}
+                    aria-invalid={!!state.fieldErrors?.[field.name]}
+                    aria-describedby={
+                      state.fieldErrors?.[field.name]
+                        ? `${prefix}-${field.name}-error`
+                        : undefined
+                    }
+                    name={field.name}
+                    required={field.required}
+                    maxLength={5000}
+                    value={String(values[field.name] ?? "")}
+                    onChange={(e) => change(field.name, e.target.value)}
+                  />
+                ) : field.type === "photo" ? (
+                  <Photo
+                    value={String(values[field.name] || "")}
+                    onChange={(v) => change(field.name, v)}
+                  />
+                ) : (
+                  <input
+                    id={`${prefix}-${field.name}`}
+                    aria-invalid={!!state.fieldErrors?.[field.name]}
+                    aria-describedby={
+                      state.fieldErrors?.[field.name]
+                        ? `${prefix}-${field.name}-error`
+                        : undefined
+                    }
+                    name={field.name}
+                    type={field.type || "text"}
+                    readOnly={serializedTransfer && field.name === "quantity"}
+                    {...(field.type === "number" ? numeric(field) : {})}
+                    required={field.required}
+                    value={String(values[field.name] ?? "")}
+                    onChange={(e) => change(field.name, e.target.value)}
+                    autoComplete={
+                      field.type === "password" ? "new-password" : undefined
+                    }
+                  />
+                )}
+                {state.fieldErrors?.[field.name] && (
+                  <small
+                    className="field-error"
+                    id={`${prefix}-${field.name}-error`}
+                  >
+                    {state.fieldErrors[field.name]}
+                  </small>
+                )}
+                {field.type === "search" && values[field.name] ? (
+                  <small>
+                    {
+                      field.options?.find((o) => o.id === values[field.name])
+                        ?.name
+                    }
+                  </small>
+                ) : null}
+                {field.help && <small>{field.help}</small>}
+                {serializedTransfer && field.name === "quantity" && (
+                  <small>Jumlah mengikuti unit yang dicentang.</small>
+                )}
+              </label>
+            ),
+          )}
       </div>
       {children}
       <div className="form-footer">

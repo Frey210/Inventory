@@ -384,6 +384,18 @@ td button {
   flex-wrap: wrap;
   gap: 10px;
 }
+.scanner-video[hidden] {
+  display: none;
+}
+.rack-links a {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .action-feedback-host.no-print {
+    top: calc(150px + env(safe-area-inset-top, 0px));
+  }
+}
 .scanner-buttons button {
   flex: 0 1 auto;
 }
@@ -597,7 +609,7 @@ td button {
 }
 @media (max-width: 767px) {
   .action-feedback-host {
-    top: calc(80px + env(safe-area-inset-top, 0px));
+    top: calc(132px + env(safe-area-inset-top, 0px));
   }
   .action-feedback {
     padding: 14px;

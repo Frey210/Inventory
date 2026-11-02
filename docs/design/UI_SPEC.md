@@ -192,3 +192,12 @@ Sebelum menyatakan frontend selesai: uji rute/action/file tanpa izin, keyboard/f
 - Login/MFA memakai POST sebagai fallback, tombol login menunggu JavaScript siap sehingga kredensial tidak masuk query URL saat hydration belum selesai.
 
 Bukti implementasi/rilis mengikuti STATUS_IMPLEMENTASI.md, bukan klaim acceptance menyeluruh dalam spesifikasi ini.
+
+
+## Feedback ketiga - 2 November 2026
+
+Kontrak rinci: RENCANA_PERBAIKAN_3.md dan STATUS_IMPLEMENTASI.md. Permintaan memiliki filter rak opsional serta lokasi asal per baris dengan stok tersedia; tujuan penggunaan terpisah. Success card existing muncul setelah server, menyebut menunggu persetujuan. Pindai manual memakai kode/tag/SKU; redirect relatif same-origin, blank video disembunyikan sampai kamera aktif. Perawatan & Kalibrasi hanya SENSOR/PRODUCT untuk tindakan baru, dibatasi server; riwayat serta incident existing tetap. Kalibrasi mengikuti flag unit, bukan semua sensor dianggap wajib kalibrasi.
+
+Hitung stok menunjukkan cakupan lokasi tepat dan jumlah awal SKU/unit. Sesi draft dapat menambah SKU temuan dari katalog; snapshot jumlah nol bila belum ada saldo, tidak mengubah Balance sampai review/posting. Unit tak dikenal/beda rak dicatat sebagai temuan tertahan, bukan langsung tersedia; tindak lanjut registrasi/penerimaan/transfer terpisah. Sesi kosong tidak dapat diajukan. Reviewer tetap berbeda pembuat/penghitung. Semua penambahan memakai atomic lock/idempotency existing, audit dan freeze sesi.
+
+Riwayat aktivitas memakai nama/peran terkini (bukan nama historis yang tidak tersimpan), tindakan Indonesia, objek dikenali dan ringkasan allowlist sebelum/sesudah; payload asli immutable, tidak diekspos sebagai JSON. Formatter sama untuk laporan. Persetujuan darurat dijelaskan sebagai reservasi sebelum penerima mengakui dan gudang memposting issue, bukan selalu barang sudah keluar; review hanya pihak berwenang selain pelaku. Tidak mengaktifkan izin atau SLA baru.

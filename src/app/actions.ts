@@ -69,7 +69,10 @@ export async function perform(
     )) as { id?: string; number?: string };
     revalidatePath("/", "layout");
     return {
-      success: `${result.number || "Data"} berhasil disimpan.`,
+      success:
+        action === "request" || action === "revise-request"
+          ? `${result.number || "Permintaan"} terkirim. Menunggu persetujuan petugas.`
+          : `${result.number || "Data"} berhasil disimpan.`,
       id: result.id,
     };
   } catch (error) {

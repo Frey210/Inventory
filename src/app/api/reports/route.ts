@@ -1,4 +1,5 @@
-﻿import { readyUser } from "@/server/policy";
+import { presentAudits } from "@/server/audit-presentation";
+import { readyUser } from "@/server/policy";
 import { db } from "@/server/db";
 import { getSettings } from "@/server/settings";
 import {
@@ -195,14 +196,15 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
     });
     count = data.length;
+    const presented = await presentAudits(data);
     rows = [
-      ["Waktu", "Aktor", "Aksi", "Objek", "Rekaman"],
-      ...data.map((a) => [
+      ["Waktu", "Pelaku", "Tindakan", "Objek", "Ringkasan"],
+      ...data.map((a, index) => [
         formatDate(a.createdAt),
-        name(a.actorId),
-        a.action,
-        a.entityId,
-        JSON.stringify(a.payload),
+        presented[index].actor,
+        presented[index].action,
+        presented[index].object,
+        presented[index].summary,
       ]),
     ];
   } else {
@@ -287,9 +289,23 @@ export async function GET(request: Request) {
   });
   const headers = { "Cache-Control": "private, no-store" };
   if (p.format === "print")
-    return new Response(printReport(`Laporan ${p.type}`, rows), {
-      headers: { ...headers, "Content-Type": "text/html; charset=utf-8" },
-    });
+    return new Response(
+      printReport(
+        p.type === "audit" ? "Laporan aktivitas" : `Laporan ${p.type}`,
+        rows,
+        {
+          generatedAt:
+            formatDate(new Date()) + " (" + String(settings.timezone) + ")",
+          filters:
+            p.type === "audit"
+              ? `Periode: ${p.from || p.to ? (p.from || "awal pencatatan") + " sampai " + (p.to || "terkini") : "semua tanggal"}; cakupan: seluruh aktivitas. Filter lokasi/proyek tidak berlaku untuk audit.`
+              : `${["stock", "assets"].includes(p.type) ? "Posisi stok saat ini (bukan riwayat periode)" : "Periode: " + (p.from || "awal pencatatan") + " sampai " + (p.to || "terkini")}; lokasi: ${p.location ? name(p.location) : "semua lokasi"}; proyek: ${["stock", "assets"].includes(p.type) ? "tidak berlaku" : p.project ? name(p.project) : "semua proyek"}.`,
+        },
+      ),
+      {
+        headers: { ...headers, "Content-Type": "text/html; charset=utf-8" },
+      },
+    );
   if (p.format === "csv")
     return new Response(csvReport(rows), {
       headers: {
@@ -302,7 +318,13 @@ export async function GET(request: Request) {
   const sheet = book.addWorksheet("Inventory");
   sheet.addRows(rows.map((row) => row.map(spreadsheetSafe)));
   sheet.views = [{ state: "frozen", ySplit: 1 }];
-  sheet.columns.forEach((c) => (c.width = 24));
+  sheet.columns.forEach((c, index) => {
+    c.width = p.type === "audit" ? [24, 28, 32, 32, 80][index] || 24 : 24;
+  });
+  if (p.type === "audit")
+    sheet.eachRow((row) => {
+      row.alignment = { wrapText: true, vertical: "top" };
+    });
   return new Response(new Uint8Array(await book.xlsx.writeBuffer()), {
     headers: {
       ...headers,

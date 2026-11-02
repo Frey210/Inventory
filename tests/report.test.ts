@@ -19,3 +19,16 @@ test("export prevents spreadsheet formulas and escapes printable user content", 
   assert.ok(!html.includes("<script>"));
   assert.ok(html.includes("&lt;img onerror=x&gt;"));
 });
+
+test("print context is readable and escaped", () => {
+  const html = printReport("Aktivitas", [["Waktu"], ["uji"]], {
+    generatedAt: "2 November 2026 18.00 (Asia/Makassar)",
+    filters: "Periode: semua tanggal <script>",
+  });
+  assert.ok(html.includes("Asia/Makassar"));
+  assert.ok(html.includes("Periode: semua tanggal &lt;script&gt;"));
+  assert.ok(!html.includes("<script>"));
+  assert.ok(
+    printReport("Aktivitas", [["Waktu"]]).includes("Periode: semua tanggal"),
+  );
+});

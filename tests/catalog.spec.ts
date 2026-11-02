@@ -156,7 +156,7 @@ test("catalog filters, eligible stock, mobile cards and request shortcuts", asyn
   await page
     .getByRole("button", { name: "Kirim permintaan", exact: true })
     .click();
-  await expect(page.getByRole("status")).toContainText("berhasil disimpan");
+  await expect(page.getByRole("status")).toContainText("Menunggu persetujuan");
   expect(
     (
       await db.balance.findUniqueOrThrow({

@@ -8,6 +8,7 @@ export function Scanner() {
   const controls = useRef<{ stop: () => void } | null>(null);
   const attempt = useRef(0);
   const [starting, setStarting] = useState(false);
+  const [camera, setCamera] = useState(false);
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
   useEffect(
@@ -19,7 +20,7 @@ export function Scanner() {
   );
   return (
     <section className="panel">
-      <h2>Scan atau masukkan kode</h2>
+      <h2>Pindai atau masukkan kode barang</h2>
       <p>
         Scan membantu pencarian. Penyerahan tetap memerlukan review dan posting
         petugas.
@@ -33,6 +34,7 @@ export function Scanner() {
           onClick={async () => {
             const current = ++attempt.current;
             setStarting(true);
+            setCamera(true);
             setError("");
             try {
               const { BrowserMultiFormatReader } =
@@ -54,6 +56,7 @@ export function Scanner() {
               if (current === attempt.current) controls.current = active;
               else active.stop();
             } catch {
+              setCamera(false);
               if (current === attempt.current)
                 setError(
                   "Akses kamera belum tersedia. Gunakan input kode manual.",
@@ -82,16 +85,23 @@ export function Scanner() {
             attempt.current++;
             controls.current?.stop();
             setStarting(false);
+            setCamera(false);
           }}
         >
           <CameraOff size={18} aria-hidden />
           Hentikan Kamera
         </button>
       </div>
-      <video ref={video} muted playsInline className="scanner-video" />
+      <video
+        ref={video}
+        muted
+        playsInline
+        className="scanner-video"
+        hidden={!camera}
+      />
       <Form action="/scan">
         <label>
-          Kode manual
+          Kode / hasil pindai
           <input
             name="q"
             value={value}
@@ -100,7 +110,7 @@ export function Scanner() {
         </label>
         <SearchSubmit>
           <Search size={18} aria-hidden />
-          Cari Barang
+          Cari kode
         </SearchSubmit>
       </Form>
       {error && <p role="alert">{error}</p>}

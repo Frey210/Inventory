@@ -21,15 +21,20 @@ test("light pages do not fetch the catalog or stock; stock stays scoped to pages
     assert.equal(needs.items, false, path);
     assert.equal(needs.stock, false, path);
   }
-  for (const path of ["/admin/dashboard", "/me", "/admin/items", "/me/items"])
+  for (const path of [
+    "/admin/dashboard",
+    "/me",
+    "/admin/items",
+    "/me/items",
+    "/admin/requests/new",
+    "/me/requests/new",
+  ])
     assert.deepEqual(
       pageDataNeeds(path),
       { masters: true, items: true, stock: true },
       path,
     );
   for (const path of [
-    "/admin/requests/new",
-    "/me/requests/new",
     "/admin/receipts/new",
     "/admin/receipts/a",
     "/admin/requests/a",

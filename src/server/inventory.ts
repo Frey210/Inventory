@@ -1,3 +1,4 @@
+import { tagAliasId } from "./tag-alias";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { hashPassword } from "better-auth/crypto";
@@ -890,6 +891,14 @@ export async function execute(
             const good = ["Baru", "Baik"].includes(meta.condition);
             if (!meta.tag || !qty.eq(1))
               throw new Error("Draft unit memerlukan satu tag dan jumlah 1.");
+            if (
+              await tx.record.findUnique({
+                where: { id: tagAliasId(meta.tag) },
+              })
+            )
+              throw new Error(
+                "Tag merupakan alias unit lama dan tidak boleh dipakai ulang.",
+              );
             newAssets.push({
               itemId: item.id,
               tag: meta.tag!,
@@ -1548,6 +1557,162 @@ export async function execute(
       await audit(tx, actor, "TRANSFER", r.id, p);
       return { id: r.id };
     }
+    if (action === "asset-retag") {
+      permit(actor, "users");
+      const p = z
+        .object({
+          id,
+          expectedTag: z.string().min(1).max(100),
+          tag: z
+            .string()
+            .regex(/^MTC-[A-Z0-9]+-[0-9]{3,}$/)
+            .max(100),
+          reason: text,
+        })
+        .parse(input);
+      const asset = await tx.asset.findUniqueOrThrow({ where: { id: p.id } });
+      if (asset.tag !== p.expectedTag)
+        throw new Error("Tag berubah. Periksa identitas sebelum melanjutkan.");
+      if (
+        (await tx.asset.findUnique({ where: { tag: p.tag } })) ||
+        (await tx.record.findUnique({ where: { id: tagAliasId(p.tag) } }))
+      )
+        throw new Error("Kode/tag sudah dipakai atau merupakan alias lama.");
+      const alias = await tx.record.findUnique({
+        where: { id: tagAliasId(asset.tag) },
+      });
+      if (alias && alias.referenceId !== asset.id)
+        throw new Error("Alias mengarah ke unit berbeda.");
+      if (!alias)
+        await tx.record.create({
+          data: {
+            id: tagAliasId(asset.tag),
+            kind: "asset_tag_alias",
+            actorId: actor.id,
+            referenceId: asset.id,
+            status: "active",
+            payload: json({ tag: asset.tag }),
+          },
+        });
+      await tx.asset.update({ where: { id: asset.id }, data: { tag: p.tag } });
+      await audit(tx, actor, "ASSET_RETAGGED", asset.id, {
+        before: { tag: asset.tag },
+        after: { tag: p.tag },
+        reason: p.reason,
+      });
+      return { id: asset.id };
+    }
+    if (action === "stocktake-add-item" || action === "stocktake-finding") {
+      permit(actor, "stock");
+      const p = z
+        .object({
+          id,
+          itemId: id.optional(),
+          assetId: z.preprocess(
+            (v) => (v === "" ? undefined : v),
+            id.optional(),
+          ),
+          reason: text,
+        })
+        .parse(input);
+      const doc = await tx.document.findUniqueOrThrow({
+        where: { id: p.id },
+        include: { lines: true },
+      });
+      if (doc.kind !== "stocktake" || doc.status !== "draft")
+        throw new Error("Penambahan hanya dapat dilakukan pada sesi draft.");
+      const freeze = await tx.freeze.findUnique({
+        where: { locationId: doc.locationId! },
+      });
+      if (freeze?.documentId !== doc.id)
+        throw new Error("Lokasi tidak dibekukan oleh sesi ini.");
+      if (action === "stocktake-finding") {
+        const finding = await tx.record.create({
+          data: {
+            kind: "stocktake_finding",
+            actorId: actor.id,
+            referenceId: doc.id,
+            status: "pending",
+            payload: json({ reason: p.reason }),
+          },
+        });
+        await audit(tx, actor, "STOCKTAKE_FINDING", doc.id, {
+          reason: p.reason,
+        });
+        return { id: finding.id };
+      }
+      if (!p.itemId) throw new Error("Pilih barang dari katalog.");
+      const item = await tx.item.findUniqueOrThrow({ where: { id: p.itemId } });
+      if (!item.active) throw new Error("Barang tidak aktif.");
+      if (doc.lines.length >= 1000)
+        throw new Error("Maksimal 1000 baris per sesi.");
+      if (item.tracking === "serialized") {
+        if (!p.assetId)
+          throw new Error(
+            "Pilih identitas unit. Unit tidak dikenal dicatat sebagai temuan terpisah.",
+          );
+        const unit = await tx.asset.findUniqueOrThrow({
+          where: { id: p.assetId },
+        });
+        if (
+          unit.itemId !== item.id ||
+          unit.locationId !== doc.locationId ||
+          !["available", "blocked"].includes(unit.availability)
+        )
+          throw new Error(
+            "Unit tidak sesuai lokasi/status sesi. Catat temuan untuk tindak lanjut.",
+          );
+        if (doc.lines.some((l) => l.assetId === unit.id))
+          throw new Error("Unit sudah ada pada daftar hitung.");
+        await tx.line.create({
+          data: {
+            documentId: doc.id,
+            itemId: item.id,
+            assetId: unit.id,
+            locationId: doc.locationId!,
+            quantity: 1,
+            details: json({
+              system: "1",
+              tag: unit.tag,
+              availability: unit.availability,
+              condition: unit.condition,
+              reason: p.reason,
+            }),
+          },
+        });
+      } else {
+        if (p.assetId)
+          throw new Error("Barang jumlah tidak memakai identitas unit.");
+        if (doc.lines.some((l) => l.itemId === item.id && !l.assetId))
+          throw new Error("Barang sudah ada pada daftar hitung.");
+        const balance = await tx.balance.findUnique({
+          where: {
+            itemId_locationId: { itemId: item.id, locationId: doc.locationId! },
+          },
+        });
+        if (balance?.reserved.gt(0))
+          throw new Error("Selesaikan reservasi sebelum hitung stok.");
+        const system = balance?.onHand || new Prisma.Decimal(0);
+        await tx.line.create({
+          data: {
+            documentId: doc.id,
+            itemId: item.id,
+            locationId: doc.locationId!,
+            quantity: system,
+            details: json({
+              system: system.toString(),
+              reason: p.reason,
+              found: true,
+            }),
+          },
+        });
+      }
+      await audit(tx, actor, "STOCKTAKE_ITEM_ADDED", doc.id, {
+        reason: p.reason,
+        itemId: item.id,
+      });
+      return { id: doc.id };
+    }
     if (action === "stocktake") {
       permit(actor, "stock");
       const p = z.object({ locationId: id, reason: text }).parse(input);
@@ -1629,8 +1794,17 @@ export async function execute(
       });
       if (doc.kind !== "stocktake" || !["draft", "review"].includes(doc.status))
         throw new Error("Sesi tidak terbuka.");
+      const freeze = await tx.freeze.findUnique({
+        where: { locationId: doc.locationId! },
+      });
+      if (freeze?.documentId !== doc.id)
+        throw new Error("Freeze sesi tidak sesuai.");
+      if (action !== "cancel-stocktake" && !doc.lines.length)
+        throw new Error("Tambahkan barang sebelum mengajukan hasil hitung.");
       if (action === "count-stocktake") {
         permit(actor, "stock");
+        if (doc.status !== "draft")
+          throw new Error("Hasil sudah diajukan untuk review.");
         for (const l of doc.lines) {
           const count = p.counts[l.id];
           if (count === undefined)
@@ -1747,8 +1921,19 @@ export async function execute(
       const asset = await tx.asset.findUniqueOrThrow({
         where: { id: p.assetId },
       });
-      if (action === "maintenance") permit(actor, "stock");
-      else if (actor.role === "TECHNICIAN") {
+      if (action === "maintenance") {
+        permit(actor, "stock");
+        const item = await tx.item.findUniqueOrThrow({
+          where: { id: asset.itemId },
+        });
+        const type = await tx.master.findUniqueOrThrow({
+          where: { id: item.typeId },
+        });
+        if (type.kind !== "type" || !["SENSOR", "PRODUCT"].includes(type.code))
+          throw new Error(
+            "Perawatan dan kalibrasi hanya untuk sensor atau produk jadi.",
+          );
+      } else if (actor.role === "TECHNICIAN") {
         if (asset.custodianId !== actor.id)
           throw new Error("Unit bukan tanggung jawab Anda.");
       } else permit(actor, "stock");
