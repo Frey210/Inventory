@@ -1,6 +1,6 @@
 # Rencana perbaikan 3 - MTC Inventory
 
-Tanggal: 2 November 2026. Status: implementasi berjalan; bukti gate/rilis pada STATUS_IMPLEMENTASI.md.
+Tanggal: 2 November 2026. Status: implementasi dan deployment selesai; bukti gate/rilis pada STATUS_IMPLEMENTASI.md. Uji perangkat/cetak fisik dan cutover tetap terpisah.
 Sumber: `perbaikan 3.docx`, seluruh paragraf dan sepuluh gambar telah dibaca; kode lokal baseline rilis `e9cc9e5bf0e3ce4024e002f092f7d3e93c8c4413`. Bukti sumber diekstrak privat ke `.local/feedback3/`; tidak disalin ke public/repository.
 
 ## Sasaran dan batas
