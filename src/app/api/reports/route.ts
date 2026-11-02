@@ -294,6 +294,7 @@ export async function GET(request: Request) {
         p.type === "audit" ? "Laporan aktivitas" : `Laporan ${p.type}`,
         rows,
         {
+          audit: p.type === "audit",
           generatedAt:
             formatDate(new Date()) + " (" + String(settings.timezone) + ")",
           filters:

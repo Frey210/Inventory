@@ -13,7 +13,7 @@ export const csvReport = (rows: string[][]) =>
 export function printReport(
   title: string,
   rows: string[][],
-  context: { generatedAt?: string; filters?: string } = {},
+  context: { generatedAt?: string; filters?: string; audit?: boolean } = {},
 ) {
   const generatedAt =
     context.generatedAt ||
@@ -25,7 +25,7 @@ export function printReport(
   const filters =
     context.filters ||
     "Periode: semua tanggal; lokasi: semua lokasi; proyek: semua proyek.";
-  return `<!doctype html><html lang="id"><meta charset="utf-8"><title>${escape(title)}</title><style>body{font:10pt Arial;color:#263648}table{border-collapse:collapse;width:100%}th,td{min-width:65px;border:1px solid #888;padding:5pt;text-align:left;overflow-wrap:break-word;word-break:normal}td:last-child{min-width:240px}thead{display:table-header-group}tr{break-inside:avoid}@media print{button{display:none}}@page{size:Letter landscape;margin:15mm}</style><body><button onclick="window.print()">Cetak / Simpan PDF</button><h1>${escape(title)}</h1><p>MTC Inventory · Data persiapan · ${escape(generatedAt)}</p><p>${escape(filters)}</p><table><thead><tr>${rows[0].map((v) => `<th>${escape(v)}</th>`).join("")}</tr></thead><tbody>${rows
+  return `<!doctype html><html lang="id"><meta charset="utf-8"><title>${escape(title)}</title><style>body{font:10pt Arial;color:#263648}table{border-collapse:collapse;width:100%}th,td{border:1px solid #888;padding:5pt;text-align:left;overflow-wrap:break-word;word-break:normal}.audit-report th,.audit-report td{min-width:65px}.audit-report td:last-child{min-width:240px}thead{display:table-header-group}tr{break-inside:avoid}@media print{button{display:none}}@page{size:Letter landscape;margin:15mm}</style><body class="${context.audit ? "audit-report" : ""}"><button onclick="window.print()">Cetak / Simpan PDF</button><h1>${escape(title)}</h1><p>MTC Inventory · Data persiapan · ${escape(generatedAt)}</p><p>${escape(filters)}</p><table><thead><tr>${rows[0].map((v) => `<th>${escape(v)}</th>`).join("")}</tr></thead><tbody>${rows
     .slice(1)
     .map(
       (row) => `<tr>${row.map((v) => `<td>${escape(v)}</td>`).join("")}</tr>`,
