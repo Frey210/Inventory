@@ -8,10 +8,11 @@ if (!process.env.INVENTORY_DATABASE_URL?.includes("inventory_test"))
   throw Error("Isolated test database required");
 const prefix = "live-" + randomUUID().slice(0, 8);
 const password = randomBytes(20).toString("base64url");
+const roles = ["ADMIN", "WAREHOUSE", "AUDITOR", "INITIAL", "DISABLED"];
 
 test.beforeAll(async () => {
   const hashed = await hashPassword(password);
-  for (const role of ["ADMIN", "WAREHOUSE", "AUDITOR", "INITIAL", "DISABLED"]) {
+  for (const role of roles) {
     const id = prefix + role.toLowerCase();
     await db.user.create({
       data: {
@@ -44,8 +45,13 @@ test("live mode permits optional MFA while retaining password and inactive-accou
   request,
 }) => {
   expect((await (await request.get("/api/health")).json()).mode).toBe("live");
-  for (const role of ["ADMIN", "WAREHOUSE", "AUDITOR", "INITIAL", "DISABLED"]) {
-    const context = await browser.newContext();
+  for (const role of roles) {
+    // Give each simulated user its own client IP so other suites do not consume its login allowance.
+    const context = await browser.newContext({
+      extraHTTPHeaders: {
+        "x-forwarded-for": `192.0.2.${roles.indexOf(role) + 1}`,
+      },
+    });
     try {
       const login = await context.request.post("/api/auth/sign-in/username", {
         data: { username: prefix + role.toLowerCase(), password },
@@ -56,7 +62,7 @@ test("live mode permits optional MFA while retaining password and inactive-accou
         await expect(page).toHaveURL(/\/login$/);
         continue;
       }
-      expect(login.ok()).toBe(true);
+      expect(login.status(), role).toBe(200);
       expect((await login.json()).twoFactorRedirect).not.toBe(true);
       const page = await context.newPage();
       await page.goto("/admin/dashboard");
