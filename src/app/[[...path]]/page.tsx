@@ -136,13 +136,6 @@ export default async function Page({
       user.mustChangePassword ? "/profile" : tech ? "/me" : "/admin/dashboard",
     );
   if (user.mustChangePassword && path !== "/profile") redirect("/profile");
-  if (
-    process.env.APP_MODE === "live" &&
-    ["ADMIN", "WAREHOUSE", "AUDITOR"].includes(user.role) &&
-    !user.twoFactorEnabled &&
-    path !== "/profile"
-  )
-    redirect("/profile");
   if (tech && path.startsWith("/admin")) notFound();
   if (!tech && path.startsWith("/me")) redirect("/admin/dashboard");
   return (

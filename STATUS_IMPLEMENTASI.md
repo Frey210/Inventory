@@ -1,5 +1,13 @@
 # Status implementasi MTC Inventory
 
+## Persiapan cutover operasional - 16 November 2026
+
+Pemilik mengizinkan reset data inventory persiapan hingga kosong, mempertahankan akun existing, dan mengonfirmasi MFA tidak wajib. Gate MFA wajib dilepas pada routing, Server Actions dan readyUser; plugin MFA/login challenge existing tetap, demikian juga password awal, akun aktif dan policy peran. Browser suite dijalankan dalam APP_MODE=live dengan tes akses Admin/Gudang/Auditor tanpa MFA serta password awal/inactive account. Runbook docs/OPERASIONAL.md. Preflight server: image 36b9faf3c7a2, mode preparation, 18 User termasuk system-worker dan 17 Account. Belum mengklaim reset/aktivasi selesai sebelum backup, restore, rekonsiliasi dan smoke akhir.
+
+## Laporan checklist feedback ketiga - 2 November 2026
+
+Laporan ringkas `output/pdf/LAPORAN_CHECKLIST_PERBAIKAN_3_MTC.pdf` disiapkan: enam halaman, checklist F3-01 sampai F3-10, screenshot aktual beranotasi, ringkasan CI dan rekonsiliasi rilis `36b9faf3c7a2`. Screenshot baru memakai source rilis dan data database latihan lokal, termasuk pengajuan tersimpan, hasil pencarian kode, barang temuan draf dan audit perubahan minimum stok; tidak membuat transaksi contoh di produksi. Seluruh halaman dirender lewat Poppler dan ditinjau, jumlah halaman/ID checklist serta batas teks diverifikasi. Laporan membedakan bukti latihan dari catatan verifikasi produksi; kamera/USB scanner nyata, cetak label fisik dan UAT gudang tetap belum diklaim. Tidak ada perubahan kode aplikasi atau deployment pada sesi laporan ini. PDF dan bahan latihan berada di direktori output/private yang diabaikan Git.
+
 ## Implementasi feedback ketiga - 2 November 2026
 
 Rilis aktif `36b9faf3c7a2b95efe307b8f96cc9e83be9e1624`, web/worker `36b9faf3c7a2` healthy. CI [41432915697](https://github.com/Frey210/Inventory/actions/runs/41432915697) success: 22 tes domain, 19 tes browser, lint/typecheck/build web+worker dan tiga fixture PDF nota. HTTPS https://inventory.farlabs.my.id terverifikasi; mode preparation tetap, tanpa migration/dependency/perubahan credential.

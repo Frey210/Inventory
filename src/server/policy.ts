@@ -15,14 +15,7 @@ export async function requireUser() {
 }
 export async function readyUser() {
   const user = await currentUser();
-  if (
-    !user ||
-    user.mustChangePassword ||
-    (process.env.APP_MODE === "live" &&
-      ["ADMIN", "WAREHOUSE", "AUDITOR"].includes(user.role) &&
-      !user.twoFactorEnabled)
-  )
-    return null;
+  if (!user || user.mustChangePassword) return null;
   return user;
 }
 

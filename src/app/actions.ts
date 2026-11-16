@@ -54,12 +54,6 @@ export async function perform(
         error:
           "Ubah password awal melalui Profil sebelum melakukan perubahan data.",
       };
-    if (
-      process.env.APP_MODE === "live" &&
-      ["ADMIN", "WAREHOUSE", "AUDITOR"].includes(user.role) &&
-      !user.twoFactorEnabled
-    )
-      return { error: "Aktifkan MFA melalui Profil sebelum melanjutkan." };
     const payload = JSON.parse(String(form.get("payload") || "{}"));
     const result = (await execute(
       user,

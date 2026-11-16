@@ -8,6 +8,7 @@ export default defineConfig({
   timeout: 90000,
   use: { baseURL: "http://localhost:3030", headless: true },
   webServer: {
+    env: { APP_MODE: "live" },
     command: "npm run start -- -p 3030",
     url: "http://localhost:3030/login",
     reuseExistingServer: true,
